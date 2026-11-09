@@ -1,6 +1,6 @@
 # BidZone — Plataforma de Subastas Online en Tiempo Real
 
-Plataforma web de subastas en línea orientada a la compra y venta de artículos mediante pujas competitivas en tiempo real. El sistema integra un motor de ofertas en vivo, control de saldo con retención preventiva, finalización automatizada mediante temporizador y un esquema de reputación y calificación mutua entre usuarios.
+Plataforma web de subastas en línea orientada a la compra y venta de artículos mediante pujas competitivas en tiempo real. El sistema integra un motor de ofertas en vivo, finalización automatizada mediante temporizador, liberación de datos de contacto entre partes para coordinación directa y un esquema de reputación, reportes y penalizaciones por incumplimiento.
 
 ---
 
@@ -21,14 +21,15 @@ Plataforma web de subastas en línea orientada a la compra y venta de artículos
 
 ## 📖 Descripción General
 
-En las transacciones informales de compra y venta a través de redes sociales o medios tradicionales, la falta de transparencia, la superposición de ofertas y la ausencia de compromisos de pago generan disputas y desconfianza.
+En las transacciones informales de compra y venta a través de redes sociales o medios tradicionales, la falta de transparencia, la superposición de ofertas y la falta de seriedad en las propuestas generan disputas y desconfianza.
 
 **BidZone** soluciona esta problemática proporcionando:
 
-- **Transparencia total:** Historial cronológico de pujas auditable y visible para todos los participantes.
-- **Compromiso financiero:** Validación de saldo en cuenta previo al registro de una puja, congelando preventivamente los fondos para asegurar la transacción.
+- **Transparencia total:** Historial cronológico de pujas auditable y visible para todos los participantes en tiempo real.
 - **Cierre automatizado e imparcial:** Finalización estricta por tiempo que bloquea pujas posteriores y adjudica el producto de forma autónoma al postor con la mayor oferta.
-- **Confianza comunitaria:** Sistema de calificación mutua (1 a 5 estrellas) tras concretar la operación.
+- **Liberación bilateral de contacto:** Al finalizar la subasta, se habilitan mutuamente los canales de comunicación entre vendedor y ganador para que coordinen el pago y la entrega del artículo de forma particular.
+- **Compromiso vinculante y penalizaciones:** Toda oferta genera una obligación de compra; el incumplimiento o falta de pago es reportable ante la plataforma y deriva en infracciones, suspensión temporal o cierre definitivo de la cuenta.
+- **Confianza comunitaria:** Sistema de calificación mutua (1 a 5 estrellas) tras concretar la operación para fomentar una reputación confiable.
 
 ---
 
@@ -46,10 +47,11 @@ En las transacciones informales de compra y venta a través de redes sociales o 
 
 - **Exploración y Búsqueda:** Catálogo público de subastas activas y finalizadas con filtros por categorías, estado y ordenamiento por tiempo restante o precio actual.
 - **Sala de Pujas en Vivo (Live Bidding):** Actualización inmediata de ofertas, cronómetro de cuenta regresiva monoespaciado e indicadores de estado dinámicos (_"Postor líder"_ vs _"Oferta superada"_).
-- **Billetera Virtual (Wallet):** Diferenciación estricta entre **Saldo Disponible** y **Saldo Comprometido en Pujas**, con registro de transacciones (recargas, retenciones, liberaciones, cobros y pagos).
 - **Publicación Guiada (Rol Vendedor):** Flujo de creación de subastas en pasos (datos del producto, precio base, incremento mínimo y fecha/hora de cierre).
-- **Panel de Usuario Centralizado:** Seguimiento de subastas publicadas, pujas activas y productos ganados.
-- **Centro de Notificaciones:** Alertas inmediatas cuando la oferta de un usuario es superada o cuando se adjudica una subasta.
+- **Adjudicación y Contacto Directo:** Al cerrar la subasta, la plataforma provee una vista privada exclusiva para el vendedor y el ganador con sus datos de contacto (teléfono, email, mensajería) para coordinar el pago y la entrega fuera de la app.
+- **Centro de Reportes y Mediación:** Interfaz para notificar incumplimientos de pago o entrega, adjuntar evidencia y solicitar la intervención administrativa para aplicar sanciones o cierres de cuenta.
+- **Panel de Usuario Centralizado:** Seguimiento de subastas publicadas, pujas activas, subastas ganadas y estado de coordinación.
+- **Centro de Notificaciones:** Alertas inmediatas cuando la oferta de un usuario es superada, cuando se adjudica una subasta o cuando se recibe una calificación o reclamo.
 
 ---
 
@@ -57,15 +59,16 @@ En las transacciones informales de compra y venta a través de redes sociales o 
 
 El sistema aplica de forma obligatoria las siguientes invariantes operativas:
 
-| Código   | Regla                        | Descripción                                                                                                            |
-| :------- | :--------------------------- | :--------------------------------------------------------------------------------------------------------------------- |
-| **RN01** | **Incremento Mínimo**        | Toda puja debe superar el precio actual de la subasta por un margen mínimo predefinido.                                |
-| **RN02** | **Prohibición de Auto-puja** | Un usuario no puede realizar ofertas sobre subastas creadas por él mismo.                                              |
-| **RN03** | **Vigencia Temporal**        | Solo se admiten ofertas si la subasta se encuentra en estado `activa` y el tiempo no ha expirado.                      |
-| **RN04** | **Irrevocabilidad**          | Las ofertas registradas son vinculantes; el postor no puede cancelar ni retractarse de una puja.                       |
-| **RN05** | **Respaldo de Saldo**        | El postor debe disponer de saldo suficiente para cubrir el monto ofertado; dicho importe pasa a estado comprometido.   |
-| **RN06** | **Calificación Única**       | La calificación mutua solo se habilita tras el cierre formal con ganador asignado (máximo una calificación por parte). |
-| **RN07** | **Inmutabilidad por Oferta** | Una vez que una subasta recibe su primera oferta válida, sus condiciones base (precio y duración) quedan bloqueadas.   |
+| Código   | Regla                             | Descripción                                                                                                                  |
+| :------- | :-------------------------------- | :--------------------------------------------------------------------------------------------------------------------------- |
+| **RN01** | **Incremento Mínimo**             | Toda puja debe superar el precio actual de la subasta por un margen mínimo predefinido por el vendedor.                     |
+| **RN02** | **Prohibición de Auto-puja**      | Un usuario no puede realizar ofertas sobre subastas creadas por él mismo.                                                    |
+| **RN03** | **Vigencia Temporal**             | Solo se admiten ofertas si la subasta se encuentra en estado `activa` y el tiempo no ha expirado.                            |
+| **RN04** | **Irrevocabilidad y Compromiso**  | Las ofertas registradas son vinculantes; el postor no puede cancelar ni retractarse de una puja una vez enviada.             |
+| **RN05** | **Liberación Condicional de Datos**| Los datos de contacto entre vendedor y postor solo se desbloquean una vez que la subasta finaliza con un postor ganador.  |
+| **RN06** | **Régimen de Infracciones**       | Si alguna parte no cumple con la coordinación, pago o entrega pactada, la contraparte puede emitir un reporte para sanción. |
+| **RN07** | **Calificación Única**            | La calificación mutua solo se habilita tras el cierre formal con ganador asignado (máximo una calificación por parte).       |
+| **RN08** | **Inmutabilidad por Oferta**      | Una vez que una subasta recibe su primera oferta válida, sus condiciones base (precio y duración) quedan bloqueadas.         |
 
 ---
 
@@ -95,8 +98,8 @@ src/
 │   │   ├── states/                  # authStore / AuthContext
 │   │   └── utils/                   # Validaciones de credenciales
 │   │
-│   ├── auctions/                    # Catálogo, publicación y detalle de artículos
-│   │   ├── components/              # AuctionCard, AuctionHero, AuctionFilters, CountdownTimer
+│   ├── auctions/                    # Catálogo, publicación, detalle y vista de contacto post-cierre
+│   │   ├── components/              # AuctionCard, AuctionHero, AuctionFilters, CountdownTimer, DealContactCard
 │   │   ├── hooks/                   # useAuctions, useAuctionTimer
 │   │   ├── lib/                     # auction.types.ts
 │   │   ├── services/                # auctionService.ts
@@ -111,13 +114,13 @@ src/
 │   │   ├── states/                  # liveBidStore
 │   │   └── utils/                   # Cálculo de puja mínima permitida
 │   │
-│   ├── wallet/                      # Gestión de billetera virtual y transacciones
-│   │   ├── components/              # WalletWidget, RechargeModal, TransactionsTable
-│   │   ├── hooks/                   # useWallet
-│   │   ├── lib/                     # wallet.types.ts
-│   │   ├── services/                # walletService.ts
-│   │   ├── states/                  # walletStore
-│   │   └── utils/
+│   ├── reports/                     # Reportes de incumplimiento, reclamos y sanciones
+│   │   ├── components/              # ReportModal, DisputeStatusCard, InfractionAlert
+│   │   ├── hooks/                   # useReports
+│   │   ├── lib/                     # report.types.ts
+│   │   ├── services/                # reportService.ts
+│   │   ├── states/                  # reportStore
+│   │   └── utils/                   # Validadores de denuncias
 │   │
 │   ├── reviews/                     # Calificaciones y reputación
 │   │   ├── components/              # ReviewModal, StarRatingDisplay, UserReviewsList
@@ -135,6 +138,6 @@ src/
 │       ├── states/                  # notificationStore
 │       └── utils/
 │
-├── App.tsx                          # Enrutador principal de la aplicación
-└── main.tsx                         # Punto de entrada de Vite
+├── App.jsx                          # Enrutador principal de la aplicación
+└── main.jsx                         # Punto de entrada de Vite
 ```
