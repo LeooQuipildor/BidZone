@@ -7,7 +7,6 @@ import { ProtectedRoute } from './modules/core/components/ProtectedRoute';
 
 import { LoginView } from './modules/auth/components/LoginView';
 import { RegisterView } from './modules/auth/components/RegisterView';
-import { UsersListView } from './modules/auth/components/UsersListView';
 import { UserCreateView } from './modules/auth/components/UserCreateView';
 import { UserEditView } from './modules/auth/components/UserEditView';
 
@@ -16,19 +15,14 @@ import { AuctionCreateView } from './modules/auctions/components/AuctionCreateVi
 import { AuctionEditView } from './modules/auctions/components/AuctionEditView';
 import { AuctionDetailView } from './modules/auctions/components/AuctionDetailView';
 
-import { BidsListView } from './modules/bids/components/BidsListView';
 import { BidCreateView } from './modules/bids/components/BidCreateView';
 import { BidEditView } from './modules/bids/components/BidEditView';
 
-import { ReportsListView } from './modules/reports/components/ReportsListView';
 import { ReportCreateView } from './modules/reports/components/ReportCreateView';
 import { ReportEditView } from './modules/reports/components/ReportEditView';
 
-import { ReviewsListView } from './modules/reviews/components/ReviewsListView';
 import { ReviewCreateView } from './modules/reviews/components/ReviewCreateView';
 import { ReviewEditView } from './modules/reviews/components/ReviewEditView';
-
-import { NotificationsView } from './modules/notifications/components/NotificationsView';
 
 function App() {
   return (
@@ -70,12 +64,12 @@ function App() {
             }
           />
 
-          {/* Entidad 2: Pujas (3 Vistas CRUD) */}
+          {/* Entidad 2: Pujas (Integrado al Dashboard + Alta/Edición directa) */}
           <Route
             path="/bids"
             element={
               <ProtectedRoute>
-                <BidsListView />
+                <DashboardView initialSection="bids" />
               </ProtectedRoute>
             }
           />
@@ -96,12 +90,12 @@ function App() {
             }
           />
 
-          {/* Entidad 3: Reportes e Infracciones (3 Vistas CRUD) */}
+          {/* Entidad 3: Reportes e Infracciones */}
           <Route
             path="/reports"
             element={
               <ProtectedRoute>
-                <ReportsListView />
+                <DashboardView initialSection="reports" />
               </ProtectedRoute>
             }
           />
@@ -122,12 +116,12 @@ function App() {
             }
           />
 
-          {/* Entidad 4: Calificaciones y Reputación (3 Vistas CRUD) */}
+          {/* Entidad 4: Calificaciones y Reputación */}
           <Route
             path="/reviews"
             element={
               <ProtectedRoute>
-                <ReviewsListView />
+                <DashboardView initialSection="reviews" />
               </ProtectedRoute>
             }
           />
@@ -148,12 +142,12 @@ function App() {
             }
           />
 
-          {/* Entidad 5: Usuarios (3 Vistas CRUD + Control por Rol) */}
+          {/* Entidad 5: Usuarios */}
           <Route
             path="/users"
             element={
               <ProtectedRoute>
-                <UsersListView />
+                <DashboardView initialSection="users" />
               </ProtectedRoute>
             }
           />
@@ -179,7 +173,7 @@ function App() {
             path="/notifications"
             element={
               <ProtectedRoute>
-                <NotificationsView />
+                <DashboardView initialSection="notifications" />
               </ProtectedRoute>
             }
           />

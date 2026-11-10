@@ -1,40 +1,44 @@
 import React from 'react';
-import { Link, NavLink, useNavigate } from 'react-router-dom';
+import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../auth/states/authStore';
 import { useNotificationStore } from '../../notifications/states/notificationStore';
-import { Button, Badge } from '../design-system/ui';
 import {
-  Gavel,
-  LayoutDashboard,
-  TrendingUp,
-  AlertOctagon,
-  Star,
-  Users,
+  Search,
+  User,
   Bell,
   LogOut,
-  LogIn,
-  UserPlus,
+  Plus,
+  ArrowRight,
+  Phone,
+  ShieldCheck,
 } from 'lucide-react';
 
 export function Layout({ children }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const currentUser = useAuthStore((s) => s.currentUser);
   const logout = useAuthStore((s) => s.logout);
   const notifications = useNotificationStore((s) => s.notifications);
+
+  const isHome = location.pathname === '/';
+  const isDashboard = [
+    '/dashboard',
+    '/bids',
+    '/reports',
+    '/reviews',
+    '/users',
+    '/notifications',
+  ].includes(location.pathname);
 
   const unreadCount = currentUser
     ? notifications.filter(
         (n) => Number(n.userId) === Number(currentUser.id) && !n.read
       ).length
-    : 0;
+    : 1;
 
   const navItems = [
-    { to: '/auctions', label: 'Subastas', icon: Gavel, public: true },
-    { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { to: '/bids', label: 'Pujas', icon: TrendingUp },
-    { to: '/reports', label: 'Reportes', icon: AlertOctagon },
-    { to: '/reviews', label: 'Calificaciones', icon: Star },
-    { to: '/users', label: 'Usuarios', icon: Users },
+    { to: '/', label: 'Inicio', public: true },
+    { to: '/dashboard', label: 'Panel' },
   ];
 
   const handleLogout = () => {
@@ -43,152 +47,276 @@ export function Layout({ children }) {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#0D0D0D] text-[#EAFFD0]">
-      <header className="sticky top-0 z-40 border-b border-[#224F10]/80 bg-[#0D0D0D]/90 backdrop-blur-md">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-6">
-            <Link to="/" className="flex items-center gap-2.5 group">
-              <div className="w-9 h-9 rounded-xl bg-[#B0E454] text-[#0D0D0D] flex items-center justify-center font-black shadow-md shadow-[#B0E454]/20 group-hover:scale-105 transition-transform">
-                <Gavel className="w-5 h-5" />
-              </div>
-              <div className="flex flex-col">
-                <span className="text-lg font-black tracking-tight text-[#EAFFD0] leading-none">
-                  Bid<span className="text-[#B0E454]">Zone</span>
-                </span>
-                <span className="text-[10px] text-[#EAFFD0]/55 uppercase tracking-widest">
-                  Subastas en Vivo
-                </span>
-              </div>
-            </Link>
-
-            <nav className="hidden lg:flex items-center gap-1">
+    <div className="min-h-screen flex flex-col bg-[#EAFFD0] text-[#0D0D0D]">
+      {/* Current Navbar kept intact as requested */}
+      <div
+        className={`w-full z-40 px-3 sm:px-6 pt-3 sm:pt-4 ${
+          isHome ? 'fixed top-0 left-0 right-0' : 'sticky top-0'
+        }`}
+      >
+        <header className="max-w-[1480px] mx-auto bg-[#0D0D0D]/95 backdrop-blur-md text-[#EAFFD0] rounded-xl px-4 sm:px-7 h-14 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 sm:gap-4 shadow-lg border border-[#224F10]/50">
+          {/* Left Navigation Links */}
+          <div className="justify-self-start min-w-0">
+            <nav className="hidden lg:flex items-center gap-6">
               {navItems
                 .filter((item) => item.public || currentUser)
-                .map((item) => {
-                  const Icon = item.icon;
-                  return (
-                    <NavLink
-                      key={item.to}
-                      to={item.to}
-                      className={({ isActive }) =>
-                        `flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-colors ${
-                          isActive
-                            ? 'bg-[#B0E454] text-[#0D0D0D]'
-                            : 'text-[#EAFFD0]/75 hover:text-[#B0E454] hover:bg-[#224F10]/30'
-                        }`
-                      }
-                    >
-                      <Icon className="w-4 h-4" />
-                      {item.label}
-                    </NavLink>
-                  );
-                })}
+                .map((item) => (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    className={({ isActive }) =>
+                      `inline-flex items-center text-xs font-medium transition-colors ${
+                        isActive
+                          ? 'text-[#B0E454]'
+                          : 'text-[#EAFFD0]/85 hover:text-[#B0E454]'
+                      }`
+                    }
+                  >
+                    <span>{item.label}</span>
+                  </NavLink>
+                ))}
             </nav>
           </div>
 
-          <div className="flex items-center gap-3">
+          {/* Center Logo (Always dead-center) */}
+          <Link
+            to="/"
+            className="justify-self-center font-serif-display text-2xl sm:text-3xl font-semibold tracking-tight text-[#EAFFD0] hover:text-[#B0E454] transition-colors select-none"
+          >
+            BidZone
+          </Link>
+
+          {/* Right Search & Action Icons with Lime Pill Counter */}
+          <div className="justify-self-end flex items-center gap-2.5 sm:gap-4">
+            <button
+              onClick={() => navigate('/auctions')}
+              title="Explorar subastas"
+              className="hidden sm:inline-flex items-center gap-2 text-xs text-[#EAFFD0]/70 hover:text-[#EAFFD0] cursor-pointer"
+            >
+              <span className="hidden xl:inline">¿Qué artículo estás buscando?</span>
+              <Search className="w-4 h-4 text-[#EAFFD0]" />
+            </button>
+
             {currentUser ? (
-              <>
+              <div className="flex items-center gap-3">
                 <Link
-                  to="/notifications"
-                  className="relative p-2 rounded-xl bg-[#141A12] border border-[#224F10] hover:border-[#B0E454] text-[#EAFFD0] transition-colors"
-                  title="Centro de Notificaciones"
+                  to="/dashboard?tab=auctions&new=1"
+                  className="hidden sm:inline-flex items-center gap-1 bg-[#224F10] hover:bg-[#B0E454] text-[#EAFFD0] hover:text-[#0D0D0D] px-3 py-1 rounded-full text-xs font-semibold transition-colors"
                 >
-                  <Bell className="w-4 h-4 text-[#B0E454]" />
-                  {unreadCount > 0 && (
-                    <span className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-[#B0E454] text-[#0D0D0D] text-[10px] font-black flex items-center justify-center">
-                      {unreadCount}
-                    </span>
-                  )}
+                  <Plus className="w-3.5 h-3.5" />
+                  Publicar
                 </Link>
 
-                <div className="hidden sm:flex items-center gap-2.5 pl-2 border-l border-[#224F10]">
-                  <div className="text-right">
-                    <p className="text-xs font-bold text-[#EAFFD0] leading-tight">
-                      {currentUser.name}
-                    </p>
-                    <Badge
-                      variant={
-                        currentUser.role === 'admin' ? 'lime' : 'default'
-                      }
-                      className="text-[10px] px-2 py-0"
-                    >
-                      {currentUser.role === 'admin' ? 'ADMIN' : 'USUARIO'}
-                    </Badge>
-                  </div>
-                </div>
+                <Link
+                  to="/dashboard"
+                  className="inline-flex items-center gap-1.5 text-xs text-[#EAFFD0] hover:text-[#B0E454]"
+                  title={`${currentUser.name} (${currentUser.role})`}
+                >
+                  <User className="w-4 h-4" />
+                  <span className="hidden xl:inline font-medium">
+                    {currentUser.name.split(' ')[0]}
+                  </span>
+                </Link>
 
-                <Button
-                  variant="outline"
-                  size="sm"
+                <Link
+                  to="/dashboard?tab=notifications"
+                  className="relative inline-flex items-center text-[#EAFFD0] hover:text-[#B0E454]"
+                  title="Notificaciones"
+                >
+                  <Bell className="w-4 h-4" />
+                  <span className="ml-1 px-1.5 py-0.2 rounded-full bg-[#B0E454] text-[#0D0D0D] text-[10px] font-bold leading-tight">
+                    {unreadCount}
+                  </span>
+                </Link>
+
+                <button
                   onClick={handleLogout}
+                  className="text-[#EAFFD0]/70 hover:text-[#B0E454] cursor-pointer"
                   title="Cerrar sesión"
                 >
                   <LogOut className="w-4 h-4" />
-                  <span className="hidden sm:inline">Salir</span>
-                </Button>
-              </>
+                </button>
+              </div>
             ) : (
-              <div className="flex items-center gap-2">
-                <Link to="/login">
-                  <Button variant="outline" size="sm">
-                    <LogIn className="w-4 h-4" />
-                    Ingresar
-                  </Button>
+              <div className="flex items-center gap-2.5 sm:gap-3">
+                <Link
+                  to="/login"
+                  title="Ingresar"
+                  className="inline-flex items-center gap-1.5 text-xs font-medium text-[#EAFFD0] hover:text-[#B0E454]"
+                >
+                  <User className="w-4 h-4" />
+                  <span className="hidden sm:inline">Ingresar</span>
                 </Link>
-                <Link to="/register">
-                  <Button variant="primary" size="sm">
-                    <UserPlus className="w-4 h-4" />
-                    Registrarse
-                  </Button>
+                <Link
+                  to="/register"
+                  className="inline-flex items-center px-3 py-1 rounded-full bg-[#B0E454] text-[#0D0D0D] text-xs font-semibold hover:bg-[#EAFFD0] transition-colors"
+                >
+                  Registro
                 </Link>
               </div>
             )}
           </div>
+        </header>
+
+        {/* Mobile Pill Subbar */}
+        <div className="lg:hidden max-w-[1480px] mx-auto mt-1.5 bg-[#224F10]/95 backdrop-blur-md rounded-xl px-3 py-2 flex items-center gap-3 overflow-x-auto text-xs text-[#EAFFD0]">
+          {navItems
+            .filter((item) => item.public || currentUser)
+            .map((item) => (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                className={({ isActive }) =>
+                  `px-2.5 py-0.5 rounded-full shrink-0 ${
+                    isActive
+                      ? 'bg-[#B0E454] text-[#0D0D0D] font-semibold'
+                      : 'text-[#EAFFD0]/85'
+                  }`
+                }
+              >
+                {item.label}
+              </NavLink>
+            ))}
         </div>
+      </div>
 
-        {/* Mobile navigation bar */}
-        {currentUser && (
-          <div className="lg:hidden flex items-center gap-1 overflow-x-auto px-4 py-2 border-t border-[#224F10]/50 bg-[#141A12]">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              return (
-                <NavLink
-                  key={item.to}
-                  to={item.to}
-                  className={({ isActive }) =>
-                    `flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold shrink-0 ${
-                      isActive
-                        ? 'bg-[#B0E454] text-[#0D0D0D]'
-                        : 'text-[#EAFFD0]/75 hover:text-[#B0E454]'
-                    }`
-                  }
-                >
-                  <Icon className="w-3.5 h-3.5" />
-                  {item.label}
-                </NavLink>
-              );
-            })}
-          </div>
-        )}
-      </header>
-
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-8">
+      {/* Main Content Container */}
+      <main
+        className={`flex-1 w-full ${
+          isHome
+            ? ''
+            : isDashboard
+              ? 'max-w-[1400px] mx-auto px-3 sm:px-6 pt-5 pb-12'
+              : 'max-w-7xl mx-auto px-3 sm:px-6 pt-5 pb-12'
+        }`}
+      >
         {children}
       </main>
 
-      <footer className="border-t border-[#224F10]/60 bg-[#0D0D0D] py-6 mt-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#EAFFD0]/60">
-          <div className="flex items-center gap-2">
-            <span className="font-bold text-[#B0E454]">BidZone</span>
-            <span>— Plataforma de Subastas Online en Tiempo Real</span>
+      {/* Framed Rounded Dark Forest Footer (matching bottom-right of reference image) */}
+      <div className="w-full max-w-7xl mx-auto px-3 sm:px-6 pb-6">
+        <footer className="rounded-[28px] bg-[#224F10] text-[#EAFFD0] p-7 sm:p-10 shadow-md">
+          {/* Top Row: CTA Title + Pill Button on Left, 3 Navigation Columns on Right */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 pb-8 border-b border-[#EAFFD0]/15">
+            <div className="lg:col-span-5 space-y-5">
+              <h3 className="text-2xl sm:text-3xl font-semibold tracking-tight text-[#EAFFD0] leading-snug max-w-sm">
+                Participa en subastas con trato directo seguro
+              </h3>
+
+              <div className="flex flex-wrap items-center gap-4">
+                <button
+                  onClick={() => navigate('/auctions')}
+                  className="inline-flex items-center gap-2.5 rounded-full bg-[#EAFFD0] hover:bg-[#B0E454] text-[#0D0D0D] pl-5 pr-1.5 py-1.5 text-xs font-semibold transition-colors cursor-pointer"
+                >
+                  <span>Explorar lotes</span>
+                  <span className="w-6 h-6 rounded-full bg-[#224F10] text-[#EAFFD0] flex items-center justify-center">
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </span>
+                </button>
+
+                <span className="inline-flex items-center gap-2 text-xs text-[#EAFFD0]/85 font-medium">
+                  <span className="w-7 h-7 rounded-full border border-[#EAFFD0]/25 flex items-center justify-center">
+                    <Phone className="w-3.5 h-3.5 text-[#B0E454]" />
+                  </span>
+                  +54 9 381 555-0199
+                </span>
+              </div>
+            </div>
+
+            <div className="lg:col-span-7 grid grid-cols-2 sm:grid-cols-3 gap-6 text-xs">
+              <div className="space-y-2.5">
+                <p className="text-[11px] uppercase tracking-wider text-[#B0E454] font-semibold">
+                  Plataforma
+                </p>
+                <ul className="space-y-2 text-[#EAFFD0]/80">
+                  <li>
+                    <Link to="/auctions" className="hover:text-[#B0E454]">
+                      Catálogo de Lotes
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/bids" className="hover:text-[#B0E454]">
+                      Historial de Pujas
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/reviews" className="hover:text-[#B0E454]">
+                      Reseñas 1 a 5 ★
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/reports" className="hover:text-[#B0E454]">
+                      Centro de Reportes
+                    </Link>
+                  </li>
+                </ul>
+              </div>
+
+              <div className="space-y-2.5">
+                <p className="text-[11px] uppercase tracking-wider text-[#B0E454] font-semibold">
+                  Reglas de Negocio
+                </p>
+                <ul className="space-y-2 text-[#EAFFD0]/80">
+                  <li>RN01 · Puja superadora</li>
+                  <li>RN02 · Prohibición propia</li>
+                  <li>RN05 · Liberación de datos</li>
+                  <li>RN06 · Sanción de cuenta</li>
+                </ul>
+              </div>
+
+              <div className="space-y-2.5 col-span-2 sm:col-span-1">
+                <p className="text-[11px] uppercase tracking-wider text-[#B0E454] font-semibold">
+                  Grupo 8 · Prog 4
+                </p>
+                <ul className="space-y-2 text-[#EAFFD0]/80">
+                  <li>Mario Matías Moussa</li>
+                  <li>Luciano Medina</li>
+                  <li>Leandro Agustín Quipildor</li>
+                </ul>
+              </div>
+            </div>
           </div>
-          <div>
-            Grupo 8 · Moussa, Medina, Quipildor · Programación 4 (2026)
+
+          {/* Middle Row: Platform / Module Pill Badges */}
+          <div className="py-5 border-b border-[#EAFFD0]/15 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <span className="w-8 h-8 rounded-lg bg-[#EAFFD0]/10 border border-[#EAFFD0]/20 flex items-center justify-center text-[#B0E454]">
+                <ShieldCheck className="w-4 h-4" />
+              </span>
+              <div>
+                <p className="text-xs font-semibold text-[#EAFFD0]">
+                  Sistema BidZone · Sin pasarelas ni billeteras virtuales
+                </p>
+                <p className="text-[11px] text-[#EAFFD0]/65">
+                  Coordinación directa entre comprador y vendedor al cierre de
+                  la subasta
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              {['Subastas', 'Pujas', 'Reportes', 'Reseñas', 'Usuarios'].map(
+                (mod) => (
+                  <span
+                    key={mod}
+                    className="px-3.5 py-1 rounded-full border border-[#EAFFD0]/25 text-[11px] font-medium text-[#EAFFD0]/90"
+                  >
+                    {mod}
+                  </span>
+                )
+              )}
+            </div>
           </div>
-        </div>
-      </footer>
+
+          {/* Bottom Copyright Row */}
+          <div className="pt-5 flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] text-[#EAFFD0]/60">
+            <span>
+              © 2026 BidZone · Todos los derechos reservados · Programación 4
+            </span>
+            <span>Paleta Oficial: #B0E454 · #224F10 · #EAFFD0 · #0D0D0D</span>
+          </div>
+        </footer>
+      </div>
     </div>
   );
 }
-

@@ -40,10 +40,10 @@ export function ReviewsListView() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <PageHeader
-        title="Calificaciones y Reputación Comunitaria (RN07)"
-        subtitle="Evaluaciones mutuas de 1 a 5 estrellas emitidas tras concretar el pago y entrega de las subastas cerradas."
+        title="Calificaciones y reputación"
+        subtitle="Evaluaciones mutuas de 1 a 5 estrellas emitidas tras concretar el pago y entrega de las subastas cerradas (RN07)."
         action={
           <Button onClick={() => navigate('/reviews/new')}>
             <PlusCircle className="w-4 h-4" />
@@ -59,11 +59,11 @@ export function ReviewsListView() {
       )}
 
       {reviews.length === 0 ? (
-        <Card className="text-center py-12 text-sm text-[#EAFFD0]/60">
+        <Card className="text-center py-12 text-sm text-[#0D0D0D]/60">
           Aún no se han registrado calificaciones.
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           {reviews.map((rv) => {
             const auction = auctions.find(
               (a) => Number(a.id) === Number(rv.auctionId)
@@ -87,12 +87,12 @@ export function ReviewsListView() {
                           key={idx}
                           className={`w-4 h-4 ${
                             idx < Number(rv.rating)
-                              ? 'text-[#B0E454] fill-[#B0E454]'
-                              : 'text-[#EAFFD0]/20'
+                              ? 'text-[#224F10] fill-[#B0E454]'
+                              : 'text-[#0D0D0D]/20'
                           }`}
                         />
                       ))}
-                      <span className="ml-1.5 text-xs font-bold text-[#B0E454]">
+                      <span className="ml-1.5 text-xs font-bold text-[#224F10]">
                         {rv.rating}.0 / 5.0
                       </span>
                     </div>
@@ -103,20 +103,20 @@ export function ReviewsListView() {
                     </Badge>
                   </div>
 
-                  <p className="text-sm text-[#EAFFD0] italic">
+                  <p className="font-serif-display text-xl italic text-[#0D0D0D]">
                     &ldquo;{rv.comment}&rdquo;
                   </p>
 
-                  <div className="text-xs text-[#EAFFD0]/70 space-y-1 bg-[#0D0D0D]/60 p-3 rounded-xl border border-[#224F10]/50">
+                  <div className="text-xs text-[#0D0D0D]/75 space-y-1 bg-white/80 p-3.5 rounded-2xl border border-[#224F10]/15">
                     <p>
                       Calificado:{' '}
-                      <strong className="text-[#B0E454]">
+                      <strong className="text-[#224F10]">
                         {target?.name || `Usuario #${rv.targetUserId}`}
                       </strong>
                     </p>
                     <p>
                       Autor:{' '}
-                      <strong className="text-[#EAFFD0]">
+                      <strong className="text-[#0D0D0D]">
                         {reviewer?.name || `Usuario #${rv.reviewerId}`}
                       </strong>
                     </p>
@@ -124,7 +124,7 @@ export function ReviewsListView() {
                       Operación:{' '}
                       <Link
                         to={`/auctions/${rv.auctionId}`}
-                        className="underline hover:text-[#B0E454]"
+                        className="underline hover:text-[#224F10]"
                       >
                         {auction?.title || `Subasta #${rv.auctionId}`}
                       </Link>
@@ -132,7 +132,7 @@ export function ReviewsListView() {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between pt-3 border-t border-[#224F10]/50 text-xs text-[#EAFFD0]/50">
+                <div className="flex items-center justify-between pt-3 border-t border-[#224F10]/15 text-xs text-[#0D0D0D]/55">
                   <span>{formatDateTime(rv.createdAt)}</span>
                   <div className="flex items-center gap-2">
                     {canEdit && (
@@ -162,4 +162,3 @@ export function ReviewsListView() {
     </div>
   );
 }
-

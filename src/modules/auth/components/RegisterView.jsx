@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../states/authStore';
 import { Card, Input, Button, Alert } from '../../core/design-system/ui';
-import { UserPlus } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 
 export function RegisterView() {
   const navigate = useNavigate();
@@ -58,20 +58,20 @@ export function RegisterView() {
   };
 
   return (
-    <div className="max-w-lg mx-auto my-8 px-4">
-      <div className="text-center mb-6">
-        <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-[#224F10] border border-[#B0E454]/40 text-[#B0E454] mb-3 shadow-lg">
-          <UserPlus className="w-7 h-7" />
-        </div>
-        <h1 className="text-2xl font-extrabold text-[#EAFFD0]">
-          Crear Cuenta en BidZone
+    <div className="max-w-lg mx-auto my-8">
+      <div className="text-center mb-8 space-y-2">
+        <span className="text-[11px] uppercase tracking-[0.2em] text-[#224F10] font-bold">
+          NUEVO PARTICIPANTE
+        </span>
+        <h1 className="font-serif-display text-5xl text-[#0D0D0D]">
+          Crear cuenta
         </h1>
-        <p className="text-sm text-[#EAFFD0]/65 mt-1">
-          Tus datos de contacto permanecerán privados y solo se liberarán cuando ganes o cierres una subasta
+        <p className="text-xs text-[#0D0D0D]/70 max-w-sm mx-auto">
+          Tus datos de contacto permanecerán privados y solo se liberarán cuando ganes o cierres una subasta.
         </p>
       </div>
 
-      <Card className="p-6">
+      <Card className="p-6 sm:p-8 rounded-3xl">
         {errorMsg && (
           <div className="mb-4">
             <Alert type="error" onClose={() => setErrorMsg('')}>
@@ -84,7 +84,7 @@ export function RegisterView() {
           <Input
             id="name"
             name="name"
-            label="Nombre y Apellido *"
+            label="Nombre y apellido *"
             placeholder="Ej: Juan Pérez"
             value={formData.name}
             onChange={handleChange}
@@ -95,7 +95,7 @@ export function RegisterView() {
               id="email"
               name="email"
               type="email"
-              label="Correo Electrónico *"
+              label="Correo electrónico *"
               placeholder="juan@correo.com"
               value={formData.email}
               onChange={handleChange}
@@ -133,7 +133,7 @@ export function RegisterView() {
               id="confirmPassword"
               name="confirmPassword"
               type="password"
-              label="Confirmar Contraseña *"
+              label="Confirmar contraseña *"
               placeholder="Repite tu contraseña"
               value={formData.confirmPassword}
               onChange={handleChange}
@@ -146,16 +146,16 @@ export function RegisterView() {
             className="w-full mt-2"
             size="lg"
           >
-            <UserPlus className="w-4 h-4" />
-            {loading ? 'Registrando cuenta...' : 'Crear mi cuenta'}
+            <span>{loading ? 'Registrando...' : 'Crear mi cuenta'}</span>
+            <ChevronRight className="w-4 h-4" />
           </Button>
         </form>
 
-        <p className="text-center text-xs text-[#EAFFD0]/65 mt-6">
+        <p className="text-center text-xs text-[#0D0D0D]/70 mt-6">
           ¿Ya tienes una cuenta?{' '}
           <Link
             to="/login"
-            className="text-[#B0E454] font-semibold hover:underline"
+            className="text-[#224F10] font-bold hover:underline"
           >
             Inicia sesión aquí
           </Link>
@@ -164,4 +164,3 @@ export function RegisterView() {
     </div>
   );
 }
-

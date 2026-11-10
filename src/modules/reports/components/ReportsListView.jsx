@@ -53,10 +53,10 @@ export function ReportsListView() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <PageHeader
-        title="Centro de Reportes e Infracciones (RN06)"
-        subtitle="Si el ganador o el dueño del artículo no cumple con el pago o entrega acordada, se informa aquí para aplicar infracción o cierre de cuenta."
+        title="Centro de reportes e infracciones"
+        subtitle="Si el ganador o el dueño del artículo no cumple con el pago o entrega acordada, se informa aquí para aplicar infracción o cierre de cuenta (RN06)."
         action={
           <Button onClick={() => navigate('/reports/new')}>
             <PlusCircle className="w-4 h-4" />
@@ -71,7 +71,7 @@ export function ReportsListView() {
         </Alert>
       )}
 
-      <Card className="p-4">
+      <Card className="p-5">
         <div className="max-w-xs">
           <Select
             id="report-status"
@@ -92,7 +92,7 @@ export function ReportsListView() {
       </Card>
 
       {filtered.length === 0 ? (
-        <Card className="text-center py-12 text-sm text-[#EAFFD0]/60">
+        <Card className="text-center py-12 text-sm text-[#0D0D0D]/60">
           No hay reportes registrados con ese estado.
         </Card>
       ) : (
@@ -111,26 +111,26 @@ export function ReportsListView() {
               isAdmin || Number(currentUser?.id) === Number(rep.reporterId);
 
             return (
-              <Card key={rep.id} className="space-y-3">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#224F10]/60 pb-3">
+              <Card key={rep.id} className="space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#224F10]/15 pb-3">
                   <div className="flex flex-wrap items-center gap-2">
                     <Badge
                       variant={
                         rep.status === 'resuelto_sancion'
                           ? 'danger'
                           : rep.status === 'en_revision'
-                            ? 'warning'
+                            ? 'lime'
                             : 'success'
                       }
                     >
                       <AlertOctagon className="w-3.5 h-3.5" />
                       {rep.status === 'resuelto_sancion'
-                        ? 'SANCIONADO / CUENTA INFRACCIONADA'
+                        ? 'Sancionado / Cuenta Infraccionada'
                         : rep.status === 'en_revision'
-                          ? 'EN REVISIÓN'
-                          : 'SOLUCIONADO'}
+                          ? 'En Revisión'
+                          : 'Solucionado'}
                     </Badge>
-                    <span className="text-xs text-[#EAFFD0]/55">
+                    <span className="text-xs text-[#0D0D0D]/55">
                       Expediente #{rep.id} · {formatDateTime(rep.createdAt)}
                     </span>
                   </div>
@@ -156,43 +156,43 @@ export function ReportsListView() {
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <h3 className="font-bold text-base text-[#EAFFD0]">
+                <div className="space-y-1.5">
+                  <h3 className="font-serif-display text-2xl font-semibold text-[#0D0D0D]">
                     Motivo: {rep.reason}
                   </h3>
-                  <p className="text-xs text-[#EAFFD0]/80 leading-relaxed">
+                  <p className="text-xs sm:text-sm text-[#0D0D0D]/80 leading-relaxed">
                     {rep.description}
                   </p>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-[#0D0D0D]/60 p-3 rounded-xl border border-[#224F10]/50 text-xs">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-white/80 p-4 rounded-2xl border border-[#224F10]/15 text-xs">
                   <div>
-                    <span className="text-[#EAFFD0]/50 block">
+                    <span className="text-[11px] text-[#0D0D0D]/55 block">
                       Subasta Involucrada
                     </span>
                     <Link
                       to={`/auctions/${rep.auctionId}`}
-                      className="font-semibold text-[#B0E454] hover:underline"
+                      className="font-semibold text-[#224F10] hover:underline"
                     >
                       {auction?.title || `Subasta #${rep.auctionId}`}
                     </Link>
                   </div>
                   <div>
-                    <span className="text-[#EAFFD0]/50 block">
+                    <span className="text-[11px] text-[#0D0D0D]/55 block">
                       Denunciante → Denunciado
                     </span>
-                    <strong className="text-[#EAFFD0]">
+                    <strong className="text-[#0D0D0D]">
                       {reporter?.name || 'Usuario'} →{' '}
-                      <span className="text-red-300">
+                      <span className="text-red-700">
                         {reported?.name || 'Usuario'} ({reported?.status})
                       </span>
                     </strong>
                   </div>
                   <div>
-                    <span className="text-[#EAFFD0]/50 block">
+                    <span className="text-[11px] text-[#0D0D0D]/55 block">
                       Medida / Sanción Aplicada
                     </span>
-                    <strong className="text-[#B0E454] flex items-center gap-1">
+                    <strong className="text-[#224F10] flex items-center gap-1">
                       <ShieldAlert className="w-3.5 h-3.5" />
                       {rep.sanctionApplied}
                     </strong>
@@ -206,4 +206,3 @@ export function ReportsListView() {
     </div>
   );
 }
-

@@ -52,10 +52,10 @@ export function BidsListView() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <PageHeader
-        title="Registro General de Pujas"
-        subtitle="Historial auditable de ofertas realizadas en las subastas de la plataforma."
+        title="Historial de pujas"
+        subtitle="Registro cronológico y auditable de ofertas realizadas en las subastas de la plataforma."
         action={
           <Button onClick={() => navigate('/bids/new')}>
             <PlusCircle className="w-4 h-4" />
@@ -70,7 +70,7 @@ export function BidsListView() {
         </Alert>
       )}
 
-      <Card className="p-4">
+      <Card className="p-5">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Select
             id="auction-filter"
@@ -99,11 +99,11 @@ export function BidsListView() {
       </Card>
 
       {filtered.length === 0 ? (
-        <Card className="text-center py-12 text-sm text-[#EAFFD0]/60">
+        <Card className="text-center py-12 text-sm text-[#0D0D0D]/60">
           No hay pujas registradas para el filtro seleccionado.
         </Card>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-3.5">
           {filtered.map((bid) => {
             const auction = auctions.find(
               (a) => Number(a.id) === Number(bid.auctionId)
@@ -121,38 +121,38 @@ export function BidsListView() {
                 key={bid.id}
                 className="flex flex-col sm:flex-row sm:items-center justify-between gap-4"
               >
-                <div className="space-y-1">
+                <div className="space-y-1.5">
                   <div className="flex flex-wrap items-center gap-2">
                     <Badge variant={isTop ? 'lime' : 'default'}>
-                      {isTop ? 'OFERTA LÍDER / GANADORA' : `PUJA #${bid.id}`}
+                      {isTop ? 'Oferta Líder / Ganadora' : `Puja #${bid.id}`}
                     </Badge>
                     <Link
                       to={`/auctions/${bid.auctionId}`}
-                      className="font-bold text-sm text-[#EAFFD0] hover:text-[#B0E454] flex items-center gap-1"
+                      className="font-serif-display text-2xl font-semibold text-[#0D0D0D] hover:text-[#224F10] flex items-center gap-1.5"
                     >
-                      <Gavel className="w-3.5 h-3.5 text-[#B0E454]" />
+                      <Gavel className="w-4 h-4 text-[#224F10]" />
                       {auction?.title || `Subasta #${bid.auctionId}`}
-                      <ExternalLink className="w-3 h-3 opacity-60" />
+                      <ExternalLink className="w-3.5 h-3.5 opacity-50" />
                     </Link>
                   </div>
-                  <p className="text-xs text-[#EAFFD0]/75">
+                  <p className="text-xs text-[#0D0D0D]/75">
                     Postor:{' '}
-                    <strong className="text-[#EAFFD0]">
+                    <strong className="text-[#0D0D0D]">
                       {bidder?.name || `Usuario #${bid.bidderId}`}
                     </strong>{' '}
                     · Nota: &ldquo;{bid.note || 'Sin nota adicional'}&rdquo;
                   </p>
-                  <p className="text-[11px] text-[#EAFFD0]/50">
+                  <p className="text-[11px] text-[#0D0D0D]/55">
                     Fecha: {formatDateTime(bid.createdAt)} · Compromiso RN04 aceptado
                   </p>
                 </div>
 
-                <div className="flex items-center justify-between sm:justify-end gap-4 pt-3 sm:pt-0 border-t sm:border-t-0 border-[#224F10]/50">
+                <div className="flex items-center justify-between sm:justify-end gap-4 pt-3 sm:pt-0 border-t sm:border-t-0 border-[#224F10]/15">
                   <div className="text-left sm:text-right">
-                    <span className="text-[10px] uppercase text-[#EAFFD0]/50 block">
+                    <span className="text-[10px] uppercase text-[#0D0D0D]/50 block">
                       Monto Ofertado
                     </span>
-                    <span className="text-lg font-extrabold text-[#B0E454]">
+                    <span className="font-serif-display text-3xl font-semibold text-[#224F10]">
                       {formatCurrency(bid.amount)}
                     </span>
                   </div>
@@ -185,4 +185,3 @@ export function BidsListView() {
     </div>
   );
 }
-

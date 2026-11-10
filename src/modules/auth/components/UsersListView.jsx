@@ -60,10 +60,10 @@ export function UsersListView() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <PageHeader
-        title="Gestión de Usuarios y Reputación"
-        subtitle="Directorio de usuarios registrados, control de roles, estado de cuenta y reputación."
+        title="Directorio de usuarios"
+        subtitle="Gestión de cuentas registradas, control de roles (Admin/User), estado disciplinario y reputación."
         action={
           currentUser?.role === 'admin' && (
             <Button onClick={() => navigate('/users/new')}>
@@ -80,7 +80,7 @@ export function UsersListView() {
         </Alert>
       )}
 
-      <Card className="p-4">
+      <Card className="p-5">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <Input
             id="search-users"
@@ -115,7 +115,7 @@ export function UsersListView() {
         </div>
       </Card>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         {filteredUsers.map((user) => {
           const canEdit =
             currentUser?.role === 'admin' ||
@@ -126,23 +126,21 @@ export function UsersListView() {
               <div>
                 <div className="flex items-start justify-between gap-2 mb-3">
                   <div>
-                    <h3 className="text-base font-bold text-[#EAFFD0]">
+                    <h3 className="font-serif-display text-2xl font-semibold text-[#0D0D0D]">
                       {user.name}
                     </h3>
-                    <p className="text-xs text-[#EAFFD0]/60">{user.email}</p>
+                    <p className="text-xs text-[#0D0D0D]/60">{user.email}</p>
                   </div>
                   <div className="flex flex-col items-end gap-1">
-                    <Badge variant={user.role === 'admin' ? 'lime' : 'default'}>
+                    <Badge variant={user.role === 'admin' ? 'lime' : 'success'}>
                       <Shield className="w-3 h-3" />
                       {user.role.toUpperCase()}
                     </Badge>
                     <Badge
                       variant={
                         user.status === 'active'
-                          ? 'success'
-                          : user.status === 'suspended'
-                            ? 'warning'
-                            : 'danger'
+                          ? 'default'
+                          : 'danger'
                       }
                     >
                       {user.status === 'active'
@@ -154,23 +152,25 @@ export function UsersListView() {
                   </div>
                 </div>
 
-                <div className="space-y-1.5 text-xs text-[#EAFFD0]/75 bg-[#0D0D0D]/60 p-3 rounded-xl border border-[#224F10]/50">
+                <div className="space-y-1.5 text-xs text-[#0D0D0D]/80 bg-white/80 p-3.5 rounded-2xl border border-[#224F10]/15">
                   <div className="flex items-center gap-2">
-                    <Phone className="w-3.5 h-3.5 text-[#B0E454]" />
+                    <Phone className="w-3.5 h-3.5 text-[#224F10]" />
                     <span>{user.phone || 'Sin teléfono'}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <MapPin className="w-3.5 h-3.5 text-[#B0E454]" />
+                    <MapPin className="w-3.5 h-3.5 text-[#224F10]" />
                     <span>{user.city || 'Sin ciudad'}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
-                    <span>Reputación: {user.reputation || '5.0'} / 5.0</span>
+                    <Star className="w-3.5 h-3.5 text-[#224F10] fill-[#B0E454]" />
+                    <span className="font-semibold">
+                      Reputación: {user.reputation || '5.0'} / 5.0
+                    </span>
                   </div>
                 </div>
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#224F10]/50">
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#224F10]/15">
                 {canEdit && (
                   <Link to={`/users/${user.id}/edit`}>
                     <Button variant="secondary" size="sm">
@@ -198,4 +198,3 @@ export function UsersListView() {
     </div>
   );
 }
-

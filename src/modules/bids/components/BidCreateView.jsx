@@ -73,7 +73,7 @@ export function BidCreateView() {
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <PageHeader
-        title="Registrar Nueva Puja"
+        title="Registrar nueva puja"
         subtitle="Emite una oferta vinculante sobre cualquiera de las subastas activas."
         action={
           <Button variant="outline" onClick={() => navigate('/bids')}>
@@ -83,7 +83,7 @@ export function BidCreateView() {
         }
       />
 
-      <Card className="p-6">
+      <Card className="p-6 sm:p-8 rounded-3xl">
         {errorMsg && (
           <div className="mb-4">
             <Alert type="error" onClose={() => setErrorMsg('')}>
@@ -105,22 +105,22 @@ export function BidCreateView() {
           />
 
           {selectedAuction && (
-            <div className="p-3.5 rounded-xl bg-[#0D0D0D]/80 border border-[#224F10] text-xs space-y-1">
+            <div className="p-4 rounded-2xl bg-white/80 border border-[#224F10]/20 text-xs space-y-1">
               <p>
                 Precio actual:{' '}
-                <strong className="text-[#B0E454]">
+                <strong className="text-[#224F10]">
                   {formatCurrency(selectedAuction.currentPrice)}
                 </strong>
               </p>
               <p>
                 Incremento mínimo (RN01):{' '}
-                <strong className="text-[#EAFFD0]">
+                <strong className="text-[#0D0D0D]">
                   {formatCurrency(selectedAuction.minIncrement)}
                 </strong>
               </p>
               <p>
                 Oferta mínima requerida:{' '}
-                <strong className="text-[#B0E454]">
+                <strong className="text-[#224F10]">
                   {formatCurrency(
                     Number(selectedAuction.currentPrice) +
                       Number(selectedAuction.minIncrement)
@@ -146,12 +146,12 @@ export function BidCreateView() {
             onChange={(e) => setNote(e.target.value)}
           />
 
-          <label className="flex items-start gap-2.5 text-xs text-[#EAFFD0]/80 cursor-pointer bg-[#0D0D0D]/60 p-3 rounded-xl border border-[#224F10]">
+          <label className="flex items-start gap-2.5 text-xs text-[#0D0D0D]/80 cursor-pointer bg-[#B0E454]/25 p-3.5 rounded-2xl border border-[#224F10]/20">
             <input
               type="checkbox"
               checked={commitment}
               onChange={(e) => setCommitment(e.target.checked)}
-              className="mt-0.5 accent-[#B0E454]"
+              className="mt-0.5 accent-[#224F10]"
             />
             <span>
               Acepto la irrevocabilidad de la oferta (RN04) y me comprometo a concretar el pago directamente con el vendedor si resulto ganador.
@@ -172,4 +172,3 @@ export function BidCreateView() {
     </div>
   );
 }
-

@@ -152,7 +152,7 @@ export function AuctionDetailView() {
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3 pb-2">
         <Button variant="outline" size="sm" onClick={() => navigate('/auctions')}>
           <ArrowLeft className="w-4 h-4" />
           Volver al Catálogo
@@ -190,8 +190,8 @@ export function AuctionDetailView() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Columna Izquierda: Producto */}
         <div className="lg:col-span-7 space-y-6">
-          <Card className="p-0 overflow-hidden">
-            <div className="relative h-80 sm:h-96 bg-[#0D0D0D]">
+          <div className="rounded-3xl bg-[#F5FFEB] border border-[#224F10]/15 overflow-hidden shadow-xs">
+            <div className="relative h-80 sm:h-96 bg-white">
               <img
                 src={auction.imageUrl}
                 alt={auction.title}
@@ -200,113 +200,117 @@ export function AuctionDetailView() {
               <div className="absolute top-4 left-4 flex gap-2">
                 <Badge variant="lime">{auction.category}</Badge>
                 <Badge
-                  variant={auction.status === 'activa' ? 'success' : 'muted'}
+                  variant={auction.status === 'activa' ? 'success' : 'dark'}
                 >
                   {auction.status === 'activa'
-                    ? 'SUBASTA EN VIVO'
-                    : 'SUBASTA FINALIZADA'}
+                    ? 'Subasta en Vivo'
+                    : 'Subasta Finalizada'}
                 </Badge>
               </div>
             </div>
 
-            <div className="p-6 space-y-4">
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-[#EAFFD0]">
+            <div className="p-6 sm:p-8 space-y-4">
+              <h1 className="font-serif-display text-3xl sm:text-5xl text-[#0D0D0D] leading-tight">
                 {auction.title}
               </h1>
-              <p className="text-sm text-[#EAFFD0]/80 leading-relaxed">
+              <p className="text-xs sm:text-sm text-[#0D0D0D]/75 leading-relaxed">
                 {auction.description}
               </p>
 
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-4 border-t border-[#224F10]/60 text-xs">
-                <div className="bg-[#0D0D0D]/60 p-3 rounded-xl border border-[#224F10]/50">
-                  <span className="text-[#EAFFD0]/55 block">Precio Base</span>
-                  <strong className="text-sm text-[#EAFFD0]">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-4 border-t border-[#224F10]/15 text-xs">
+                <div className="bg-white/80 p-3.5 rounded-2xl border border-[#224F10]/15">
+                  <span className="text-[11px] text-[#0D0D0D]/55 block">
+                    Precio Base
+                  </span>
+                  <strong className="font-serif-display text-2xl text-[#0D0D0D]">
                     {formatCurrency(auction.basePrice)}
                   </strong>
                 </div>
-                <div className="bg-[#0D0D0D]/60 p-3 rounded-xl border border-[#224F10]/50">
-                  <span className="text-[#EAFFD0]/55 block">
-                    Incremento Mínimo (RN01)
+                <div className="bg-white/80 p-3.5 rounded-2xl border border-[#224F10]/15">
+                  <span className="text-[11px] text-[#0D0D0D]/55 block">
+                    Incremento Mín. (RN01)
                   </span>
-                  <strong className="text-sm text-[#B0E454]">
+                  <strong className="font-serif-display text-2xl text-[#224F10]">
                     + {formatCurrency(auction.minIncrement)}
                   </strong>
                 </div>
-                <div className="bg-[#0D0D0D]/60 p-3 rounded-xl border border-[#224F10]/50 col-span-2 sm:col-span-1">
-                  <span className="text-[#EAFFD0]/55 block">Dueño / Vendedor</span>
-                  <strong className="text-sm text-[#EAFFD0]">
+                <div className="bg-white/80 p-3.5 rounded-2xl border border-[#224F10]/15">
+                  <span className="text-[11px] text-[#0D0D0D]/55 block">
+                    Dueño / Vendedor
+                  </span>
+                  <strong className="text-sm font-semibold text-[#0D0D0D] block mt-1">
                     {seller?.name || 'Usuario'} ({seller?.reputation || '5.0'} ★)
                   </strong>
                 </div>
               </div>
             </div>
-          </Card>
+          </div>
 
           {/* RN05: Tarjeta de Liberación de Datos de Contacto tras Cierre */}
           {auction.status === 'finalizada' && (
-            <Card className="border-[#B0E454] bg-gradient-to-br from-[#224F10]/40 to-[#141A12] space-y-4">
-              <div className="flex items-center justify-between">
+            <div className="rounded-3xl bg-[#0D0D0D] text-[#EAFFD0] p-6 sm:p-8 shadow-lg space-y-5">
+              <div className="flex items-center justify-between border-b border-[#EAFFD0]/15 pb-3">
                 <div className="flex items-center gap-2">
                   <ShieldCheck className="w-6 h-6 text-[#B0E454]" />
-                  <h2 className="text-lg font-extrabold text-[#EAFFD0]">
-                    Resolución y Coordinación Directa (RN05 / RN06)
+                  <h2 className="font-serif-display text-2xl sm:text-3xl text-[#EAFFD0]">
+                    Coordinación directa liberada (RN05 / RN06)
                   </h2>
                 </div>
-                <Badge variant="lime">SUBASTA CERRADA</Badge>
+                <Badge variant="lime">Adjudicada</Badge>
               </div>
 
               {!winner ? (
-                <p className="text-sm text-[#EAFFD0]/75">
+                <p className="text-sm text-[#EAFFD0]/80">
                   Esta subasta finalizó sin recibir ofertas.
                 </p>
               ) : canSeeUnlockedContact ? (
                 <div className="space-y-4">
-                  <p className="text-xs text-[#EAFFD0]/85 leading-relaxed">
+                  <p className="text-xs sm:text-sm text-[#EAFFD0]/85 leading-relaxed">
                     ¡Felicitaciones! Como parte involucrada en la adjudicación,{' '}
                     <strong className="text-[#B0E454]">
                       BidZone ha liberado los datos de contacto oficiales
                     </strong>{' '}
-                    para que coordinen el pago y la entrega del artículo por su cuenta. Recuerda que ante cualquier incumplimiento puedes elevar un reporte para sancionar o cerrar la cuenta infractora.
+                    para que coordinen el pago y la entrega del artículo por su cuenta. Ante cualquier incumplimiento puedes elevar un reporte para sancionar o cerrar la cuenta infractora.
                   </p>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-[#0D0D0D]/85 p-4 rounded-xl border border-[#B0E454]/40 text-xs">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-[#224F10]/35 p-5 rounded-2xl border border-[#B0E454]/30 text-xs">
                     <div className="space-y-1.5">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-[#B0E454]">
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-[#B0E454]">
                         Datos del Dueño del Artículo
                       </span>
-                      <p className="text-sm font-bold text-[#EAFFD0]">
+                      <p className="font-serif-display text-2xl text-[#EAFFD0]">
                         {seller?.name}
                       </p>
-                      <p className="flex items-center gap-2 text-[#EAFFD0]/85">
+                      <p className="flex items-center gap-2 text-[#EAFFD0]">
                         <Phone className="w-3.5 h-3.5 text-[#B0E454]" />
                         {seller?.phone}
                       </p>
-                      <p className="flex items-center gap-2 text-[#EAFFD0]/85">
+                      <p className="flex items-center gap-2 text-[#EAFFD0]">
                         <Mail className="w-3.5 h-3.5 text-[#B0E454]" />
                         {seller?.email}
                       </p>
-                      <p className="flex items-center gap-2 text-[#EAFFD0]/85">
+                      <p className="flex items-center gap-2 text-[#EAFFD0]">
                         <MapPin className="w-3.5 h-3.5 text-[#B0E454]" />
                         {seller?.city}
                       </p>
                     </div>
 
-                    <div className="space-y-1.5 border-t sm:border-t-0 sm:border-l border-[#224F10] pt-3 sm:pt-0 sm:pl-4">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-[#B0E454]">
+                    <div className="space-y-1.5 border-t sm:border-t-0 sm:border-l border-[#EAFFD0]/20 pt-3 sm:pt-0 sm:pl-4">
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-[#B0E454]">
                         Datos del Postor Ganador
                       </span>
-                      <p className="text-sm font-bold text-[#EAFFD0]">
+                      <p className="font-serif-display text-2xl text-[#EAFFD0]">
                         {winner?.name}
                       </p>
-                      <p className="flex items-center gap-2 text-[#EAFFD0]/85">
+                      <p className="flex items-center gap-2 text-[#EAFFD0]">
                         <Phone className="w-3.5 h-3.5 text-[#B0E454]" />
                         {winner?.phone}
                       </p>
-                      <p className="flex items-center gap-2 text-[#EAFFD0]/85">
+                      <p className="flex items-center gap-2 text-[#EAFFD0]">
                         <Mail className="w-3.5 h-3.5 text-[#B0E454]" />
                         {winner?.email}
                       </p>
-                      <p className="flex items-center gap-2 text-[#EAFFD0]/85">
+                      <p className="flex items-center gap-2 text-[#EAFFD0]">
                         <MapPin className="w-3.5 h-3.5 text-[#B0E454]" />
                         {winner?.city}
                       </p>
@@ -321,7 +325,7 @@ export function AuctionDetailView() {
                       </Button>
                     </Link>
                     <Link to={`/reports/new?auctionId=${auction.id}`}>
-                      <Button variant="danger" size="sm">
+                      <Button variant="secondary" size="sm">
                         <AlertOctagon className="w-4 h-4" />
                         Informar Incumplimiento / Denunciar
                       </Button>
@@ -329,11 +333,11 @@ export function AuctionDetailView() {
                   </div>
                 </div>
               ) : (
-                <div className="flex items-center gap-3 bg-[#0D0D0D]/70 p-4 rounded-xl border border-[#224F10] text-xs text-[#EAFFD0]/75">
+                <div className="flex items-center gap-3 bg-[#224F10]/30 p-4 rounded-2xl border border-[#B0E454]/30 text-xs text-[#EAFFD0]">
                   <Lock className="w-5 h-5 text-[#B0E454] shrink-0" />
                   <div>
                     Subasta adjudicada a{' '}
-                    <strong className="text-[#EAFFD0]">{winner.name}</strong> por{' '}
+                    <strong className="text-[#B0E454]">{winner.name}</strong> por{' '}
                     <strong className="text-[#B0E454]">
                       {formatCurrency(auction.currentPrice)}
                     </strong>
@@ -341,28 +345,28 @@ export function AuctionDetailView() {
                   </div>
                 </div>
               )}
-            </Card>
+            </div>
           )}
         </div>
 
         {/* Columna Derecha: Sala de Pujas en Vivo */}
         <div className="lg:col-span-5 space-y-6">
-          <Card className="space-y-5 border-[#B0E454]/40">
-            <div className="flex items-center justify-between border-b border-[#224F10]/60 pb-4">
+          <Card className="space-y-5">
+            <div className="flex items-center justify-between border-b border-[#224F10]/15 pb-4">
               <div>
-                <span className="text-xs uppercase tracking-wider text-[#EAFFD0]/60 block">
+                <span className="text-[11px] text-[#0D0D0D]/60 block">
                   Oferta Líder Actual
                 </span>
-                <p className="text-3xl font-black text-[#B0E454]">
+                <p className="font-serif-display text-4xl font-semibold text-[#224F10]">
                   {formatCurrency(auction.currentPrice)}
                 </p>
               </div>
               <div className="text-right">
-                <span className="text-xs uppercase tracking-wider text-[#EAFFD0]/60 block">
+                <span className="text-[11px] text-[#0D0D0D]/60 block">
                   Tiempo Restante
                 </span>
-                <p className="text-base font-mono font-bold text-[#EAFFD0] flex items-center justify-end gap-1.5">
-                  <Clock className="w-4 h-4 text-[#B0E454]" />
+                <p className="text-sm font-mono font-bold text-[#0D0D0D] flex items-center justify-end gap-1.5 mt-1">
+                  <Clock className="w-4 h-4 text-[#224F10]" />
                   {auction.status === 'activa'
                     ? remaining.formatted
                     : 'Finalizada'}
@@ -370,19 +374,18 @@ export function AuctionDetailView() {
               </div>
             </div>
 
-            {/* Indicador dinámico de estado del postor */}
             {currentUser && auction.status === 'activa' && (
               <div>
                 {isLeader ? (
-                  <Badge variant="lime" className="w-full justify-center py-1.5">
-                    ★ ERES EL POSTOR LÍDER ACTUAL EN ESTA SUBASTA
+                  <Badge variant="lime" className="w-full justify-center py-2">
+                    ★ Eres el postor líder actual en esta subasta
                   </Badge>
                 ) : hasParticipated ? (
                   <Badge
-                    variant="warning"
-                    className="w-full justify-center py-1.5"
+                    variant="success"
+                    className="w-full justify-center py-2"
                   >
-                    ⚠ TU OFERTA FUE SUPERADA — PUJA NUEVAMENTE PARA LIDERAR
+                    ⚠ Tu oferta fue superada — Puja nuevamente para liderar
                   </Badge>
                 ) : null}
               </div>
@@ -412,12 +415,12 @@ export function AuctionDetailView() {
                     onChange={(e) => setBidNote(e.target.value)}
                   />
 
-                  <label className="flex items-start gap-2.5 text-xs text-[#EAFFD0]/80 cursor-pointer bg-[#0D0D0D]/60 p-3 rounded-xl border border-[#224F10]">
+                  <label className="flex items-start gap-2.5 text-xs text-[#0D0D0D]/85 cursor-pointer bg-[#B0E454]/25 p-3.5 rounded-2xl border border-[#224F10]/20">
                     <input
                       type="checkbox"
                       checked={commitment}
                       onChange={(e) => setCommitment(e.target.checked)}
-                      className="mt-0.5 accent-[#B0E454]"
+                      className="mt-0.5 accent-[#224F10]"
                     />
                     <span>
                       <strong>Compromiso vinculante (RN04 / RN06):</strong> Si resulto ganador, me comprometo a coordinar el pago con el dueño. Comprendo que el incumplimiento conlleva infracción o cierre de cuenta.
@@ -425,13 +428,13 @@ export function AuctionDetailView() {
                   </label>
 
                   <Button type="submit" size="lg" className="w-full">
-                    <Gavel className="w-5 h-5" />
+                    <Gavel className="w-4 h-4" />
                     Enviar Oferta Vinculante
                   </Button>
                 </form>
               )
             ) : (
-              <div className="bg-[#0D0D0D]/60 p-4 rounded-xl border border-[#224F10] text-center text-xs text-[#EAFFD0]/70">
+              <div className="bg-[#0D0D0D] text-[#EAFFD0] p-4 rounded-2xl text-center text-xs font-medium">
                 Esta subasta se encuentra cerrada y ya no admite nuevas pujas (RN03).
               </div>
             )}
@@ -439,20 +442,20 @@ export function AuctionDetailView() {
 
           {/* Historial Cronológico Auditable de Pujas */}
           <Card className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-bold uppercase tracking-wider text-[#EAFFD0]">
-                Historial Auditable de Pujas ({auctionBids.length})
+            <div className="flex items-center justify-between border-b border-[#224F10]/15 pb-2">
+              <h3 className="font-serif-display text-2xl text-[#0D0D0D]">
+                Historial auditable de pujas ({auctionBids.length})
               </h3>
               <Link
                 to="/bids"
-                className="text-xs text-[#B0E454] hover:underline"
+                className="text-xs font-semibold text-[#224F10] hover:underline"
               >
                 Ver todas →
               </Link>
             </div>
 
             {auctionBids.length === 0 ? (
-              <p className="text-xs text-[#EAFFD0]/60 py-4 text-center">
+              <p className="text-xs text-[#0D0D0D]/60 py-4 text-center">
                 Aún no hay ofertas registradas. ¡Sé el primero en pujar!
               </p>
             ) : (
@@ -464,32 +467,36 @@ export function AuctionDetailView() {
                   return (
                     <div
                       key={bid.id}
-                      className={`p-3 rounded-xl border text-xs flex items-center justify-between gap-2 ${
+                      className={`p-3.5 rounded-2xl border text-xs flex items-center justify-between gap-2 ${
                         index === 0
-                          ? 'bg-[#224F10]/40 border-[#B0E454]/60'
-                          : 'bg-[#0D0D0D]/60 border-[#224F10]/40'
+                          ? 'bg-[#0D0D0D] text-[#EAFFD0] border-[#0D0D0D]'
+                          : 'bg-white/80 text-[#0D0D0D] border-[#224F10]/15'
                       }`}
                     >
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="font-bold text-[#EAFFD0]">
+                          <span className="font-semibold">
                             {bidder?.name || `Usuario #${bid.bidderId}`}
                           </span>
                           {index === 0 && (
                             <Badge variant="lime" className="text-[10px]">
-                              LÍDER
+                              Líder
                             </Badge>
                           )}
                         </div>
-                        <p className="text-[11px] text-[#EAFFD0]/65 mt-0.5">
+                        <p className="text-[11px] opacity-75 mt-0.5">
                           {bid.note}
                         </p>
-                        <span className="text-[10px] text-[#EAFFD0]/45">
+                        <span className="text-[10px] opacity-60">
                           {formatDateTime(bid.createdAt)}
                         </span>
                       </div>
                       <div className="text-right">
-                        <span className="text-sm font-extrabold text-[#B0E454]">
+                        <span
+                          className={`font-serif-display text-2xl font-semibold ${
+                            index === 0 ? 'text-[#B0E454]' : 'text-[#224F10]'
+                          }`}
+                        >
                           {formatCurrency(bid.amount)}
                         </span>
                       </div>
@@ -504,4 +511,3 @@ export function AuctionDetailView() {
     </div>
   );
 }
-

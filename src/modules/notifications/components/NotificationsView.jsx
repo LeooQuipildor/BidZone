@@ -25,9 +25,9 @@ export function NotificationsView() {
       );
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
+    <div className="space-y-8 max-w-4xl mx-auto">
       <PageHeader
-        title="Centro de Notificaciones"
+        title="Centro de notificaciones"
         subtitle="Alertas automáticas de ofertas superadas, subastas adjudicadas con liberación de contacto y expedientes de mediación."
         action={
           currentUser && (
@@ -44,33 +44,33 @@ export function NotificationsView() {
       />
 
       {myNotifications.length === 0 ? (
-        <Card className="text-center py-12 text-sm text-[#EAFFD0]/60">
+        <Card className="text-center py-12 text-sm text-[#0D0D0D]/60">
           No tienes notificaciones pendientes.
         </Card>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-3.5">
           {myNotifications.map((item) => (
             <Card
               key={item.id}
               className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
                 !item.read
-                  ? 'border-[#B0E454]/60 bg-[#224F10]/20'
+                  ? 'border-[#224F10]/40 bg-white'
                   : 'opacity-80'
               }`}
             >
-              <div className="flex items-start gap-3">
-                <div className="w-9 h-9 rounded-xl bg-[#224F10] text-[#B0E454] flex items-center justify-center shrink-0 mt-0.5">
+              <div className="flex items-start gap-3.5">
+                <div className="w-10 h-10 rounded-full bg-[#224F10] text-[#EAFFD0] flex items-center justify-center shrink-0 mt-0.5">
                   <Bell className="w-4 h-4" />
                 </div>
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <h3 className="text-sm font-bold text-[#EAFFD0]">
+                    <h3 className="text-sm font-bold text-[#0D0D0D]">
                       {item.title}
                     </h3>
-                    {!item.read && <Badge variant="lime">NUEVA</Badge>}
+                    {!item.read && <Badge variant="lime">Nueva</Badge>}
                   </div>
-                  <p className="text-xs text-[#EAFFD0]/80">{item.message}</p>
-                  <span className="text-[10px] text-[#EAFFD0]/50 block">
+                  <p className="text-xs text-[#0D0D0D]/75">{item.message}</p>
+                  <span className="text-[10px] text-[#0D0D0D]/50 block">
                     {formatDateTime(item.createdAt)}
                   </span>
                 </div>
@@ -101,4 +101,3 @@ export function NotificationsView() {
     </div>
   );
 }
-

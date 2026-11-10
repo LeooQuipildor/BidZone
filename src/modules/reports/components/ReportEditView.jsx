@@ -75,7 +75,7 @@ export function ReportEditView() {
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <PageHeader
-        title={`Expediente de Reporte #${report.id}`}
+        title={`Expediente de reporte #${report.id}`}
         subtitle={`Usuario denunciado: ${reportedUser?.name || `#${report.reportedUserId}`} (Estado actual: ${reportedUser?.status || 'active'})`}
         action={
           <Button variant="outline" onClick={() => navigate('/reports')}>
@@ -85,7 +85,7 @@ export function ReportEditView() {
         }
       />
 
-      <Card className="p-6">
+      <Card className="p-6 sm:p-8 rounded-3xl">
         {errorMsg && (
           <div className="mb-4">
             <Alert type="error" onClose={() => setErrorMsg('')}>
@@ -120,8 +120,8 @@ export function ReportEditView() {
           />
 
           {isAdmin && (
-            <div className="space-y-4 pt-4 border-t border-[#224F10]">
-              <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#B0E454]">
+            <div className="space-y-4 pt-4 border-t border-[#224F10]/20">
+              <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#224F10]">
                 <ShieldAlert className="w-4 h-4" />
                 Resolución Administrativa y Sanción de Cuenta (RN06)
               </div>
@@ -192,4 +192,3 @@ export function ReportEditView() {
     </div>
   );
 }
-

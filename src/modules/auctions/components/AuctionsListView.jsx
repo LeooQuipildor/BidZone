@@ -1,25 +1,20 @@
 import React, { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuctionStore } from '../states/auctionStore';
 import { useAuthStore } from '../../auth/states/authStore';
+import { AuctionCard } from './AuctionCard';
 import {
   Card,
   Button,
-  Badge,
   Input,
   Select,
   PageHeader,
   Alert,
 } from '../../core/design-system/ui';
-import { formatCurrency, getRemainingTime } from '../../core/utils/formatters';
 import {
   PlusCircle,
-  Gavel,
-  Edit3,
-  Trash2,
-  Eye,
-  Clock,
-  CheckCircle2,
+  ArrowRight,
+  Sparkles,
 } from 'lucide-react';
 
 export function AuctionsListView() {
@@ -30,7 +25,6 @@ export function AuctionsListView() {
   const fetchAuctions = useAuctionStore((s) => s.fetchAuctions);
   const deleteAuction = useAuctionStore((s) => s.deleteAuction);
   const currentUser = useAuthStore((s) => s.currentUser);
-  const users = useAuthStore((s) => s.users);
 
   const [feedback, setFeedback] = useState('');
 
@@ -77,15 +71,15 @@ export function AuctionsListView() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <PageHeader
-        title="Catálogo de Subastas"
-        subtitle="Explora subastas en vivo, realiza ofertas vinculantes o administra tus publicaciones."
+        title="Elige tu lote en subasta"
+        subtitle="Explora artículos en vivo, realiza ofertas vinculantes o administra tus publicaciones."
         action={
           currentUser && (
             <Button onClick={() => navigate('/auctions/new')}>
               <PlusCircle className="w-4 h-4" />
-              Nueva Subasta
+              Publicar Subasta
             </Button>
           )
         }
@@ -97,172 +91,113 @@ export function AuctionsListView() {
         </Alert>
       )}
 
-      {/* Filtros */}
-      <Card className="p-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Input
-            id="search-auctions"
-            label="Buscar artículo"
-            placeholder="MacBook, PS5, Silla..."
-            value={filters.search}
-            onChange={(e) => setFilters({ search: e.target.value })}
-          />
-          <Select
-            id="category-filter"
-            label="Categoría"
-            value={filters.category}
-            onChange={(e) => setFilters({ category: e.target.value })}
-            options={categories.map((c) => ({ value: c, label: c }))}
-          />
-          <Select
-            id="status-filter"
-            label="Estado"
-            value={filters.status}
-            onChange={(e) => setFilters({ status: e.target.value })}
-            options={[
-              { value: 'todas', label: 'Todas las subastas' },
-              { value: 'activa', label: 'En vivo (Activas)' },
-              { value: 'finalizada', label: 'Finalizadas' },
-            ]}
-          />
-          <Select
-            id="sort-filter"
-            label="Ordenar por"
-            value={filters.sortBy}
-            onChange={(e) => setFilters({ sortBy: e.target.value })}
-            options={[
-              { value: 'endingSoon', label: 'Próximas a finalizar' },
-              { value: 'priceAsc', label: 'Menor precio actual' },
-              { value: 'priceDesc', label: 'Mayor precio actual' },
-            ]}
-          />
+      {/* Category Filter Pills Bar + Search Controls */}
+      <div className="space-y-4">
+        <div className="flex flex-wrap items-center gap-2">
+          {categories.map((cat) => (
+            <button
+              key={cat}
+              onClick={() => setFilters({ category: cat })}
+              className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
+                filters.category === cat
+                  ? 'bg-[#224F10] text-[#EAFFD0]'
+                  : 'bg-white/80 text-[#0D0D0D]/75 hover:bg-white border border-[#224F10]/12'
+              }`}
+            >
+              {cat}
+            </button>
+          ))}
         </div>
-      </Card>
+
+        <Card className="p-4 sm:p-5">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <Input
+              id="search-auctions"
+              label="Buscar artículo"
+              placeholder="MacBook, PS5, Silla..."
+              value={filters.search}
+              onChange={(e) => setFilters({ search: e.target.value })}
+            />
+            <Select
+              id="status-filter"
+              label="Estado de sala"
+              value={filters.status}
+              onChange={(e) => setFilters({ status: e.target.value })}
+              options={[
+                { value: 'todas', label: 'Todas las subastas' },
+                { value: 'activa', label: 'En vivo (Activas)' },
+                { value: 'finalizada', label: 'Finalizadas' },
+              ]}
+            />
+            <Select
+              id="sort-filter"
+              label="Ordenar por"
+              value={filters.sortBy}
+              onChange={(e) => setFilters({ sortBy: e.target.value })}
+              options={[
+                { value: 'endingSoon', label: 'Próximas a finalizar' },
+                { value: 'priceAsc', label: 'Menor precio actual' },
+                { value: 'priceDesc', label: 'Mayor precio actual' },
+              ]}
+            />
+          </div>
+        </Card>
+      </div>
 
       {filtered.length === 0 ? (
         <Card className="text-center py-12">
-          <p className="text-sm text-[#EAFFD0]/65">
+          <p className="text-sm text-[#0D0D0D]/65">
             No se encontraron subastas con los criterios seleccionados.
           </p>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {filtered.map((auction) => {
-            const remaining = getRemainingTime(auction.endTime);
-            const seller = users.find(
-              (u) => Number(u.id) === Number(auction.sellerId)
-            );
             const canManage =
               currentUser &&
               (currentUser.role === 'admin' ||
                 Number(currentUser.id) === Number(auction.sellerId));
 
             return (
-              <Card
+              <AuctionCard
                 key={auction.id}
-                className="flex flex-col justify-between p-0 overflow-hidden hover:border-[#B0E454]/60 transition-all"
-              >
-                <div>
-                  <div className="relative h-48 bg-[#0D0D0D]">
-                    <img
-                      src={auction.imageUrl}
-                      alt={auction.title}
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute top-3 left-3 flex gap-1.5">
-                      <Badge variant="lime">{auction.category}</Badge>
-                      <Badge
-                        variant={
-                          auction.status === 'activa' ? 'success' : 'muted'
-                        }
-                      >
-                        {auction.status === 'activa' ? 'EN VIVO' : 'FINALIZADA'}
-                      </Badge>
-                    </div>
-                    <div className="absolute bottom-3 right-3 bg-[#0D0D0D]/90 border border-[#B0E454]/40 px-2.5 py-1 rounded-lg text-xs font-mono text-[#B0E454] flex items-center gap-1.5">
-                      {auction.status === 'activa' ? (
-                        <>
-                          <Clock className="w-3.5 h-3.5" />
-                          {remaining.formatted}
-                        </>
-                      ) : (
-                        <>
-                          <CheckCircle2 className="w-3.5 h-3.5" />
-                          Cerrada
-                        </>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="p-5 space-y-2.5">
-                    <h3 className="font-bold text-base text-[#EAFFD0] line-clamp-1">
-                      {auction.title}
-                    </h3>
-                    <p className="text-xs text-[#EAFFD0]/65 line-clamp-2">
-                      {auction.description}
-                    </p>
-                    <p className="text-[11px] text-[#EAFFD0]/55">
-                      Vendedor:{' '}
-                      <strong className="text-[#EAFFD0]">
-                        {seller?.name || 'Usuario'}
-                      </strong>{' '}
-                      · Incremento mín: {formatCurrency(auction.minIncrement)}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="px-5 pb-5 pt-3 border-t border-[#224F10]/50 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <span className="text-[10px] uppercase tracking-wider text-[#EAFFD0]/55 block">
-                        Oferta Actual
-                      </span>
-                      <span className="text-xl font-extrabold text-[#B0E454]">
-                        {formatCurrency(auction.currentPrice)}
-                      </span>
-                    </div>
-                    <Link to={`/auctions/${auction.id}`}>
-                      <Button size="sm">
-                        {auction.status === 'activa' ? (
-                          <>
-                            <Gavel className="w-3.5 h-3.5" />
-                            Sala de Puja
-                          </>
-                        ) : (
-                          <>
-                            <Eye className="w-3.5 h-3.5" />
-                            Ver Resultado
-                          </>
-                        )}
-                      </Button>
-                    </Link>
-                  </div>
-
-                  {canManage && (
-                    <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#224F10]/30">
-                      <Link to={`/auctions/${auction.id}/edit`}>
-                        <Button variant="secondary" size="sm">
-                          <Edit3 className="w-3.5 h-3.5" />
-                          Editar
-                        </Button>
-                      </Link>
-                      <Button
-                        variant="danger"
-                        size="sm"
-                        onClick={() => handleDelete(auction)}
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                        Eliminar
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              </Card>
+                auction={auction}
+                canManage={canManage}
+                onDelete={handleDelete}
+              />
             );
           })}
+
+          {/* Dark Forest Green Summary Card at the end of the grid */}
+          <div className="rounded-[28px] bg-[#224F10] text-[#EAFFD0] p-6 sm:p-7 flex flex-col justify-between min-h-[320px] shadow-sm">
+            <span className="w-10 h-10 rounded-full bg-[#EAFFD0] text-[#224F10] flex items-center justify-center">
+              <Sparkles className="w-5 h-5" />
+            </span>
+
+            <div className="space-y-4 pt-6">
+              <div className="space-y-1.5">
+                <h3 className="text-xl font-semibold text-[#EAFFD0] leading-snug">
+                  ¿Tienes un artículo para subastar?
+                </h3>
+                <p className="text-xs text-[#EAFFD0]/75 leading-relaxed">
+                  Publica tu lote con precio base e incremento mínimo. Al
+                  cerrar la subasta coordinas directamente con el ganador.
+                </p>
+              </div>
+
+              <button
+                onClick={() => navigate('/auctions/new')}
+                className="inline-flex items-center gap-2.5 rounded-full bg-[#EAFFD0] hover:bg-[#B0E454] text-[#0D0D0D] pl-4 pr-1.5 py-1.5 text-xs font-semibold transition-colors cursor-pointer"
+              >
+                <span>Crear nueva subasta</span>
+                <span className="w-6 h-6 rounded-full bg-[#224F10] text-[#EAFFD0] flex items-center justify-center">
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </span>
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
   );
 }
-
