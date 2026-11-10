@@ -338,16 +338,29 @@ export function DashboardBidsTab({
                     disabled={Boolean(editingBidId && !isAdmin)}
                     value={formAmount}
                     onChange={(e) => setFormAmount(e.target.value)}
+                    max={
+                      selectedAuctionForForm
+                        ? Number(selectedAuctionForForm.basePrice || selectedAuctionForForm.currentPrice) * 10
+                        : undefined
+                    }
                     className="w-full rounded-xl bg-[#F7FBF3] border border-[#224F10]/15 px-3.5 py-2 text-xs font-semibold text-[#0D0D0D] disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-[#224F10]/25"
                   />
                   {selectedAuctionForForm && !editingBidId && (
-                    <p className="text-[10px] text-[#224F10] font-medium">
-                      Mínimo sugerido RN01:{' '}
-                      {formatCurrency(
-                        Number(selectedAuctionForForm.currentPrice) +
-                          Number(selectedAuctionForForm.minIncrement)
-                      )}
-                    </p>
+                    <div className="space-y-0.5">
+                      <p className="text-[10px] text-[#224F10] font-medium">
+                        Mínimo sugerido RN01:{' '}
+                        {formatCurrency(
+                          Number(selectedAuctionForForm.currentPrice) +
+                            Number(selectedAuctionForForm.minIncrement)
+                        )}
+                      </p>
+                      <p className="text-[10px] text-[#0D0D0D]/60 font-medium">
+                        Máximo permitido (10x precio inicial):{' '}
+                        {formatCurrency(
+                          Number(selectedAuctionForForm.basePrice || selectedAuctionForForm.currentPrice) * 10
+                        )}
+                      </p>
+                    </div>
                   )}
                 </div>
               </div>
