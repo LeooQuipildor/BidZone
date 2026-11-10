@@ -55,6 +55,15 @@ export const useBidStore = create((set) => ({
       );
     }
 
+    // Límite máximo: No mayor a 10 veces el precio inicial fijado por el vendedor
+    const initialPrice = Number(auction.basePrice ?? auction.currentPrice);
+    const maxAllowed = initialPrice * 10;
+    if (numericAmount > maxAllowed) {
+      throw new Error(
+        `La oferta no puede superar 10 veces el precio inicial de la subasta ($${maxAllowed.toLocaleString('es-AR')}).`
+      );
+    }
+
     // RN04: Irrevocabilidad y compromiso
     if (!commitmentAccepted) {
       throw new Error(
@@ -123,6 +132,18 @@ export const useBidStore = create((set) => ({
       (a) => Number(a.id) === Number(existing.auctionId)
     );
     if (auctionIdx !== -1) {
+      if (updates.amount !== undefined) {
+        const initialPrice = Number(
+          db.auctions[auctionIdx].basePrice ?? db.auctions[auctionIdx].currentPrice
+        );
+        const maxAllowed = initialPrice * 10;
+        if (updatedAmount > maxAllowed) {
+          throw new Error(
+            `La oferta no puede superar 10 veces el precio inicial de la subasta ($${maxAllowed.toLocaleString('es-AR')}).`
+          );
+        }
+      }
+
       const auctionBids = db.bids.filter(
         (b) => Number(b.auctionId) === Number(existing.auctionId)
       );

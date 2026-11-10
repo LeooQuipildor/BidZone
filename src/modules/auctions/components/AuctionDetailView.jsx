@@ -119,6 +119,15 @@ export function AuctionDetailView() {
       return;
     }
 
+    const initialPrice = Number(auction.basePrice || auction.currentPrice);
+    const maxAllowed = initialPrice * 10;
+    if (Number(bidAmount) > maxAllowed) {
+      setErrorMsg(
+        `La oferta no puede superar 10 veces el precio inicial de la subasta (${formatCurrency(maxAllowed)}).`
+      );
+      return;
+    }
+
     try {
       await createBid({
         auctionId: auction.id,
@@ -404,6 +413,10 @@ export function AuctionDetailView() {
                     label={`Tu Oferta en ARS (Mínimo ${formatCurrency(
                       Number(auction.currentPrice) + Number(auction.minIncrement)
                     )})`}
+                    helperText={`Máximo permitido: ${formatCurrency(
+                      Number(auction.basePrice || auction.currentPrice) * 10
+                    )} (10 veces el precio inicial)`}
+                    max={Number(auction.basePrice || auction.currentPrice) * 10}
                     value={bidAmount}
                     onChange={(e) => setBidAmount(e.target.value)}
                   />

@@ -51,7 +51,7 @@ export function RegisterView() {
 
     try {
       await register(formData);
-      navigate('/dashboard', { replace: true });
+      navigate('/', { replace: true });
     } catch (err) {
       setErrorMsg(err.message);
     }

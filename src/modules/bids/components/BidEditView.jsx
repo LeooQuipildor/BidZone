@@ -100,9 +100,16 @@ export function BidEditView() {
             disabled={!isAdmin}
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
+            max={
+              auction
+                ? Number(auction.basePrice || auction.currentPrice) * 10
+                : undefined
+            }
             helperText={
               isAdmin
-                ? 'Modo Administrador: Puedes ajustar el importe por auditoría.'
+                ? `Modo Administrador: Puedes ajustar el importe por auditoría (Máximo 10x precio inicial: ${formatCurrency(
+                    Number(auction?.basePrice || auction?.currentPrice || 0) * 10
+                  )}).`
                 : 'El importe no puede reducirse ni anularse por parte del postor.'
             }
           />

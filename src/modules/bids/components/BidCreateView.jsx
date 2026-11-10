@@ -107,6 +107,12 @@ export function BidCreateView() {
           {selectedAuction && (
             <div className="p-4 rounded-2xl bg-white/80 border border-[#224F10]/20 text-xs space-y-1">
               <p>
+                Precio inicial fijado por vendedor:{' '}
+                <strong className="text-[#0D0D0D]">
+                  {formatCurrency(selectedAuction.basePrice || selectedAuction.currentPrice)}
+                </strong>
+              </p>
+              <p>
                 Precio actual:{' '}
                 <strong className="text-[#224F10]">
                   {formatCurrency(selectedAuction.currentPrice)}
@@ -127,6 +133,14 @@ export function BidCreateView() {
                   )}
                 </strong>
               </p>
+              <p>
+                Oferta máxima permitida (10x precio inicial):{' '}
+                <strong className="text-[#224F10]">
+                  {formatCurrency(
+                    Number(selectedAuction.basePrice || selectedAuction.currentPrice) * 10
+                  )}
+                </strong>
+              </p>
             </div>
           )}
 
@@ -134,6 +148,18 @@ export function BidCreateView() {
             id="amount"
             type="number"
             label="Monto a Ofertar (ARS) *"
+            max={
+              selectedAuction
+                ? Number(selectedAuction.basePrice || selectedAuction.currentPrice) * 10
+                : undefined
+            }
+            helperText={
+              selectedAuction
+                ? `Máximo permitido: ${formatCurrency(
+                    Number(selectedAuction.basePrice || selectedAuction.currentPrice) * 10
+                  )} (10 veces el precio inicial).`
+                : undefined
+            }
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
           />

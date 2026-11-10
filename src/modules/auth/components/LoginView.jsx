@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../states/authStore';
@@ -14,7 +15,10 @@ export function LoginView() {
   const [password, setPassword] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
 
-  const from = location.state?.from?.pathname || '/dashboard';
+  const from =
+    location.state?.from?.pathname && location.state.from.pathname !== '/dashboard'
+      ? location.state.from.pathname
+      : '/';
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -39,7 +43,7 @@ export function LoginView() {
     setErrorMsg('');
     try {
       await login(demoEmail, demoPass);
-      navigate('/dashboard', { replace: true });
+      navigate(from, { replace: true });
     } catch (err) {
       setErrorMsg(err.message);
     }
