@@ -250,16 +250,34 @@ export function Spinner({ label = 'Cargando...' }) {
 }
 
 export function Modal({ isOpen, onClose, title, children }) {
+  React.useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        onClose?.();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0D0D0D]/60 backdrop-blur-xs p-4">
-      <div className="w-full max-w-lg rounded-3xl bg-[#EAFFD0] border border-[#224F10]/25 p-6 shadow-2xl">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-[#0D0D0D]/60 backdrop-blur-xs p-4"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-lg rounded-3xl bg-[#EAFFD0] border border-[#224F10]/25 p-6 shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex items-center justify-between border-b border-[#224F10]/15 pb-3 mb-4">
           <h3 className="text-2xl font-medium tracking-tight text-[#0D0D0D]">
             {title}
           </h3>
           <button
+            type="button"
             onClick={onClose}
             className="p-1.5 rounded-full text-[#0D0D0D]/70 hover:bg-[#224F10]/10 cursor-pointer"
           >

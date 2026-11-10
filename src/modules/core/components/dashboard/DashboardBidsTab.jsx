@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useBidStore } from '../../../bids/states/bidStore';
 import { formatCurrency, formatDateTime } from '../../utils/formatters';
 import { getInitials } from './dashboardHelpers';
+import { Modal, Button } from '../../design-system/ui';
 import {
   Plus,
   X,
@@ -51,6 +52,8 @@ export function DashboardBidsTab({
   );
   const [formNote, setFormNote] = useState('');
   const [commitmentAccepted, setCommitmentAccepted] = useState(true);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [isSubmittingBid, setIsSubmittingBid] = useState(false);
 
   const myBids = bids.filter(
     (b) => Number(b.bidderId) === Number(currentUser?.id)
@@ -129,8 +132,8 @@ export function DashboardBidsTab({
     e.preventDefault();
     setFeedback(null);
 
-    try {
-      if (editingBidId) {
+    if (editingBidId) {
+      try {
         const targetBid = bids.find((b) => Number(b.id) === Number(editingBidId));
         await updateBid(editingBidId, {
           amount: isAdmin ? Number(formAmount) : targetBid?.amount,
@@ -140,23 +143,79 @@ export function DashboardBidsTab({
           type: 'success',
           text: `Registro de puja #${editingBidId} actualizado.`,
         });
-      } else {
-        await createBid({
-          auctionId: formAuctionId,
-          bidderId: currentUser.id,
-          amount: formAmount,
-          note: formNote,
-          commitmentAccepted,
-        });
-        setFeedback({
-          type: 'success',
-          text: `Oferta vinculante de ${formatCurrency(formAmount)} registrada correctamente.`,
-        });
+        setFormOpen(false);
+        setEditingBidId(null);
+      } catch (err) {
+        setFeedback({ type: 'error', text: err.message });
       }
+      return;
+    }
+
+    if (!selectedAuctionForForm) {
+      setFeedback({
+        type: 'error',
+        text: 'Debes seleccionar una subasta activa.',
+      });
+      return;
+    }
+
+    const numericAmount = Number(formAmount);
+    if (!formAmount || isNaN(numericAmount) || numericAmount <= 0) {
+      setFeedback({
+        type: 'error',
+        text: 'Por favor ingresa un monto numérico válido.',
+      });
+      return;
+    }
+
+    const minAllowed =
+      Number(selectedAuctionForForm.currentPrice) +
+      Number(selectedAuctionForForm.minIncrement);
+    if (numericAmount < minAllowed) {
+      setFeedback({
+        type: 'error',
+        text: `RN01: La oferta debe ser de al menos ${formatCurrency(
+          minAllowed
+        )} (Precio actual + incremento mínimo).`,
+      });
+      return;
+    }
+
+    if (!commitmentAccepted) {
+      setFeedback({
+        type: 'error',
+        text: 'Debes aceptar el compromiso vinculante (RN04) antes de enviar la oferta.',
+      });
+      return;
+    }
+
+    setShowConfirmModal(true);
+  };
+
+  const handleConfirmBid = async () => {
+    setIsSubmittingBid(true);
+    setFeedback(null);
+
+    try {
+      await createBid({
+        auctionId: formAuctionId,
+        bidderId: currentUser.id,
+        amount: formAmount,
+        note: formNote,
+        commitmentAccepted,
+      });
+      setFeedback({
+        type: 'success',
+        text: `Oferta vinculante de ${formatCurrency(formAmount)} registrada correctamente.`,
+      });
+      setShowConfirmModal(false);
       setFormOpen(false);
       setEditingBidId(null);
     } catch (err) {
+      setShowConfirmModal(false);
       setFeedback({ type: 'error', text: err.message });
+    } finally {
+      setIsSubmittingBid(false);
     }
   };
 
@@ -547,6 +606,109 @@ export function DashboardBidsTab({
           })}
         </div>
       )}
+
+      {/* Modal de Confirmación de Oferta */}
+      <Modal
+        isOpen={showConfirmModal}
+        onClose={() => !isSubmittingBid && setShowConfirmModal(false)}
+        title="Confirmar oferta"
+      >
+        <div className="space-y-5">
+          <div className="p-3.5 bg-[#B0E454]/30 rounded-2xl border border-[#224F10]/20 text-xs text-[#0D0D0D]">
+            <p className="font-bold text-sm mb-1 text-[#224F10] flex items-center gap-1.5">
+              <CheckCircle2 className="w-4 h-4 text-[#224F10]" />
+              Confirmar oferta
+            </p>
+            <p className="text-[#0D0D0D]/80">
+              ¿Estás seguro de que deseas enviar esta puja? Por favor revisa el monto antes de confirmar, ya que las ofertas son vinculantes (RN04).
+            </p>
+          </div>
+
+          <div className="bg-white/90 rounded-2xl p-4 sm:p-5 border border-[#224F10]/15 space-y-4">
+            {selectedAuctionForForm && (
+              <>
+                <div className="flex flex-col gap-1 pb-3 border-b border-[#224F10]/10">
+                  <span className="text-[10px] font-bold text-[#0D0D0D]/55 uppercase tracking-wider">
+                    Artículo / Subasta
+                  </span>
+                  <span className="text-sm font-semibold text-[#0D0D0D] line-clamp-2">
+                    {selectedAuctionForForm.title}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 pb-3 border-b border-[#224F10]/10 text-xs">
+                  <div>
+                    <span className="text-[11px] text-[#0D0D0D]/55 block">
+                      Oferta líder actual
+                    </span>
+                    <strong className="text-sm font-semibold text-[#0D0D0D]">
+                      {formatCurrency(selectedAuctionForForm.currentPrice)}
+                    </strong>
+                  </div>
+                  <div>
+                    <span className="text-[11px] text-[#0D0D0D]/55 block">
+                      Incremento mínimo
+                    </span>
+                    <strong className="text-sm font-semibold text-[#224F10]">
+                      +{formatCurrency(selectedAuctionForForm.minIncrement)}
+                    </strong>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* Cuadro destacado del monto ofertado */}
+            <div className="bg-[#EAFFD0] p-4 rounded-2xl border-2 border-[#224F10]/30 shadow-xs">
+              <span className="text-xs font-bold uppercase tracking-wider text-[#224F10] block mb-1">
+                Monto que estás ofertando:
+              </span>
+              <div className="flex items-baseline justify-between gap-2">
+                <span className="font-serif-display text-3xl sm:text-4xl font-extrabold text-[#224F10]">
+                  {formatCurrency(formAmount)}
+                </span>
+                {selectedAuctionForForm && (
+                  <span className="text-[11px] font-medium text-[#224F10]/80">
+                    +{formatCurrency(Number(formAmount) - Number(selectedAuctionForForm.currentPrice))} vs actual
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {formNote && (
+              <div className="text-xs text-[#0D0D0D]/80 pt-1">
+                <span className="font-semibold block text-[#0D0D0D]">
+                  Nota de coordinación:
+                </span>
+                <p className="italic bg-[#F5FFEB] p-2.5 rounded-xl border border-[#224F10]/10 mt-1">
+                  &ldquo;{formNote}&rdquo;
+                </p>
+              </div>
+            )}
+          </div>
+
+          <div className="flex flex-col-reverse sm:flex-row items-center justify-end gap-3 pt-1">
+            <Button
+              variant="outline"
+              size="md"
+              disabled={isSubmittingBid}
+              onClick={() => setShowConfirmModal(false)}
+              className="w-full sm:w-auto"
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="primary"
+              size="md"
+              disabled={isSubmittingBid}
+              onClick={handleConfirmBid}
+              className="w-full sm:w-auto"
+            >
+              <Gavel className="w-4 h-4" />
+              {isSubmittingBid ? 'Enviando...' : 'Confirmar oferta'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }
