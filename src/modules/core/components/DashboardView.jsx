@@ -125,8 +125,7 @@ export function DashboardView({ initialSection = 'overview' }) {
     (r) => r.status === 'en_revision'
   ).length;
   const unreadNotifications = notifications.filter(
-    (n) =>
-      (isAdmin || Number(n.userId) === Number(currentUser?.id)) && !n.read
+    (n) => Number(n.userId) === Number(currentUser?.id) && !n.read
   );
 
   const menuSections = [

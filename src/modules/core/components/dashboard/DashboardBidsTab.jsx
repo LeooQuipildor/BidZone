@@ -38,22 +38,31 @@ export function DashboardBidsTab({
   const [formOpen, setFormOpen] = useState(false);
   const [editingBidId, setEditingBidId] = useState(null);
 
-  const defaultAuction = activeAuctions[0];
-  const [formAuctionId, setFormAuctionId] = useState(
-    defaultAuction ? String(defaultAuction.id) : ''
-  );
-  const [formAmount, setFormAmount] = useState(
-    defaultAuction
-      ? String(
-          Number(defaultAuction.currentPrice) +
-            Number(defaultAuction.minIncrement)
-        )
-      : ''
-  );
+  const [formAuctionId, setFormAuctionId] = useState('');
+  const [formAmountInput, setFormAmountInput] = useState(null);
   const [formNote, setFormNote] = useState('');
   const [commitmentAccepted, setCommitmentAccepted] = useState(true);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [isSubmittingBid, setIsSubmittingBid] = useState(false);
+
+  const effectiveAuctionId = editingBidId
+    ? formAuctionId
+    : activeAuctions.some((a) => String(a.id) === String(formAuctionId))
+      ? String(formAuctionId)
+      : activeAuctions[0]
+        ? String(activeAuctions[0].id)
+        : '';
+
+  const selectedAuctionForForm = auctions.find(
+    (a) => Number(a.id) === Number(effectiveAuctionId)
+  );
+  const suggestedAmount = selectedAuctionForForm
+    ? String(
+        Number(selectedAuctionForForm.currentPrice) +
+          Number(selectedAuctionForForm.minIncrement)
+      )
+    : '';
+  const formAmount = formAmountInput ?? suggestedAmount;
 
   const myBids = bids.filter(
     (b) => Number(b.bidderId) === Number(currentUser?.id)
@@ -82,8 +91,8 @@ export function DashboardBidsTab({
       auctionFilter === 'todas' || Number(b.auctionId) === Number(auctionFilter);
     const matchQuery =
       !normalizedQuery ||
-      (auction?.title || '').toLowerCase().includes(normalizedQuery) ||
-      (bidder?.name || '').toLowerCase().includes(normalizedQuery) ||
+      (auction?.title || b.auctionTitle || '').toLowerCase().includes(normalizedQuery) ||
+      (bidder?.name || b.bidderName || '').toLowerCase().includes(normalizedQuery) ||
       (b.note || '').toLowerCase().includes(normalizedQuery);
 
     return matchScope && matchAuction && matchQuery;
@@ -93,11 +102,7 @@ export function DashboardBidsTab({
     setEditingBidId(null);
     const first = activeAuctions[0];
     setFormAuctionId(first ? String(first.id) : '');
-    setFormAmount(
-      first
-        ? String(Number(first.currentPrice) + Number(first.minIncrement))
-        : ''
-    );
+    setFormAmountInput(null);
     setFormNote('');
     setCommitmentAccepted(true);
     setFormOpen(true);
@@ -107,7 +112,7 @@ export function DashboardBidsTab({
   const openEditForm = (bid) => {
     setEditingBidId(bid.id);
     setFormAuctionId(String(bid.auctionId));
-    setFormAmount(String(bid.amount));
+    setFormAmountInput(String(bid.amount));
     setFormNote(bid.note || '');
     setCommitmentAccepted(true);
     setFormOpen(true);
@@ -116,17 +121,10 @@ export function DashboardBidsTab({
 
   const handleAuctionSelect = (val) => {
     setFormAuctionId(val);
-    const found = auctions.find((a) => Number(a.id) === Number(val));
-    if (found && !editingBidId) {
-      setFormAmount(
-        String(Number(found.currentPrice) + Number(found.minIncrement))
-      );
+    if (!editingBidId) {
+      setFormAmountInput(null);
     }
   };
-
-  const selectedAuctionForForm = auctions.find(
-    (a) => Number(a.id) === Number(formAuctionId)
-  );
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -134,11 +132,10 @@ export function DashboardBidsTab({
 
     if (editingBidId) {
       try {
-        const targetBid = bids.find((b) => Number(b.id) === Number(editingBidId));
-        await updateBid(editingBidId, {
-          amount: isAdmin ? Number(formAmount) : targetBid?.amount,
-          note: formNote.trim(),
-        });
+        const payload = isAdmin
+          ? { amount: Number(formAmount), note: formNote.trim() }
+          : { note: formNote.trim() };
+        await updateBid(editingBidId, payload);
         setFeedback({
           type: 'success',
           text: `Registro de puja #${editingBidId} actualizado.`,
@@ -198,7 +195,7 @@ export function DashboardBidsTab({
 
     try {
       await createBid({
-        auctionId: formAuctionId,
+        auctionId: effectiveAuctionId,
         bidderId: currentUser.id,
         amount: formAmount,
         note: formNote,
@@ -224,11 +221,15 @@ export function DashboardBidsTab({
       `¿Confirmas eliminar el registro de puja #${bid.id} por ${formatCurrency(bid.amount)}?`
     );
     if (!confirmed) return;
-    await deleteBid(bid.id);
-    setFeedback({
-      type: 'success',
-      text: `Puja #${bid.id} eliminada y precio de subasta recalculado.`,
-    });
+    try {
+      await deleteBid(bid.id);
+      setFeedback({
+        type: 'success',
+        text: `Puja #${bid.id} eliminada y precio de subasta recalculado.`,
+      });
+    } catch (err) {
+      setFeedback({ type: 'error', text: err.message });
+    }
   };
 
   return (
@@ -376,7 +377,7 @@ export function DashboardBidsTab({
                   </label>
                   <select
                     disabled={Boolean(editingBidId)}
-                    value={formAuctionId}
+                    value={effectiveAuctionId}
                     onChange={(e) => handleAuctionSelect(e.target.value)}
                     className="w-full rounded-xl bg-[#F7FBF3] border border-[#224F10]/15 px-3 py-2 text-xs text-[#0D0D0D] disabled:opacity-60 focus:outline-none"
                   >
@@ -396,7 +397,7 @@ export function DashboardBidsTab({
                     type="number"
                     disabled={Boolean(editingBidId && !isAdmin)}
                     value={formAmount}
-                    onChange={(e) => setFormAmount(e.target.value)}
+                    onChange={(e) => setFormAmountInput(e.target.value)}
                     max={
                       selectedAuctionForForm
                         ? Number(selectedAuctionForForm.basePrice || selectedAuctionForForm.currentPrice) * 10
@@ -544,7 +545,7 @@ export function DashboardBidsTab({
                         : 'bg-[#EAFFD0] text-[#224F10]'
                     }`}
                   >
-                    {getInitials(bidder?.name, 'PU')}
+                    {getInitials(bidder?.name || bid.bidderName, 'PU')}
                   </span>
 
                   <div className="min-w-0 space-y-1">
@@ -564,7 +565,7 @@ export function DashboardBidsTab({
                       >
                         <Gavel className="w-3.5 h-3.5 text-[#224F10] shrink-0" />
                         <span className="truncate">
-                          {auction?.title || `Subasta #${bid.auctionId}`}
+                          {auction?.title || bid.auctionTitle || `Subasta #${bid.auctionId}`}
                         </span>
                         <ExternalLink className="w-3 h-3 opacity-50 shrink-0" />
                       </Link>
@@ -573,7 +574,7 @@ export function DashboardBidsTab({
                     <p className="text-xs text-[#0D0D0D]/70">
                       Postor:{' '}
                       <strong className="text-[#0D0D0D]">
-                        {bidder?.name || `Usuario #${bid.bidderId}`}
+                        {bidder?.name || bid.bidderName || `Usuario #${bid.bidderId}`}
                       </strong>{' '}
                       · &ldquo;{bid.note || 'Sin nota adicional'}&rdquo;
                     </p>

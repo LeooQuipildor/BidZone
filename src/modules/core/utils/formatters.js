@@ -1,3 +1,6 @@
+export const DEFAULT_AUCTION_IMAGE_URL =
+  'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=900&q=80';
+
 export function formatCurrency(amount) {
   const num = Number(amount) || 0;
   return new Intl.NumberFormat('es-AR', {
@@ -20,8 +23,23 @@ export function formatDateTime(dateString) {
   }).format(date);
 }
 
-export function getRemainingTime(endDateString) {
-  const now = Date.now();
+export function toLocalDatetimeInputValue(dateInput) {
+  const date = dateInput
+    ? new Date(dateInput)
+    : new Date(Date.now() + 24 * 3600 * 1000);
+  if (Number.isNaN(date.getTime())) return '';
+  const offsetMs = date.getTimezoneOffset() * 60 * 1000;
+  return new Date(date.getTime() - offsetMs).toISOString().slice(0, 16);
+}
+
+export function toIsoFromLocalInput(localInput) {
+  if (!localInput) return '';
+  const parsed = new Date(localInput);
+  if (Number.isNaN(parsed.getTime())) return '';
+  return parsed.toISOString();
+}
+
+export function getRemainingTime(endDateString, now = Date.now()) {
   const end = new Date(endDateString).getTime();
   const diff = end - now;
 

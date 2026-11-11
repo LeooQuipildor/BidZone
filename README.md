@@ -10,12 +10,11 @@ Plataforma web de subastas en línea orientada a la compra y venta de artículos
 2. [Integrantes (Grupo 8)](#-integrantes-grupo-8)
 3. [Características Principales](#-características-principales)
 4. [Reglas de Negocio](#-reglas-de-negocio)
-5. [Arquitectura del Proyecto (Screaming Architecture)](#-arquitectura-del-proyecto-screaming-architecture)
-6. [Modelo de Datos (MySQL)](#-modelo-de-datos-mysql)
-7. [Stack Tecnológico](#-stack-tecnológico)
-8. [Instalación y Puesta en Marcha](#-instalación-y-puesta-en-marcha)
-9. [Scripts Disponibles](#-scripts-disponibles)
-10. [Convenciones y Buenas Prácticas](#-convenciones-y-buenas-prácticas)
+5. [Arquitectura General y Estructura del Repositorio](#️-arquitectura-general-y-estructura-del-repositorio)
+6. [Stack Tecnológico](#️-stack-tecnológico)
+7. [Instalación y Puesta en Marcha](#️-instalación-y-puesta-en-marcha)
+8. [Scripts Disponibles](#-scripts-disponibles)
+9. [Convenciones y Buenas Prácticas](#-convenciones-y-buenas-prácticas)
 
 ---
 
@@ -72,72 +71,119 @@ El sistema aplica de forma obligatoria las siguientes invariantes operativas:
 
 ---
 
-## 🏗️ Arquitectura del Proyecto (Screaming Architecture)
+## 🏗️ Arquitectura General y Estructura del Repositorio
 
-El frontend sigue el patrón **Screaming Architecture**, donde la estructura de carpetas expresa de forma directa el dominio del negocio en lugar de la tecnología empleada.
+El proyecto está organizado en tres carpetas hermanas bajo el directorio raíz `BidZone/`:
 
 ```text
-src/
-├── assets/                          # Recursos gráficos globales (iconos, imágenes)
-│   ├── icons/
-│   └── images/
+├── database/                        # Capa de persistencia MySQL 8.0+
+│   ├── schema.sql                   # Tablas, PK, FK, índices, CHECK y restricciones de integridad
+│   ├── seed.sql                     # Datos semilla idempotentes para entorno de desarrollo
+│   └── DER.md                       # Diagrama Entidad-Relación (DER) y cardinalidades
 │
-├── modules/                         # Módulos de dominio y soporte
-│   ├── core/                        # Infraestructura transversal y componentes comunes
-│   │   ├── components/              # Layout, Navbar, Footer, ProtectedRoute
-│   │   ├── design-system/           # Componentes UI atómicos (Button, Input, Modal, Badge, Card)
-│   │   ├── hooks/                   # Hooks genéricos (useTheme, useDebounce)
-│   │   ├── lib/                     # Clientes HTTP, configuración base de WebSockets
-│   │   └── utils/                   # Formateadores (moneda, fecha) y utilidades de estilo
-│   │
-│   ├── auth/                        # Autenticación, registro y perfil de usuarios
-│   │   ├── components/              # LoginForm, RegisterForm, UserProfileCard
-│   │   ├── hooks/                   # useAuth
-│   │   ├── lib/                     # auth.types.ts
-│   │   ├── services/                # authService.ts
-│   │   ├── states/                  # authStore / AuthContext
-│   │   └── utils/                   # Validaciones de credenciales
-│   │
-│   ├── auctions/                    # Catálogo, publicación, detalle y vista de contacto post-cierre
-│   │   ├── components/              # AuctionCard, AuctionHero, AuctionFilters, CountdownTimer, DealContactCard
-│   │   ├── hooks/                   # useAuctions, useAuctionTimer
-│   │   ├── lib/                     # auction.types.ts
-│   │   ├── services/                # auctionService.ts
-│   │   ├── states/                  # auctionFilterStore
-│   │   └── utils/                   # Validadores de subasta
-│   │
-│   ├── bids/                        # Motor de pujas y sala en tiempo real
-│   │   ├── components/              # LiveBiddingRoom, BidForm, BidHistoryList, BidStatusBadge
-│   │   ├── hooks/                   # useBids, useLiveAuctionSocket
-│   │   ├── lib/                     # bid.types.ts
-│   │   ├── services/                # bidService.ts
-│   │   ├── states/                  # liveBidStore
-│   │   └── utils/                   # Cálculo de puja mínima permitida
-│   │
-│   ├── reports/                     # Reportes de incumplimiento, reclamos y sanciones
-│   │   ├── components/              # ReportModal, DisputeStatusCard, InfractionAlert
-│   │   ├── hooks/                   # useReports
-│   │   ├── lib/                     # report.types.ts
-│   │   ├── services/                # reportService.ts
-│   │   ├── states/                  # reportStore
-│   │   └── utils/                   # Validadores de denuncias
-│   │
-│   ├── reviews/                     # Calificaciones y reputación
-│   │   ├── components/              # ReviewModal, StarRatingDisplay, UserReviewsList
-│   │   ├── hooks/                   # useReviews
-│   │   ├── lib/                     # review.types.ts
-│   │   ├── services/                # reviewService.ts
-│   │   ├── states/
-│   │   └── utils/
-│   │
-│   └── notifications/               # Centro de notificaciones y alertas
-│       ├── components/              # NotificationBell, NotificationDrawer
-│       ├── hooks/                   # useNotifications
-│       ├── lib/                     # notification.types.ts
-│       ├── services/                # notificationService.ts
-│       ├── states/                  # notificationStore
-│       └── utils/
+├── backend/                         # API REST en Node.js + Express + mysql2
+│   ├── .env.example                 # Plantilla de variables de entorno (sin secretos)
+│   ├── src/
+│   │   ├── config/                  # Conexión MySQL (mysql2/promise) y lectura de entorno
+│   │   ├── middlewares/             # JWT Auth, RBAC por rol, validación y errores centralizados
+│   │   ├── models/                  # Consultas SQL parametrizadas (users, auctions, bids, reports, reviews, notifications)
+│   │   ├── controllers/             # Reglas de negocio (RN01-RN08), transacciones y privacidad RN05
+│   │   ├── routes/                  # Endpoints REST bajo /api/*
+│   │   ├── database/                # Scripts initDb.js y seedDb.js
+│   │   ├── app.js                   # Factory de la app Express (exportada para pruebas)
+│   │   └── server.js                # Arranque HTTP y verificación inicial de MySQL
+│   └── tests/api.test.js            # Pruebas unitarias de controladores y reglas de negocio
 │
-├── App.jsx                          # Enrutador principal de la aplicación
-└── main.jsx                         # Punto de entrada de Vite
+└── BidZone/                         # Frontend Web (React + Vite + Tailwind + Zustand)
+    ├── .env.example                 # Variable VITE_API_URL=http://localhost:3000/api
+    └── src/
+        ├── modules/
+        │   ├── core/                # Design system, Layout, Navbar, Dashboard dinámico y cliente HTTP
+        │   ├── auth/                # Login, registro, gestión de usuarios y sesión JWT
+        │   ├── auctions/            # Catálogo, detalle con pujas en vivo, publicación y edición
+        │   ├── bids/                # Registro, listado y edición de notas de pujas
+        │   ├── reports/             # Reportes de incumplimiento y sanciones administrativas RN06
+        │   ├── reviews/             # Calificaciones post-cierre y reputación RN07
+        │   └── notifications/       # Bandeja personal de notificaciones
+        ├── App.jsx
+        └── main.jsx
 ```
+
+---
+
+## 🛠️ Stack Tecnológico
+
+- **Frontend:** React 19, Vite, Tailwind CSS v4, React Router DOM, Zustand, Lucide React.
+- **Backend:** Node.js (ESM), Express, `mysql2/promise`, `jsonwebtoken`, `bcryptjs`, `cors`, `dotenv`.
+- **Base de Datos:** MySQL 8.0+.
+
+---
+
+## ⚙️ Instalación y Puesta en Marcha
+
+### 1. Requisitos previos
+- **Node.js** 18+ y `npm`
+- **MySQL Server** 8.0+ en ejecución local (puedes usar MySQL Workbench para inspeccionar el esquema y las tablas)
+
+### 2. Configurar y levantar el Backend + MySQL
+
+Desde la carpeta hermana `../backend`:
+
+1. Instala las dependencias:
+   ```bash
+   cd ../backend
+   npm install
+   ```
+2. Crea tu archivo de entorno local a partir de `.env.example` (sin subir `.env` al repositorio):
+   - Completa `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME` (por ejemplo, una base vacía en MySQL) y una clave segura para `JWT_SECRET`.
+   - Opcionalmente define `SEED_ADMIN_PASSWORD` y `SEED_USER_PASSWORD` si deseas personalizar las claves de las cuentas de demostración al ejecutar el seed.
+3. Inicializa el esquema y carga los datos iniciales en MySQL:
+   ```bash
+   npm run db:init
+   npm run db:seed
+   ```
+4. Inicia el servidor Express en modo desarrollo:
+   ```bash
+   npm run dev
+   ```
+   La API quedará escuchando por defecto en `http://localhost:3000/api` (`GET /api/health` confirma la conexión activa a MySQL).
+
+### 3. Configurar y levantar el Frontend
+
+Desde esta carpeta (`BidZone/`):
+
+1. Instala las dependencias:
+   ```bash
+   npm install
+   ```
+2. (Opcional) Si tu API corre en otro puerto o host, copia `.env.example` a `.env` y ajusta `VITE_API_URL`. Por defecto usa `http://localhost:3000/api`.
+3. Inicia el servidor de desarrollo de Vite:
+   ```bash
+   npm run dev
+   ```
+   Abre `http://localhost:5173` en tu navegador.
+
+---
+
+## 📜 Scripts Disponibles
+
+### En `BidZone/` (Frontend)
+- `npm run dev` — Servidor de desarrollo Vite (`http://localhost:5173`).
+- `npm run build` — Compilación de producción en `dist/`.
+- `npm run lint` — Análisis estático con `oxlint`.
+- `npm run preview` — Previsualización del build de producción.
+
+### En `../backend/` (Backend y DB)
+- `npm run dev` — Inicia el servidor Express con recarga automática (`node --watch`).
+- `npm start` — Inicia el servidor Express en modo estándar.
+- `npm run db:init` — Ejecuta `../database/schema.sql` contra MySQL.
+- `npm run db:seed` — Ejecuta `../database/seed.sql` de forma idempotente en MySQL.
+- `npm test` — Ejecuta la suite de pruebas unitarias de controladores y reglas de negocio.
+
+---
+
+## 🔒 Convenciones y Buenas Prácticas
+
+- Todo estado de dominio se sincroniza directamente contra MySQL a través de la API REST (`/api/*`), sin almacenamiento mock en `localStorage` (únicamente el token JWT `bidzone_token` y la caché de sesión `bidzone_user` se persisten en `localStorage` para conservar la sesión).
+- Los datos de contacto privado (`email`, `phone`) permanecen ocultos hasta la adjudicación formal de una subasta con ganador asignado (**RN05**).
+- Las credenciales reales nunca se versionan ni se documentan en código fuente; utiliza archivos `.env` locales ignorados por Git.

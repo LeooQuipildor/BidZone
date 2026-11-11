@@ -13,30 +13,20 @@ import {
   X,
 } from 'lucide-react';
 
-export function DashboardProfileTab({ currentUser, auctions, bids }) {
-  const updateUser = useAuthStore((s) => s.updateUser);
-
+function ProfileFormCard({ currentUser, updateUser, onFeedback }) {
   const [formData, setFormData] = useState(() => ({
     name: currentUser?.name || '',
     email: currentUser?.email || '',
     phone: currentUser?.phone || '',
     city: currentUser?.city || '',
   }));
-  const [feedback, setFeedback] = useState(null);
-
-  const myAuctionsCount = auctions.filter(
-    (a) => Number(a.sellerId) === Number(currentUser?.id)
-  ).length;
-  const myBidsCount = bids.filter(
-    (b) => Number(b.bidderId) === Number(currentUser?.id)
-  ).length;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setFeedback(null);
+    onFeedback(null);
 
     if (!formData.name.trim() || !formData.email.trim()) {
-      setFeedback({
+      onFeedback({
         type: 'error',
         text: 'El nombre y el correo electrónico son obligatorios.',
       });
@@ -45,14 +35,106 @@ export function DashboardProfileTab({ currentUser, auctions, bids }) {
 
     try {
       await updateUser(currentUser.id, formData);
-      setFeedback({
+      onFeedback({
         type: 'success',
         text: 'Tus datos de coordinación directa RN05 se actualizaron correctamente.',
       });
     } catch (err) {
-      setFeedback({ type: 'error', text: err.message });
+      onFeedback({ type: 'error', text: err.message });
     }
   };
+
+  return (
+    <div className="lg:col-span-8 rounded-2xl bg-white border border-[#224F10]/10 p-6 shadow-2xs">
+      <h2 className="text-base font-bold text-[#0D0D0D] pb-4 border-b border-[#224F10]/10">
+        Datos de Contacto y Coordinación
+      </h2>
+
+      <form onSubmit={handleSubmit} className="space-y-4 pt-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="space-y-1">
+            <label className="text-[11px] font-semibold text-[#0D0D0D]/75">
+              Nombre Completo *
+            </label>
+            <input
+              type="text"
+              value={formData.name}
+              onChange={(e) =>
+                setFormData((p) => ({ ...p, name: e.target.value }))
+              }
+              className="w-full rounded-xl bg-[#F7FBF3] border border-[#224F10]/15 px-3.5 py-2.5 text-xs text-[#0D0D0D] focus:outline-none focus:ring-2 focus:ring-[#224F10]/25"
+            />
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-[11px] font-semibold text-[#0D0D0D]/75">
+              Correo Electrónico *
+            </label>
+            <input
+              type="email"
+              value={formData.email}
+              onChange={(e) =>
+                setFormData((p) => ({ ...p, email: e.target.value }))
+              }
+              className="w-full rounded-xl bg-[#F7FBF3] border border-[#224F10]/15 px-3.5 py-2.5 text-xs text-[#0D0D0D] focus:outline-none focus:ring-2 focus:ring-[#224F10]/25"
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="space-y-1">
+            <label className="text-[11px] font-semibold text-[#0D0D0D]/75">
+              Teléfono / WhatsApp RN05 *
+            </label>
+            <input
+              type="text"
+              value={formData.phone}
+              onChange={(e) =>
+                setFormData((p) => ({ ...p, phone: e.target.value }))
+              }
+              className="w-full rounded-xl bg-[#F7FBF3] border border-[#224F10]/15 px-3.5 py-2.5 text-xs text-[#0D0D0D] focus:outline-none focus:ring-2 focus:ring-[#224F10]/25"
+            />
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-[11px] font-semibold text-[#0D0D0D]/75">
+              Ciudad / Localidad
+            </label>
+            <input
+              type="text"
+              value={formData.city}
+              onChange={(e) =>
+                setFormData((p) => ({ ...p, city: e.target.value }))
+              }
+              className="w-full rounded-xl bg-[#F7FBF3] border border-[#224F10]/15 px-3.5 py-2.5 text-xs text-[#0D0D0D] focus:outline-none focus:ring-2 focus:ring-[#224F10]/25"
+            />
+          </div>
+        </div>
+
+        <div className="flex justify-end pt-3">
+          <button
+            type="submit"
+            className="inline-flex items-center gap-2 rounded-full bg-[#224F10] hover:bg-[#0D0D0D] text-[#EAFFD0] px-5 py-2.5 text-xs font-semibold transition-colors cursor-pointer shadow-xs"
+          >
+            <Save className="w-3.5 h-3.5" />
+            <span>Guardar Cambios</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+export function DashboardProfileTab({ currentUser, auctions, bids }) {
+  const updateUser = useAuthStore((s) => s.updateUser);
+  const [feedback, setFeedback] = useState(null);
+
+  const myAuctionsCount = auctions.filter(
+    (a) => Number(a.sellerId) === Number(currentUser?.id)
+  ).length;
+  const myBidsCount = bids.filter(
+    (b) => Number(b.bidderId) === Number(currentUser?.id)
+  ).length;
 
   return (
     <div className="space-y-6">
@@ -145,83 +227,12 @@ export function DashboardProfileTab({ currentUser, auctions, bids }) {
         </div>
 
         {/* Right Edit Profile Card */}
-        <div className="lg:col-span-8 rounded-2xl bg-white border border-[#224F10]/10 p-6 shadow-2xs">
-          <h2 className="text-base font-bold text-[#0D0D0D] pb-4 border-b border-[#224F10]/10">
-            Datos de Contacto y Coordinación
-          </h2>
-
-          <form onSubmit={handleSubmit} className="space-y-4 pt-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <label className="text-[11px] font-semibold text-[#0D0D0D]/75">
-                  Nombre Completo *
-                </label>
-                <input
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) =>
-                    setFormData((p) => ({ ...p, name: e.target.value }))
-                  }
-                  className="w-full rounded-xl bg-[#F7FBF3] border border-[#224F10]/15 px-3.5 py-2.5 text-xs text-[#0D0D0D] focus:outline-none focus:ring-2 focus:ring-[#224F10]/25"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-[11px] font-semibold text-[#0D0D0D]/75">
-                  Correo Electrónico *
-                </label>
-                <input
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) =>
-                    setFormData((p) => ({ ...p, email: e.target.value }))
-                  }
-                  className="w-full rounded-xl bg-[#F7FBF3] border border-[#224F10]/15 px-3.5 py-2.5 text-xs text-[#0D0D0D] focus:outline-none focus:ring-2 focus:ring-[#224F10]/25"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <label className="text-[11px] font-semibold text-[#0D0D0D]/75">
-                  Teléfono / WhatsApp RN05 *
-                </label>
-                <input
-                  type="text"
-                  value={formData.phone}
-                  onChange={(e) =>
-                    setFormData((p) => ({ ...p, phone: e.target.value }))
-                  }
-                  className="w-full rounded-xl bg-[#F7FBF3] border border-[#224F10]/15 px-3.5 py-2.5 text-xs text-[#0D0D0D] focus:outline-none focus:ring-2 focus:ring-[#224F10]/25"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-[11px] font-semibold text-[#0D0D0D]/75">
-                  Ciudad / Localidad
-                </label>
-                <input
-                  type="text"
-                  value={formData.city}
-                  onChange={(e) =>
-                    setFormData((p) => ({ ...p, city: e.target.value }))
-                  }
-                  className="w-full rounded-xl bg-[#F7FBF3] border border-[#224F10]/15 px-3.5 py-2.5 text-xs text-[#0D0D0D] focus:outline-none focus:ring-2 focus:ring-[#224F10]/25"
-                />
-              </div>
-            </div>
-
-            <div className="flex justify-end pt-3">
-              <button
-                type="submit"
-                className="inline-flex items-center gap-2 rounded-full bg-[#224F10] hover:bg-[#0D0D0D] text-[#EAFFD0] px-5 py-2.5 text-xs font-semibold transition-colors cursor-pointer shadow-xs"
-              >
-                <Save className="w-3.5 h-3.5" />
-                <span>Guardar Cambios</span>
-              </button>
-            </div>
-          </form>
-        </div>
+        <ProfileFormCard
+          key={`${currentUser?.id || 'anon'}-${currentUser?.name || ''}-${currentUser?.email || ''}-${currentUser?.phone || ''}-${currentUser?.city || ''}`}
+          currentUser={currentUser}
+          updateUser={updateUser}
+          onFeedback={setFeedback}
+        />
       </div>
     </div>
   );

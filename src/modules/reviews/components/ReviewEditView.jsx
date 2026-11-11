@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useReviewStore } from '../states/reviewStore';
+import { useAuthStore } from '../../auth/states/authStore';
 import {
   Card,
   Select,
@@ -8,40 +9,14 @@ import {
   Button,
   PageHeader,
   Alert,
+  Spinner,
 } from '../../core/design-system/ui';
 import { Save, ArrowLeft } from 'lucide-react';
 
-export function ReviewEditView() {
-  const { id } = useParams();
-  const navigate = useNavigate();
-
-  const reviews = useReviewStore((s) => s.reviews);
-  const updateReview = useReviewStore((s) => s.updateReview);
-
-  const review = reviews.find((rv) => Number(rv.id) === Number(id));
-
-  const [rating, setRating] = useState(() =>
-    review ? String(review.rating) : '5'
-  );
-  const [comment, setComment] = useState(() => review?.comment || '');
+function ReviewEditForm({ review, updateReview, navigate }) {
+  const [rating, setRating] = useState(String(review.rating ?? '5'));
+  const [comment, setComment] = useState(review.comment || '');
   const [errorMsg, setErrorMsg] = useState('');
-
-  if (!review) {
-    return (
-      <div className="max-w-xl mx-auto my-12">
-        <Alert type="error" title="Calificación no encontrada">
-          El registro solicitado no existe.
-        </Alert>
-        <Button
-          variant="secondary"
-          className="mt-4"
-          onClick={() => navigate('/reviews')}
-        >
-          Volver a Calificaciones
-        </Button>
-      </div>
-    );
-  }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -119,6 +94,71 @@ export function ReviewEditView() {
         </form>
       </Card>
     </div>
+  );
+}
+
+export function ReviewEditView() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+
+  const reviews = useReviewStore((s) => s.reviews);
+  const reviewsLoading = useReviewStore((s) => s.loading);
+  const fetchReviews = useReviewStore((s) => s.fetchReviews);
+  const updateReview = useReviewStore((s) => s.updateReview);
+  const currentUser = useAuthStore((s) => s.currentUser);
+
+  useEffect(() => {
+    fetchReviews();
+  }, [fetchReviews]);
+
+  const review = reviews.find((rv) => Number(rv.id) === Number(id));
+  const isAdmin = currentUser?.role === 'admin';
+
+  if (reviewsLoading && !review) {
+    return <Spinner label="Cargando calificación..." />;
+  }
+
+  if (!review) {
+    return (
+      <div className="max-w-xl mx-auto my-12">
+        <Alert type="error" title="Calificación no encontrada">
+          El registro solicitado no existe.
+        </Alert>
+        <Button
+          variant="secondary"
+          className="mt-4"
+          onClick={() => navigate('/reviews')}
+        >
+          Volver a Calificaciones
+        </Button>
+      </div>
+    );
+  }
+
+  if (!isAdmin && Number(currentUser?.id) !== Number(review.reviewerId)) {
+    return (
+      <div className="max-w-xl mx-auto my-12">
+        <Alert type="error" title="Sin permisos de edición">
+          Solo el autor de la reseña o un administrador puede modificarla.
+        </Alert>
+        <Button
+          variant="secondary"
+          className="mt-4"
+          onClick={() => navigate('/reviews')}
+        >
+          Volver a Calificaciones
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <ReviewEditForm
+      key={`${review.id}-${review.updatedAt || review.rating}`}
+      review={review}
+      updateReview={updateReview}
+      navigate={navigate}
+    />
   );
 }
 

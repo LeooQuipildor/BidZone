@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useReportStore } from '../states/reportStore';
 import { useAuctionStore } from '../../auctions/states/auctionStore';
@@ -18,28 +18,49 @@ export function ReportCreateView() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const preselectedAuctionId = searchParams.get('auctionId') || '';
+  const preselectedReportedUserId = searchParams.get('reportedUserId') || '';
 
   const createReport = useReportStore((s) => s.createReport);
   const auctions = useAuctionStore((s) => s.auctions);
+  const fetchAuctions = useAuctionStore((s) => s.fetchAuctions);
   const users = useAuthStore((s) => s.users);
+  const fetchUsers = useAuthStore((s) => s.fetchUsers);
   const currentUser = useAuthStore((s) => s.currentUser);
 
-  const initialAuction =
-    auctions.find((a) => String(a.id) === String(preselectedAuctionId)) ||
-    auctions[0];
+  useEffect(() => {
+    fetchAuctions();
+    fetchUsers();
+  }, [fetchAuctions, fetchUsers]);
 
-  const otherUsers = users.filter(
-    (u) => Number(u.id) !== Number(currentUser?.id)
+  const otherUsers = useMemo(
+    () => users.filter((u) => Number(u.id) !== Number(currentUser?.id)),
+    [users, currentUser?.id]
   );
 
   const [formData, setFormData] = useState({
-    auctionId: initialAuction ? String(initialAuction.id) : '',
-    reportedUserId: otherUsers[0] ? String(otherUsers[0].id) : '',
+    auctionId: preselectedAuctionId,
+    reportedUserId: preselectedReportedUserId,
     reason: 'Incumplimiento de pago en plazo acordado',
     description: '',
     evidenceUrl: '',
   });
   const [errorMsg, setErrorMsg] = useState('');
+
+  const effectiveAuctionId = auctions.some(
+    (a) => String(a.id) === String(formData.auctionId)
+  )
+    ? String(formData.auctionId)
+    : auctions[0]
+      ? String(auctions[0].id)
+      : '';
+
+  const effectiveReportedUserId = otherUsers.some(
+    (u) => String(u.id) === String(formData.reportedUserId)
+  )
+    ? String(formData.reportedUserId)
+    : otherUsers[0]
+      ? String(otherUsers[0].id)
+      : '';
 
   const handleChange = (e) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -49,10 +70,21 @@ export function ReportCreateView() {
     e.preventDefault();
     setErrorMsg('');
 
+    if (!effectiveAuctionId || !effectiveReportedUserId) {
+      setErrorMsg('Debes seleccionar una subasta y el usuario denunciado.');
+      return;
+    }
+
+    if (!formData.description.trim()) {
+      setErrorMsg('Por favor describe detalladamente los hechos del incumplimiento.');
+      return;
+    }
+
     try {
       await createReport({
         ...formData,
-        reporterId: currentUser.id,
+        auctionId: effectiveAuctionId,
+        reportedUserId: effectiveReportedUserId,
       });
       navigate('/reports');
     } catch (err) {
@@ -88,23 +120,33 @@ export function ReportCreateView() {
               id="auctionId"
               name="auctionId"
               label="Subasta Involucrada *"
-              value={formData.auctionId}
+              value={effectiveAuctionId}
               onChange={handleChange}
-              options={auctions.map((a) => ({
-                value: String(a.id),
-                label: `#${a.id} — ${a.title}`,
-              }))}
+              options={
+                auctions.length > 0
+                  ? auctions.map((a) => ({
+                      value: String(a.id),
+                      label: `#${a.id} — ${a.title}`,
+                    }))
+                  : [{ value: '', label: 'Sin subastas registradas' }]
+              }
             />
             <Select
               id="reportedUserId"
               name="reportedUserId"
               label="Usuario Denunciado *"
-              value={formData.reportedUserId}
+              value={effectiveReportedUserId}
               onChange={handleChange}
-              options={otherUsers.map((u) => ({
-                value: String(u.id),
-                label: `${u.name} (${u.email})`,
-              }))}
+              options={
+                otherUsers.length > 0
+                  ? otherUsers.map((u) => ({
+                      value: String(u.id),
+                      label: u.email
+                        ? `${u.name} (${u.email})`
+                        : `${u.name} (${u.city || 'Socio BidZone'})`,
+                    }))
+                  : [{ value: '', label: 'Sin usuarios disponibles' }]
+              }
             />
           </div>
 

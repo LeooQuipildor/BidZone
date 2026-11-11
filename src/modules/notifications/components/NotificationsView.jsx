@@ -1,28 +1,55 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNotificationStore } from '../states/notificationStore';
 import { useAuthStore } from '../../auth/states/authStore';
-import { Card, Button, Badge, PageHeader } from '../../core/design-system/ui';
+import { Card, Button, Badge, PageHeader, Alert } from '../../core/design-system/ui';
 import { formatDateTime } from '../../core/utils/formatters';
 import { Bell, CheckCheck, Trash2 } from 'lucide-react';
 
 export function NotificationsView() {
   const notifications = useNotificationStore((s) => s.notifications);
+  const notifError = useNotificationStore((s) => s.error);
   const fetchNotifications = useNotificationStore((s) => s.fetchNotifications);
   const markAsRead = useNotificationStore((s) => s.markAsRead);
   const markAllAsRead = useNotificationStore((s) => s.markAllAsRead);
   const deleteNotification = useNotificationStore((s) => s.deleteNotification);
   const currentUser = useAuthStore((s) => s.currentUser);
 
+  const [errorMsg, setErrorMsg] = useState('');
+
   useEffect(() => {
     fetchNotifications();
   }, [fetchNotifications]);
 
-  const isAdmin = currentUser?.role === 'admin';
-  const myNotifications = isAdmin
-    ? notifications
-    : notifications.filter(
-        (n) => Number(n.userId) === Number(currentUser?.id)
-      );
+  const myNotifications = notifications.filter(
+    (n) => Number(n.userId) === Number(currentUser?.id)
+  );
+
+  const handleMarkAll = async () => {
+    setErrorMsg('');
+    try {
+      await markAllAsRead();
+    } catch (err) {
+      setErrorMsg(err.message);
+    }
+  };
+
+  const handleMarkAsRead = async (id) => {
+    setErrorMsg('');
+    try {
+      await markAsRead(id);
+    } catch (err) {
+      setErrorMsg(err.message);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    setErrorMsg('');
+    try {
+      await deleteNotification(id);
+    } catch (err) {
+      setErrorMsg(err.message);
+    }
+  };
 
   return (
     <div className="space-y-8 max-w-4xl mx-auto">
@@ -34,7 +61,7 @@ export function NotificationsView() {
             <Button
               variant="secondary"
               size="sm"
-              onClick={() => markAllAsRead(currentUser.id)}
+              onClick={handleMarkAll}
             >
               <CheckCheck className="w-4 h-4" />
               Marcar todas como leídas
@@ -42,6 +69,12 @@ export function NotificationsView() {
           )
         }
       />
+
+      {(errorMsg || notifError) && (
+        <Alert type="error" onClose={() => setErrorMsg('')}>
+          {errorMsg || notifError}
+        </Alert>
+      )}
 
       {myNotifications.length === 0 ? (
         <Card className="text-center py-12 text-sm text-[#0D0D0D]/60">
@@ -81,7 +114,7 @@ export function NotificationsView() {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => markAsRead(item.id)}
+                    onClick={() => handleMarkAsRead(item.id)}
                   >
                     Marcar leída
                   </Button>
@@ -89,7 +122,7 @@ export function NotificationsView() {
                 <Button
                   variant="danger"
                   size="sm"
-                  onClick={() => deleteNotification(item.id)}
+                  onClick={() => handleDelete(item.id)}
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                 </Button>

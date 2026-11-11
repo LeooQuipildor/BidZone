@@ -17,19 +17,24 @@ import { PlusCircle, Edit3, Trash2, Gavel, ExternalLink } from 'lucide-react';
 export function BidsListView() {
   const navigate = useNavigate();
   const bids = useBidStore((s) => s.bids);
+  const bidsError = useBidStore((s) => s.error);
   const fetchBids = useBidStore((s) => s.fetchBids);
   const deleteBid = useBidStore((s) => s.deleteBid);
   const auctions = useAuctionStore((s) => s.auctions);
+  const fetchAuctions = useAuctionStore((s) => s.fetchAuctions);
   const users = useAuthStore((s) => s.users);
+  const fetchUsers = useAuthStore((s) => s.fetchUsers);
   const currentUser = useAuthStore((s) => s.currentUser);
 
   const [auctionFilter, setAuctionFilter] = useState('todas');
   const [scopeFilter, setScopeFilter] = useState('todas');
-  const [feedback, setFeedback] = useState('');
+  const [feedback, setFeedback] = useState(null);
 
   useEffect(() => {
     fetchBids();
-  }, [fetchBids]);
+    fetchAuctions();
+    fetchUsers();
+  }, [fetchBids, fetchAuctions, fetchUsers]);
 
   const isAdmin = currentUser?.role === 'admin';
 
@@ -47,8 +52,15 @@ export function BidsListView() {
       `¿Confirmas eliminar el registro de puja #${bid.id} por ${formatCurrency(bid.amount)}?`
     );
     if (!confirmed) return;
-    await deleteBid(bid.id);
-    setFeedback(`Puja #${bid.id} eliminada y precio de subasta recalculado.`);
+    try {
+      await deleteBid(bid.id);
+      setFeedback({
+        type: 'success',
+        text: `Puja #${bid.id} eliminada y precio de subasta recalculado.`,
+      });
+    } catch (err) {
+      setFeedback({ type: 'error', text: err.message });
+    }
   };
 
   return (
@@ -65,9 +77,13 @@ export function BidsListView() {
       />
 
       {feedback && (
-        <Alert type="success" onClose={() => setFeedback('')}>
-          {feedback}
+        <Alert type={feedback.type} onClose={() => setFeedback(null)}>
+          {feedback.text}
         </Alert>
+      )}
+
+      {!feedback && bidsError && (
+        <Alert type="error">{bidsError}</Alert>
       )}
 
       <Card className="p-5">
@@ -126,22 +142,22 @@ export function BidsListView() {
                     <Badge variant={isTop ? 'lime' : 'default'}>
                       {isTop ? 'Oferta Líder / Ganadora' : `Puja #${bid.id}`}
                     </Badge>
-                    <Link
-                      to={`/auctions/${bid.auctionId}`}
-                      className="font-serif-display text-2xl font-semibold text-[#0D0D0D] hover:text-[#224F10] flex items-center gap-1.5"
-                    >
-                      <Gavel className="w-4 h-4 text-[#224F10]" />
-                      {auction?.title || `Subasta #${bid.auctionId}`}
-                      <ExternalLink className="w-3.5 h-3.5 opacity-50" />
-                    </Link>
-                  </div>
-                  <p className="text-xs text-[#0D0D0D]/75">
-                    Postor:{' '}
-                    <strong className="text-[#0D0D0D]">
-                      {bidder?.name || `Usuario #${bid.bidderId}`}
-                    </strong>{' '}
-                    · Nota: &ldquo;{bid.note || 'Sin nota adicional'}&rdquo;
-                  </p>
+                      <Link
+                        to={`/auctions/${bid.auctionId}`}
+                        className="font-serif-display text-2xl font-semibold text-[#0D0D0D] hover:text-[#224F10] flex items-center gap-1.5"
+                      >
+                        <Gavel className="w-4 h-4 text-[#224F10]" />
+                        {auction?.title || bid.auctionTitle || `Subasta #${bid.auctionId}`}
+                        <ExternalLink className="w-3.5 h-3.5 opacity-50" />
+                      </Link>
+                    </div>
+                    <p className="text-xs text-[#0D0D0D]/75">
+                      Postor:{' '}
+                      <strong className="text-[#0D0D0D]">
+                        {bidder?.name || bid.bidderName || `Usuario #${bid.bidderId}`}
+                      </strong>{' '}
+                      · Nota: &ldquo;{bid.note || 'Sin nota adicional'}&rdquo;
+                    </p>
                   <p className="text-[11px] text-[#0D0D0D]/55">
                     Fecha: {formatDateTime(bid.createdAt)} · Compromiso RN04 aceptado
                   </p>

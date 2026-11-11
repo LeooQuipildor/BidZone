@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../auth/states/authStore';
 import { useNotificationStore } from '../../notifications/states/notificationStore';
@@ -17,8 +17,22 @@ export function Layout({ children }) {
   const navigate = useNavigate();
   const location = useLocation();
   const currentUser = useAuthStore((s) => s.currentUser);
+  const checkSession = useAuthStore((s) => s.checkSession);
   const logout = useAuthStore((s) => s.logout);
   const notifications = useNotificationStore((s) => s.notifications);
+  const fetchNotifications = useNotificationStore((s) => s.fetchNotifications);
+
+  useEffect(() => {
+    if (localStorage.getItem('bidzone_token')) {
+      checkSession();
+    }
+  }, [checkSession]);
+
+  useEffect(() => {
+    if (currentUser?.id) {
+      fetchNotifications();
+    }
+  }, [currentUser?.id, fetchNotifications]);
 
   const isHome = location.pathname === '/';
   const isDashboard = [
@@ -34,7 +48,7 @@ export function Layout({ children }) {
     ? notifications.filter(
         (n) => Number(n.userId) === Number(currentUser.id) && !n.read
       ).length
-    : 1;
+    : 0;
 
   const navItems = [
     { to: '/', label: 'Inicio', public: true },

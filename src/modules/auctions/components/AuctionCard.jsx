@@ -1,7 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useBidStore } from "../../bids/states/bidStore";
-import { formatCurrency, getRemainingTime } from "../../core/utils/formatters";
+import {
+  DEFAULT_AUCTION_IMAGE_URL,
+  formatCurrency,
+  getRemainingTime,
+} from "../../core/utils/formatters";
 import { Clock, ArrowUpRight, Edit3, Trash2 } from "lucide-react";
 import { Button } from "../../core/design-system/ui";
 
@@ -29,6 +33,10 @@ export function AuctionCard({
   const sellerBids = bids.filter(
     (b) => Number(b.auctionId) === Number(auction.id),
   );
+  const bidCount =
+    auction.bidCount !== undefined
+      ? Number(auction.bidCount)
+      : sellerBids.length;
 
   const isLive = auction.status === "activa" && !remaining.expired;
 
@@ -41,7 +49,7 @@ export function AuctionCard({
         {/* Top Image Container with Reduced Margins */}
         <div className="relative w-full aspect-[4/3] rounded-[20px] overflow-hidden bg-neutral-100">
           <img
-            src={auction.imageUrl}
+            src={auction.imageUrl || DEFAULT_AUCTION_IMAGE_URL}
             alt={auction.title}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             loading="lazy"
@@ -81,7 +89,7 @@ export function AuctionCard({
           </div>
 
           <p className="text-xs text-neutral-400 font-normal truncate">
-            {sellerBids.length} {sellerBids.length === 1 ? "oferta" : "ofertas"}
+            {bidCount} {bidCount === 1 ? "oferta" : "ofertas"}
           </p>
         </div>
       </div>

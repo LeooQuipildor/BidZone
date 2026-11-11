@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useReportStore } from '../states/reportStore';
 import { useAuthStore } from '../../auth/states/authStore';
@@ -10,51 +10,22 @@ import {
   Button,
   PageHeader,
   Alert,
+  Spinner,
 } from '../../core/design-system/ui';
 import { Save, ArrowLeft, ShieldAlert } from 'lucide-react';
 
-export function ReportEditView() {
-  const { id } = useParams();
-  const navigate = useNavigate();
-
-  const reports = useReportStore((s) => s.reports);
-  const updateReport = useReportStore((s) => s.updateReport);
-  const currentUser = useAuthStore((s) => s.currentUser);
-  const users = useAuthStore((s) => s.users);
-
-  const report = reports.find((r) => Number(r.id) === Number(id));
-  const isAdmin = currentUser?.role === 'admin';
-
-  const [formData, setFormData] = useState(() => ({
-    reason: report?.reason || '',
-    description: report?.description || '',
-    evidenceUrl: report?.evidenceUrl || '',
-    status: report?.status || 'en_revision',
-    sanctionApplied: report?.sanctionApplied || '',
+function ReportEditForm({ report, reportedUser, isAdmin, updateReport, navigate }) {
+  const [formData, setFormData] = useState({
+    reason: report.reason || '',
+    description: report.description || '',
+    evidenceUrl: report.evidenceUrl || '',
+    status: report.status || 'en_revision',
+    sanctionApplied: report.sanctionApplied || '',
     accountAction: 'none',
-  }));
+  });
   const [errorMsg, setErrorMsg] = useState('');
 
-  if (!report) {
-    return (
-      <div className="max-w-xl mx-auto my-12">
-        <Alert type="error" title="Reporte no encontrado">
-          El expediente solicitado no existe.
-        </Alert>
-        <Button
-          variant="secondary"
-          className="mt-4"
-          onClick={() => navigate('/reports')}
-        >
-          Volver a Reportes
-        </Button>
-      </div>
-    );
-  }
-
-  const reportedUser = users.find(
-    (u) => Number(u.id) === Number(report.reportedUserId)
-  );
+  const isLockedForReporter = !isAdmin && report.status !== 'en_revision';
 
   const handleChange = (e) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -64,19 +35,35 @@ export function ReportEditView() {
     e.preventDefault();
     setErrorMsg('');
 
+    const payload = isAdmin
+      ? formData
+      : {
+          reason: formData.reason,
+          description: formData.description,
+          evidenceUrl: formData.evidenceUrl,
+        };
+
     try {
-      await updateReport(report.id, formData);
+      await updateReport(report.id, payload);
       navigate('/reports');
     } catch (err) {
       setErrorMsg(err.message);
     }
   };
 
+  const reportedStatus = reportedUser?.status
+    ? `Estado actual: ${reportedUser.status}`
+    : 'En evaluación';
+
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <PageHeader
         title={`Expediente de reporte #${report.id}`}
-        subtitle={`Usuario denunciado: ${reportedUser?.name || `#${report.reportedUserId}`} (Estado actual: ${reportedUser?.status || 'active'})`}
+        subtitle={`Usuario denunciado: ${
+          reportedUser?.name ||
+          report.reportedUserName ||
+          `#${report.reportedUserId}`
+        } (${reportedStatus})`}
         action={
           <Button variant="outline" onClick={() => navigate('/reports')}>
             <ArrowLeft className="w-4 h-4" />
@@ -84,6 +71,12 @@ export function ReportEditView() {
           </Button>
         }
       />
+
+      {isLockedForReporter && (
+        <Alert type="warning" title="Expediente cerrado para edición">
+          Este expediente ya fue resuelto por moderación y no admite cambios del denunciante.
+        </Alert>
+      )}
 
       <Card className="p-6 sm:p-8 rounded-3xl">
         {errorMsg && (
@@ -99,6 +92,7 @@ export function ReportEditView() {
             id="reason"
             name="reason"
             label="Motivo del Reclamo *"
+            disabled={isLockedForReporter}
             value={formData.reason}
             onChange={handleChange}
           />
@@ -107,6 +101,7 @@ export function ReportEditView() {
             id="evidenceUrl"
             name="evidenceUrl"
             label="Enlace de Evidencia"
+            disabled={isLockedForReporter}
             value={formData.evidenceUrl}
             onChange={handleChange}
           />
@@ -115,6 +110,7 @@ export function ReportEditView() {
             id="description"
             name="description"
             label="Descripción del Caso *"
+            disabled={isLockedForReporter}
             value={formData.description}
             onChange={handleChange}
           />
@@ -182,13 +178,90 @@ export function ReportEditView() {
             <Button variant="ghost" onClick={() => navigate('/reports')}>
               Cancelar
             </Button>
-            <Button type="submit">
-              <Save className="w-4 h-4" />
-              Guardar Expediente
-            </Button>
+            {!isLockedForReporter && (
+              <Button type="submit">
+                <Save className="w-4 h-4" />
+                Guardar Expediente
+              </Button>
+            )}
           </div>
         </form>
       </Card>
     </div>
+  );
+}
+
+export function ReportEditView() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+
+  const reports = useReportStore((s) => s.reports);
+  const reportsLoading = useReportStore((s) => s.loading);
+  const fetchReports = useReportStore((s) => s.fetchReports);
+  const updateReport = useReportStore((s) => s.updateReport);
+  const currentUser = useAuthStore((s) => s.currentUser);
+  const users = useAuthStore((s) => s.users);
+  const fetchUsers = useAuthStore((s) => s.fetchUsers);
+
+  useEffect(() => {
+    fetchReports();
+    fetchUsers();
+  }, [fetchReports, fetchUsers]);
+
+  const report = reports.find((r) => Number(r.id) === Number(id));
+  const isAdmin = currentUser?.role === 'admin';
+
+  if (reportsLoading && !report) {
+    return <Spinner label="Cargando expediente..." />;
+  }
+
+  if (!report) {
+    return (
+      <div className="max-w-xl mx-auto my-12">
+        <Alert type="error" title="Reporte no encontrado">
+          El expediente solicitado no existe o no tienes acceso para consultarlo.
+        </Alert>
+        <Button
+          variant="secondary"
+          className="mt-4"
+          onClick={() => navigate('/reports')}
+        >
+          Volver a Reportes
+        </Button>
+      </div>
+    );
+  }
+
+  const isReporter = Number(currentUser?.id) === Number(report.reporterId);
+  if (!isAdmin && !isReporter) {
+    return (
+      <div className="max-w-xl mx-auto my-12">
+        <Alert type="error" title="Sin permisos de edición">
+          Solo el denunciante original o un administrador puede modificar este reporte.
+        </Alert>
+        <Button
+          variant="secondary"
+          className="mt-4"
+          onClick={() => navigate('/reports')}
+        >
+          Volver a Reportes
+        </Button>
+      </div>
+    );
+  }
+
+  const reportedUser = users.find(
+    (u) => Number(u.id) === Number(report.reportedUserId)
+  );
+
+  return (
+    <ReportEditForm
+      key={`${report.id}-${report.updatedAt || report.status}`}
+      report={report}
+      reportedUser={reportedUser}
+      isAdmin={isAdmin}
+      updateReport={updateReport}
+      navigate={navigate}
+    />
   );
 }

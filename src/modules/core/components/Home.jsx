@@ -23,6 +23,7 @@ import {
 export function Home() {
   const navigate = useNavigate();
   const auctions = useAuctionStore((s) => s.auctions);
+  const auctionsError = useAuctionStore((s) => s.error);
   const fetchAuctions = useAuctionStore((s) => s.fetchAuctions);
   const setFilters = useAuctionStore((s) => s.setFilters);
 
@@ -348,6 +349,12 @@ export function Home() {
         </div>
 
         {/* 4-Column Catalog Grid + Final Dark Green Summary Card (matching bottom-left of reference image) */}
+        {auctionsError && auctions.length === 0 && (
+          <div className="rounded-2xl bg-red-50 border border-red-200 px-4 py-3 text-xs text-red-800 font-medium">
+            {auctionsError}
+          </div>
+        )}
+
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {filteredCatalog.slice(0, 7).map((auction) => (
             <AuctionCard key={auction.id} auction={auction} />

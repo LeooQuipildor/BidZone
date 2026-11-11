@@ -20,13 +20,14 @@ import {
 export function AuctionsListView() {
   const navigate = useNavigate();
   const auctions = useAuctionStore((s) => s.auctions);
+  const auctionsError = useAuctionStore((s) => s.error);
   const filters = useAuctionStore((s) => s.filters);
   const setFilters = useAuctionStore((s) => s.setFilters);
   const fetchAuctions = useAuctionStore((s) => s.fetchAuctions);
   const deleteAuction = useAuctionStore((s) => s.deleteAuction);
   const currentUser = useAuthStore((s) => s.currentUser);
 
-  const [feedback, setFeedback] = useState('');
+  const [feedback, setFeedback] = useState(null);
 
   useEffect(() => {
     fetchAuctions();
@@ -44,9 +45,10 @@ export function AuctionsListView() {
 
   const filtered = auctions
     .filter((a) => {
+      const searchLower = filters.search.toLowerCase();
       const matchSearch =
-        a.title.toLowerCase().includes(filters.search.toLowerCase()) ||
-        a.description.toLowerCase().includes(filters.search.toLowerCase());
+        (a.title || '').toLowerCase().includes(searchLower) ||
+        (a.description || '').toLowerCase().includes(searchLower);
       const matchCategory =
         filters.category === 'Todas' || a.category === filters.category;
       const matchStatus =
@@ -66,8 +68,19 @@ export function AuctionsListView() {
       `¿Confirmas la eliminación de la subasta "${auction.title}"?`
     );
     if (!confirmed) return;
-    await deleteAuction(auction.id);
-    setFeedback(`Subasta "${auction.title}" eliminada exitosamente.`);
+    setFeedback(null);
+    try {
+      await deleteAuction(auction.id);
+      setFeedback({
+        type: 'success',
+        text: `Subasta "${auction.title}" eliminada exitosamente.`,
+      });
+    } catch (err) {
+      setFeedback({
+        type: 'error',
+        text: err.message,
+      });
+    }
   };
 
   return (
@@ -85,9 +98,12 @@ export function AuctionsListView() {
         }
       />
 
-      {feedback && (
-        <Alert type="success" onClose={() => setFeedback('')}>
-          {feedback}
+      {(feedback || auctionsError) && (
+        <Alert
+          type={feedback?.type || 'error'}
+          onClose={() => setFeedback(null)}
+        >
+          {feedback?.text || auctionsError}
         </Alert>
       )}
 
@@ -127,6 +143,7 @@ export function AuctionsListView() {
                 { value: 'todas', label: 'Todas las subastas' },
                 { value: 'activa', label: 'En vivo (Activas)' },
                 { value: 'finalizada', label: 'Finalizadas' },
+                { value: 'cancelada', label: 'Canceladas' },
               ]}
             />
             <Select

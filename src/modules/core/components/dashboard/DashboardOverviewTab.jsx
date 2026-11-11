@@ -69,8 +69,8 @@ export function DashboardOverviewTab({
     .filter(
       (a) =>
         !normalizedQuery ||
-        a.title.toLowerCase().includes(normalizedQuery) ||
-        a.category.toLowerCase().includes(normalizedQuery)
+        (a.title || '').toLowerCase().includes(normalizedQuery) ||
+        (a.category || '').toLowerCase().includes(normalizedQuery)
     )
     .slice(0, 5);
 
@@ -78,8 +78,8 @@ export function DashboardOverviewTab({
     .filter(
       (u) =>
         !normalizedQuery ||
-        u.name.toLowerCase().includes(normalizedQuery) ||
-        u.email.toLowerCase().includes(normalizedQuery) ||
+        (u.name || '').toLowerCase().includes(normalizedQuery) ||
+        (u.email || '').toLowerCase().includes(normalizedQuery) ||
         (u.city || '').toLowerCase().includes(normalizedQuery)
     )
     .slice(0, 4);
@@ -89,9 +89,9 @@ export function DashboardOverviewTab({
     const seller = users.find((u) => Number(u.id) === Number(deal.sellerId));
     const winner = users.find((u) => Number(u.id) === Number(deal.winnerId));
     return (
-      deal.title.toLowerCase().includes(normalizedQuery) ||
-      (seller?.name || '').toLowerCase().includes(normalizedQuery) ||
-      (winner?.name || '').toLowerCase().includes(normalizedQuery)
+      (deal.title || '').toLowerCase().includes(normalizedQuery) ||
+      (seller?.name || deal.sellerName || '').toLowerCase().includes(normalizedQuery) ||
+      (winner?.name || deal.winnerName || '').toLowerCase().includes(normalizedQuery)
     );
   });
 
@@ -746,19 +746,19 @@ export function DashboardOverviewTab({
                         Dueño del Artículo
                       </p>
                       <p className="font-semibold text-[#0D0D0D]">
-                        {seller?.name || 'Vendedor'}
+                        {seller?.name || deal.sellerName || 'Vendedor'}
                       </p>
                       <p className="flex items-center gap-1.5 text-[#0D0D0D]/75">
                         <Phone className="w-3 h-3 text-[#224F10]" />
-                        {seller?.phone}
+                        {seller?.phone || 'Sin teléfono'}
                       </p>
                       <p className="flex items-center gap-1.5 text-[#0D0D0D]/75 truncate">
                         <Mail className="w-3 h-3 text-[#224F10]" />
-                        {seller?.email}
+                        {seller?.email || 'Privado (RN05)'}
                       </p>
                       <p className="flex items-center gap-1.5 text-[#0D0D0D]/75">
                         <MapPin className="w-3 h-3 text-[#224F10]" />
-                        {seller?.city}
+                        {seller?.city || 'Argentina'}
                       </p>
                     </div>
 
@@ -767,19 +767,19 @@ export function DashboardOverviewTab({
                         Ganador Adjudicado
                       </p>
                       <p className="font-semibold text-[#0D0D0D]">
-                        {winner?.name || 'Comprador'}
+                        {winner?.name || deal.winnerName || 'Comprador'}
                       </p>
                       <p className="flex items-center gap-1.5 text-[#0D0D0D]/75">
                         <Phone className="w-3 h-3 text-[#224F10]" />
-                        {winner?.phone}
+                        {winner?.phone || 'Sin teléfono'}
                       </p>
                       <p className="flex items-center gap-1.5 text-[#0D0D0D]/75 truncate">
                         <Mail className="w-3 h-3 text-[#224F10]" />
-                        {winner?.email}
+                        {winner?.email || 'Privado (RN05)'}
                       </p>
                       <p className="flex items-center gap-1.5 text-[#0D0D0D]/75">
                         <MapPin className="w-3 h-3 text-[#224F10]" />
-                        {winner?.city}
+                        {winner?.city || 'Argentina'}
                       </p>
                     </div>
                   </div>

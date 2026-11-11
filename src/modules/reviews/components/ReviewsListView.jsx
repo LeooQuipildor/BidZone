@@ -16,17 +16,22 @@ import { Star, PlusCircle, Edit3, Trash2 } from 'lucide-react';
 export function ReviewsListView() {
   const navigate = useNavigate();
   const reviews = useReviewStore((s) => s.reviews);
+  const reviewsError = useReviewStore((s) => s.error);
   const fetchReviews = useReviewStore((s) => s.fetchReviews);
   const deleteReview = useReviewStore((s) => s.deleteReview);
   const auctions = useAuctionStore((s) => s.auctions);
+  const fetchAuctions = useAuctionStore((s) => s.fetchAuctions);
   const users = useAuthStore((s) => s.users);
+  const fetchUsers = useAuthStore((s) => s.fetchUsers);
   const currentUser = useAuthStore((s) => s.currentUser);
 
-  const [feedback, setFeedback] = useState('');
+  const [feedback, setFeedback] = useState(null);
 
   useEffect(() => {
     fetchReviews();
-  }, [fetchReviews]);
+    fetchAuctions();
+    fetchUsers();
+  }, [fetchReviews, fetchAuctions, fetchUsers]);
 
   const isAdmin = currentUser?.role === 'admin';
 
@@ -35,8 +40,15 @@ export function ReviewsListView() {
       `¿Confirmas eliminar la calificación #${rv.id}?`
     );
     if (!confirmed) return;
-    await deleteReview(rv.id);
-    setFeedback(`Calificación #${rv.id} eliminada y reputación recalculada.`);
+    try {
+      await deleteReview(rv.id);
+      setFeedback({
+        type: 'success',
+        text: `Calificación #${rv.id} eliminada y reputación recalculada.`,
+      });
+    } catch (err) {
+      setFeedback({ type: 'error', text: err.message });
+    }
   };
 
   return (
@@ -53,10 +65,12 @@ export function ReviewsListView() {
       />
 
       {feedback && (
-        <Alert type="success" onClose={() => setFeedback('')}>
-          {feedback}
+        <Alert type={feedback.type} onClose={() => setFeedback(null)}>
+          {feedback.text}
         </Alert>
       )}
+
+      {!feedback && reviewsError && <Alert type="error">{reviewsError}</Alert>}
 
       {reviews.length === 0 ? (
         <Card className="text-center py-12 text-sm text-[#0D0D0D]/60">
@@ -111,13 +125,17 @@ export function ReviewsListView() {
                     <p>
                       Calificado:{' '}
                       <strong className="text-[#224F10]">
-                        {target?.name || `Usuario #${rv.targetUserId}`}
+                        {target?.name ||
+                          rv.targetUserName ||
+                          `Usuario #${rv.targetUserId}`}
                       </strong>
                     </p>
                     <p>
                       Autor:{' '}
                       <strong className="text-[#0D0D0D]">
-                        {reviewer?.name || `Usuario #${rv.reviewerId}`}
+                        {reviewer?.name ||
+                          rv.reviewerName ||
+                          `Usuario #${rv.reviewerId}`}
                       </strong>
                     </p>
                     <p>
@@ -126,7 +144,9 @@ export function ReviewsListView() {
                         to={`/auctions/${rv.auctionId}`}
                         className="underline hover:text-[#224F10]"
                       >
-                        {auction?.title || `Subasta #${rv.auctionId}`}
+                        {auction?.title ||
+                          rv.auctionTitle ||
+                          `Subasta #${rv.auctionId}`}
                       </Link>
                     </p>
                   </div>
@@ -136,21 +156,21 @@ export function ReviewsListView() {
                   <span>{formatDateTime(rv.createdAt)}</span>
                   <div className="flex items-center gap-2">
                     {canEdit && (
-                      <Link to={`/reviews/${rv.id}/edit`}>
-                        <Button variant="secondary" size="sm">
-                          <Edit3 className="w-3.5 h-3.5" />
-                          Editar
+                      <>
+                        <Link to={`/reviews/${rv.id}/edit`}>
+                          <Button variant="secondary" size="sm">
+                            <Edit3 className="w-3.5 h-3.5" />
+                            Editar
+                          </Button>
+                        </Link>
+                        <Button
+                          variant="danger"
+                          size="sm"
+                          onClick={() => handleDelete(rv)}
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
                         </Button>
-                      </Link>
-                    )}
-                    {isAdmin && (
-                      <Button
-                        variant="danger"
-                        size="sm"
-                        onClick={() => handleDelete(rv)}
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </Button>
+                      </>
                     )}
                   </div>
                 </div>

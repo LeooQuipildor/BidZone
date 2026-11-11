@@ -1,112 +1,101 @@
 import { create } from 'zustand';
-import { loadLocalDb, saveLocalDb, httpRequest } from '../../core/lib/apiClient';
+import { httpRequest, registerSessionReset } from '../../core/lib/apiClient';
 import { useAuthStore } from '../../auth/states/authStore';
+import { useNotificationStore } from '../../notifications/states/notificationStore';
 
 export const useReportStore = create((set) => ({
-  reports: loadLocalDb().reports,
+  reports: [],
   loading: false,
   error: null,
 
   fetchReports: async () => {
+    if (!localStorage.getItem('bidzone_token')) {
+      set({ reports: [], loading: false });
+      return [];
+    }
     set({ loading: true, error: null });
     try {
       const data = await httpRequest('/reports');
       set({ reports: data, loading: false });
       return data;
-    } catch {
-      const db = loadLocalDb();
-      set({ reports: db.reports, loading: false });
-      return db.reports;
+    } catch (err) {
+      set({ loading: false, error: err.message });
+      return [];
     }
   },
 
   createReport: async (payload) => {
-    const db = loadLocalDb();
-
-    if (!payload.auctionId)
-      throw new Error('Debes seleccionar la subasta involucrada.');
-    if (!payload.reportedUserId)
-      throw new Error('Debes indicar el usuario denunciado.');
-    if (!payload.reason?.trim())
-      throw new Error('El motivo del reclamo es obligatorio.');
-    if (!payload.description?.trim())
-      throw new Error('La descripción detallada del incumplimiento es obligatoria.');
-
-    const newReport = {
-      id: Date.now(),
-      auctionId: Number(payload.auctionId),
-      reporterId: Number(payload.reporterId),
-      reportedUserId: Number(payload.reportedUserId),
-      reason: payload.reason.trim(),
-      description: payload.description.trim(),
-      evidenceUrl: payload.evidenceUrl?.trim() || '',
-      status: payload.status || 'en_revision',
-      sanctionApplied: payload.sanctionApplied || 'Pendiente de evaluación',
-      createdAt: new Date().toISOString(),
-    };
-
-    db.reports.unshift(newReport);
-
-    db.notifications.unshift({
-      id: Date.now() + 1,
-      userId: Number(payload.reportedUserId),
-      title: 'Nuevo reporte de incumplimiento registrado',
-      message: `Se ha abierto un expediente de mediación (#${newReport.id}) por "${newReport.reason}".`,
-      type: 'report',
-      read: false,
-      createdAt: new Date().toISOString(),
-    });
-
-    saveLocalDb(db);
-    set({ reports: db.reports });
-    return newReport;
+    set({ error: null });
+    try {
+      const created = await httpRequest('/reports', {
+        method: 'POST',
+        body: JSON.stringify({
+          auctionId: Number(payload.auctionId),
+          reportedUserId: Number(payload.reportedUserId),
+          reason: payload.reason?.trim(),
+          description: payload.description?.trim(),
+          evidenceUrl: payload.evidenceUrl?.trim() || '',
+        }),
+      });
+      set((state) => ({ reports: [created, ...state.reports] }));
+      return created;
+    } catch (err) {
+      set({ error: err.message });
+      throw err;
+    }
   },
 
   updateReport: async (id, updates) => {
-    const db = loadLocalDb();
-    const idx = db.reports.findIndex((r) => Number(r.id) === Number(id));
-    if (idx === -1) throw new Error('Reporte no encontrado.');
-
-    const updated = {
-      ...db.reports[idx],
-      ...updates,
-      id: db.reports[idx].id,
-    };
-    db.reports[idx] = updated;
-
-    // RN06: Si se aplica sanción o cierre de cuenta al usuario infractor
-    if (
-      updates.status === 'resuelto_sancion' ||
-      updates.accountAction === 'suspend' ||
-      updates.accountAction === 'close'
-    ) {
-      const userIdx = db.users.findIndex(
-        (u) => Number(u.id) === Number(updated.reportedUserId)
-      );
-      if (userIdx !== -1) {
-        db.users[userIdx].status =
-          updates.accountAction === 'close' ? 'closed' : 'suspended';
+    set({ error: null });
+    try {
+      const body = {};
+      if (updates.reason !== undefined) body.reason = updates.reason;
+      if (updates.description !== undefined) body.description = updates.description;
+      if (updates.evidenceUrl !== undefined) body.evidenceUrl = updates.evidenceUrl;
+      if (updates.status !== undefined) body.status = updates.status;
+      if (updates.sanctionApplied !== undefined) {
+        body.sanctionApplied = updates.sanctionApplied;
       }
-    } else if (updates.accountAction === 'activate') {
-      const userIdx = db.users.findIndex(
-        (u) => Number(u.id) === Number(updated.reportedUserId)
-      );
-      if (userIdx !== -1) {
-        db.users[userIdx].status = 'active';
+      if (updates.accountAction !== undefined) {
+        body.accountAction = updates.accountAction;
       }
+
+      const updated = await httpRequest(`/reports/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(body),
+      });
+
+      set((state) => ({
+        reports: state.reports.map((r) =>
+          Number(r.id) === Number(id) ? updated : r
+        ),
+      }));
+
+      await useAuthStore.getState().fetchUsers();
+      if (localStorage.getItem('bidzone_token')) {
+        await useNotificationStore.getState().fetchNotifications();
+      }
+      return updated;
+    } catch (err) {
+      set({ error: err.message });
+      throw err;
     }
-
-    saveLocalDb(db);
-    set({ reports: db.reports });
-    useAuthStore.getState().fetchUsers();
-    return updated;
   },
 
   deleteReport: async (id) => {
-    const db = loadLocalDb();
-    db.reports = db.reports.filter((r) => Number(r.id) !== Number(id));
-    saveLocalDb(db);
-    set({ reports: db.reports });
+    set({ error: null });
+    try {
+      await httpRequest(`/reports/${id}`, { method: 'DELETE' });
+      set((state) => ({
+        reports: state.reports.filter((r) => Number(r.id) !== Number(id)),
+      }));
+    } catch (err) {
+      set({ error: err.message });
+      throw err;
+    }
   },
 }));
 
+registerSessionReset(() => {
+  useReportStore.setState({ reports: [], error: null, loading: false });
+});

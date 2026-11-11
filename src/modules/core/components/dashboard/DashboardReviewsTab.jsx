@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useReviewStore } from '../../../reviews/states/reviewStore';
 import { formatDateTime } from '../../utils/formatters';
@@ -13,6 +13,31 @@ import {
   Save,
 } from 'lucide-react';
 
+function deriveReviewTarget(auction, currentUserId, otherUsers) {
+  if (!auction) {
+    return {
+      targetUserId: otherUsers[0] ? String(otherUsers[0].id) : '',
+      roleContext: 'comprador_a_vendedor',
+    };
+  }
+  if (Number(auction.winnerId) === Number(currentUserId)) {
+    return {
+      targetUserId: String(auction.sellerId),
+      roleContext: 'comprador_a_vendedor',
+    };
+  }
+  if (Number(auction.sellerId) === Number(currentUserId)) {
+    return {
+      targetUserId: String(auction.winnerId),
+      roleContext: 'vendedor_a_comprador',
+    };
+  }
+  return {
+    targetUserId: String(auction.sellerId || otherUsers[0]?.id || ''),
+    roleContext: 'comprador_a_vendedor',
+  };
+}
+
 export function DashboardReviewsTab({
   currentUser,
   users,
@@ -26,25 +51,71 @@ export function DashboardReviewsTab({
   const deleteReview = useReviewStore((s) => s.deleteReview);
 
   const isAdmin = currentUser?.role === 'admin';
-  const closedAuctions = auctions.filter((a) => a.status === 'finalizada');
-  const otherUsers = users.filter(
-    (u) => Number(u.id) !== Number(currentUser?.id)
+
+  const eligibleClosedAuctions = useMemo(
+    () =>
+      auctions.filter((a) => {
+        if (a.status !== 'finalizada' || !a.winnerId) return false;
+        if (isAdmin) return true;
+        return (
+          Number(a.winnerId) === Number(currentUser?.id) ||
+          Number(a.sellerId) === Number(currentUser?.id)
+        );
+      }),
+    [auctions, isAdmin, currentUser?.id]
+  );
+
+  const otherUsers = useMemo(
+    () => users.filter((u) => Number(u.id) !== Number(currentUser?.id)),
+    [users, currentUser?.id]
   );
 
   const [feedback, setFeedback] = useState(null);
   const [formOpen, setFormOpen] = useState(Boolean(prefill?.openCreate));
   const [editingReviewId, setEditingReviewId] = useState(null);
 
+  const initialAuction =
+    eligibleClosedAuctions.find(
+      (a) => String(a.id) === String(prefill?.auctionId)
+    ) || eligibleClosedAuctions[0];
+  const initialDerived = deriveReviewTarget(
+    initialAuction,
+    currentUser?.id,
+    otherUsers
+  );
+
   const [formData, setFormData] = useState(() => ({
     auctionId:
-      prefill?.auctionId ||
-      (closedAuctions[0] ? String(closedAuctions[0].id) : ''),
-    targetUserId:
-      prefill?.targetUserId || (otherUsers[0] ? String(otherUsers[0].id) : ''),
+      prefill?.auctionId || (initialAuction ? String(initialAuction.id) : ''),
+    targetUserId: prefill?.targetUserId || initialDerived.targetUserId,
     rating: '5',
-    roleContext: 'comprador_a_vendedor',
+    roleContext: initialDerived.roleContext,
     comment: '',
   }));
+
+  const selectedAuction = editingReviewId
+    ? null
+    : eligibleClosedAuctions.find(
+        (a) => String(a.id) === String(formData.auctionId)
+      ) ||
+      eligibleClosedAuctions[0] ||
+      null;
+  const effectiveDerived = deriveReviewTarget(
+    selectedAuction,
+    currentUser?.id,
+    otherUsers
+  );
+  const effectiveAuctionId = editingReviewId
+    ? formData.auctionId
+    : selectedAuction
+      ? String(selectedAuction.id)
+      : '';
+  const effectiveTargetUserId = editingReviewId
+    ? formData.targetUserId
+    : formData.targetUserId || effectiveDerived.targetUserId;
+  const effectiveRoleContext = editingReviewId
+    ? formData.roleContext
+    : formData.roleContext || effectiveDerived.roleContext;
 
   const fiveStarCount = reviews.filter((r) => Number(r.rating) === 5).length;
 
@@ -62,20 +133,22 @@ export function DashboardReviewsTab({
       (a) => Number(a.id) === Number(rv.auctionId)
     );
     return (
-      rv.comment.toLowerCase().includes(normalizedQuery) ||
-      (target?.name || '').toLowerCase().includes(normalizedQuery) ||
-      (reviewer?.name || '').toLowerCase().includes(normalizedQuery) ||
-      (auction?.title || '').toLowerCase().includes(normalizedQuery)
+      (rv.comment || '').toLowerCase().includes(normalizedQuery) ||
+      (target?.name || rv.targetUserName || '').toLowerCase().includes(normalizedQuery) ||
+      (reviewer?.name || rv.reviewerName || '').toLowerCase().includes(normalizedQuery) ||
+      (auction?.title || rv.auctionTitle || '').toLowerCase().includes(normalizedQuery)
     );
   });
 
   const openCreateForm = () => {
     setEditingReviewId(null);
+    const first = eligibleClosedAuctions[0];
+    const derived = deriveReviewTarget(first, currentUser?.id, otherUsers);
     setFormData({
-      auctionId: closedAuctions[0] ? String(closedAuctions[0].id) : '',
-      targetUserId: otherUsers[0] ? String(otherUsers[0].id) : '',
+      auctionId: first ? String(first.id) : '',
+      targetUserId: derived.targetUserId,
       rating: '5',
-      roleContext: 'comprador_a_vendedor',
+      roleContext: derived.roleContext,
       comment: '',
     });
     setFormOpen(true);
@@ -118,9 +191,19 @@ export function DashboardReviewsTab({
           text: `Calificación #${editingReviewId} actualizada y reputación recalculada.`,
         });
       } else {
+        if (!effectiveAuctionId) {
+          setFeedback({
+            type: 'error',
+            text: 'Debes seleccionar una subasta finalizada elegible.',
+          });
+          return;
+        }
         await createReview({
-          ...formData,
-          reviewerId: currentUser.id,
+          auctionId: effectiveAuctionId,
+          targetUserId: effectiveTargetUserId,
+          rating: Number(formData.rating),
+          roleContext: effectiveRoleContext,
+          comment: formData.comment.trim(),
         });
         setFeedback({
           type: 'success',
@@ -139,12 +222,21 @@ export function DashboardReviewsTab({
       `¿Confirmas eliminar la calificación #${rv.id}?`
     );
     if (!confirmed) return;
-    await deleteReview(rv.id);
-    setFeedback({
-      type: 'success',
-      text: `Calificación #${rv.id} eliminada y reputación recalculada.`,
-    });
+    try {
+      await deleteReview(rv.id);
+      setFeedback({
+        type: 'success',
+        text: `Calificación #${rv.id} eliminada y reputación recalculada.`,
+      });
+    } catch (err) {
+      setFeedback({ type: 'error', text: err.message });
+    }
   };
+
+  const isParticipantInSelected =
+    selectedAuction &&
+    (Number(selectedAuction.winnerId) === Number(currentUser?.id) ||
+      Number(selectedAuction.sellerId) === Number(currentUser?.id));
 
   return (
     <div className="space-y-6">
@@ -217,10 +309,10 @@ export function DashboardReviewsTab({
             Cierres Calificables
           </span>
           <p className="text-4xl font-bold tracking-tight text-[#0D0D0D] my-2">
-            {closedAuctions.length}
+            {eligibleClosedAuctions.length}
           </p>
           <span className="text-[11px] text-[#0D0D0D]/55">
-            Subastas finalizadas
+            Subastas finalizadas elegibles
           </span>
         </div>
       </div>
@@ -277,136 +369,170 @@ export function DashboardReviewsTab({
             </button>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {!editingReviewId && (
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="space-y-1">
-                  <label className="text-[11px] font-semibold text-[#0D0D0D]/75">
-                    Subasta Finalizada *
-                  </label>
-                  <select
-                    value={formData.auctionId}
-                    onChange={(e) =>
-                      setFormData((p) => ({ ...p, auctionId: e.target.value }))
-                    }
-                    className="w-full rounded-xl bg-[#F7FBF3] border border-[#224F10]/15 px-3 py-2 text-xs text-[#0D0D0D] focus:outline-none"
-                  >
-                    {closedAuctions.map((a) => (
-                      <option key={a.id} value={String(a.id)}>
-                        #{a.id} — {a.title}
+          {!editingReviewId && eligibleClosedAuctions.length === 0 ? (
+            <p className="text-xs text-[#0D0D0D]/65 py-2">
+              Solo puedes calificar subastas finalizadas con ganador adjudicado en las que hayas participado como vendedor o comprador ganador (RN07).
+            </p>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {!editingReviewId && (
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-semibold text-[#0D0D0D]/75">
+                      Subasta Finalizada *
+                    </label>
+                    <select
+                      value={effectiveAuctionId}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        const nextAuction = eligibleClosedAuctions.find(
+                          (a) => String(a.id) === String(val)
+                        );
+                        const derived = deriveReviewTarget(
+                          nextAuction,
+                          currentUser?.id,
+                          otherUsers
+                        );
+                        setFormData((p) => ({
+                          ...p,
+                          auctionId: val,
+                          targetUserId: derived.targetUserId,
+                          roleContext: derived.roleContext,
+                        }));
+                      }}
+                      className="w-full rounded-xl bg-[#F7FBF3] border border-[#224F10]/15 px-3 py-2 text-xs text-[#0D0D0D] focus:outline-none"
+                    >
+                      {eligibleClosedAuctions.map((a) => {
+                        const already = reviews.some(
+                          (rv) =>
+                            Number(rv.auctionId) === Number(a.id) &&
+                            Number(rv.reviewerId) === Number(currentUser?.id)
+                        );
+                        return (
+                          <option key={a.id} value={String(a.id)}>
+                            #{a.id} — {a.title}
+                            {already ? ' (Ya calificada)' : ''}
+                          </option>
+                        );
+                      })}
+                    </select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-semibold text-[#0D0D0D]/75">
+                      Usuario a Calificar *
+                    </label>
+                    <select
+                      disabled={Boolean(!isAdmin && isParticipantInSelected)}
+                      value={effectiveTargetUserId}
+                      onChange={(e) =>
+                        setFormData((p) => ({
+                          ...p,
+                          targetUserId: e.target.value,
+                        }))
+                      }
+                      className="w-full rounded-xl bg-[#F7FBF3] border border-[#224F10]/15 px-3 py-2 text-xs text-[#0D0D0D] disabled:opacity-65 focus:outline-none"
+                    >
+                      {otherUsers.length > 0 ? (
+                        otherUsers.map((u) => (
+                          <option key={u.id} value={String(u.id)}>
+                            {u.name}
+                          </option>
+                        ))
+                      ) : (
+                        <option value="">Sin contraparte</option>
+                      )}
+                    </select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-semibold text-[#0D0D0D]/75">
+                      Rol en la Operación
+                    </label>
+                    <select
+                      disabled={Boolean(!isAdmin && isParticipantInSelected)}
+                      value={effectiveRoleContext}
+                      onChange={(e) =>
+                        setFormData((p) => ({
+                          ...p,
+                          roleContext: e.target.value,
+                        }))
+                      }
+                      className="w-full rounded-xl bg-[#F7FBF3] border border-[#224F10]/15 px-3 py-2 text-xs text-[#0D0D0D] disabled:opacity-65 focus:outline-none"
+                    >
+                      <option value="comprador_a_vendedor">
+                        Comprador → Vendedor
                       </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-[11px] font-semibold text-[#0D0D0D]/75">
-                    Usuario a Calificar *
-                  </label>
-                  <select
-                    value={formData.targetUserId}
-                    onChange={(e) =>
-                      setFormData((p) => ({
-                        ...p,
-                        targetUserId: e.target.value,
-                      }))
-                    }
-                    className="w-full rounded-xl bg-[#F7FBF3] border border-[#224F10]/15 px-3 py-2 text-xs text-[#0D0D0D] focus:outline-none"
-                  >
-                    {otherUsers.map((u) => (
-                      <option key={u.id} value={String(u.id)}>
-                        {u.name}
+                      <option value="vendedor_a_comprador">
+                        Vendedor → Comprador
                       </option>
-                    ))}
-                  </select>
+                    </select>
+                  </div>
                 </div>
+              )}
 
-                <div className="space-y-1">
-                  <label className="text-[11px] font-semibold text-[#0D0D0D]/75">
-                    Rol en la Operación
-                  </label>
-                  <select
-                    value={formData.roleContext}
-                    onChange={(e) =>
-                      setFormData((p) => ({
-                        ...p,
-                        roleContext: e.target.value,
-                      }))
-                    }
-                    className="w-full rounded-xl bg-[#F7FBF3] border border-[#224F10]/15 px-3 py-2 text-xs text-[#0D0D0D] focus:outline-none"
-                  >
-                    <option value="comprador_a_vendedor">
-                      Comprador → Vendedor
-                    </option>
-                    <option value="vendedor_a_comprador">
-                      Vendedor → Comprador
-                    </option>
-                  </select>
-                </div>
-              </div>
-            )}
-
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-semibold text-[#0D0D0D]/75 block">
-                Puntuación (1 a 5 Estrellas) *
-              </label>
-              <div className="flex flex-wrap items-center gap-2">
-                {['5', '4', '3', '2', '1'].map((val) => (
-                  <button
-                    key={val}
-                    type="button"
-                    onClick={() => setFormData((p) => ({ ...p, rating: val }))}
-                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors cursor-pointer ${
-                      formData.rating === val
-                        ? 'bg-[#224F10] text-[#EAFFD0] border-[#224F10]'
-                        : 'bg-[#F7FBF3] text-[#0D0D0D]/75 border-[#224F10]/15 hover:bg-[#EAFFD0]'
-                    }`}
-                  >
-                    <Star
-                      className={`w-3.5 h-3.5 ${
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-semibold text-[#0D0D0D]/75 block">
+                  Puntuación (1 a 5 Estrellas) *
+                </label>
+                <div className="flex flex-wrap items-center gap-2">
+                  {['5', '4', '3', '2', '1'].map((val) => (
+                    <button
+                      key={val}
+                      type="button"
+                      onClick={() => setFormData((p) => ({ ...p, rating: val }))}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors cursor-pointer ${
                         formData.rating === val
-                          ? 'fill-[#B0E454] text-[#B0E454]'
-                          : 'fill-[#B0E454] text-[#224F10]'
+                          ? 'bg-[#224F10] text-[#EAFFD0] border-[#224F10]'
+                          : 'bg-[#F7FBF3] text-[#0D0D0D]/75 border-[#224F10]/15 hover:bg-[#EAFFD0]'
                       }`}
-                    />
-                    <span>{val} ★</span>
-                  </button>
-                ))}
+                    >
+                      <Star
+                        className={`w-3.5 h-3.5 ${
+                          formData.rating === val
+                            ? 'fill-[#B0E454] text-[#B0E454]'
+                            : 'fill-[#B0E454] text-[#224F10]'
+                        }`}
+                      />
+                      <span>{val} ★</span>
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
 
-            <div className="space-y-1">
-              <label className="text-[11px] font-semibold text-[#0D0D0D]/75">
-                Comentario de la Experiencia *
-              </label>
-              <textarea
-                rows={2}
-                value={formData.comment}
-                onChange={(e) =>
-                  setFormData((p) => ({ ...p, comment: e.target.value }))
-                }
-                placeholder="Describe el cumplimiento de entrega, comunicación y estado del artículo..."
-                className="w-full rounded-xl bg-[#F7FBF3] border border-[#224F10]/15 px-3.5 py-2 text-xs text-[#0D0D0D] focus:outline-none"
-              />
-            </div>
+              <div className="space-y-1">
+                <label className="text-[11px] font-semibold text-[#0D0D0D]/75">
+                  Comentario de la Experiencia *
+                </label>
+                <textarea
+                  rows={2}
+                  value={formData.comment}
+                  onChange={(e) =>
+                    setFormData((p) => ({ ...p, comment: e.target.value }))
+                  }
+                  placeholder="Describe el cumplimiento de entrega, comunicación y estado del artículo..."
+                  className="w-full rounded-xl bg-[#F7FBF3] border border-[#224F10]/15 px-3.5 py-2 text-xs text-[#0D0D0D] focus:outline-none"
+                />
+              </div>
 
-            <div className="flex justify-end gap-2 pt-1">
-              <button
-                type="button"
-                onClick={() => setFormOpen(false)}
-                className="px-4 py-2 rounded-full border border-[#224F10]/15 text-xs font-semibold text-[#0D0D0D]/75 hover:bg-[#F7FBF3] cursor-pointer"
-              >
-                Cancelar
-              </button>
-              <button
-                type="submit"
-                className="inline-flex items-center gap-1.5 px-5 py-2 rounded-full bg-[#224F10] hover:bg-[#0D0D0D] text-[#EAFFD0] text-xs font-semibold cursor-pointer"
-              >
-                <Save className="w-3.5 h-3.5" />
-                {editingReviewId ? 'Guardar Cambios' : 'Publicar Reseña'}
-              </button>
-            </div>
-          </form>
+              <div className="flex justify-end gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => setFormOpen(false)}
+                  className="px-4 py-2 rounded-full border border-[#224F10]/15 text-xs font-semibold text-[#0D0D0D]/75 hover:bg-[#F7FBF3] cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="inline-flex items-center gap-1.5 px-5 py-2 rounded-full bg-[#224F10] hover:bg-[#0D0D0D] text-[#EAFFD0] text-xs font-semibold cursor-pointer"
+                >
+                  <Save className="w-3.5 h-3.5" />
+                  {editingReviewId ? 'Guardar Cambios' : 'Publicar Reseña'}
+                </button>
+              </div>
+            </form>
+          )}
         </div>
       )}
 
@@ -468,13 +594,17 @@ export function DashboardReviewsTab({
                     <p>
                       Calificado:{' '}
                       <strong className="text-[#224F10]">
-                        {target?.name || `Usuario #${rv.targetUserId}`}
+                        {target?.name ||
+                          rv.targetUserName ||
+                          `Usuario #${rv.targetUserId}`}
                       </strong>
                     </p>
                     <p>
                       Autor:{' '}
                       <strong className="text-[#0D0D0D]">
-                        {reviewer?.name || `Usuario #${rv.reviewerId}`}
+                        {reviewer?.name ||
+                          rv.reviewerName ||
+                          `Usuario #${rv.reviewerId}`}
                       </strong>
                     </p>
                     <p className="truncate">
@@ -483,7 +613,9 @@ export function DashboardReviewsTab({
                         to={`/auctions/${rv.auctionId}`}
                         className="font-semibold text-[#224F10] hover:underline"
                       >
-                        {auction?.title || `Subasta #${rv.auctionId}`}
+                        {auction?.title ||
+                          rv.auctionTitle ||
+                          `Subasta #${rv.auctionId}`}
                       </Link>
                     </p>
                   </div>
@@ -493,22 +625,22 @@ export function DashboardReviewsTab({
                   <span>{formatDateTime(rv.createdAt)}</span>
                   <div className="flex items-center gap-1.5">
                     {canEdit && (
-                      <button
-                        onClick={() => openEditForm(rv)}
-                        title="Editar calificación"
-                        className="w-7 h-7 rounded-full border border-[#224F10]/15 hover:bg-[#EAFFD0] text-[#0D0D0D]/75 flex items-center justify-center transition-colors cursor-pointer"
-                      >
-                        <Edit3 className="w-3.5 h-3.5" />
-                      </button>
-                    )}
-                    {isAdmin && (
-                      <button
-                        onClick={() => handleDelete(rv)}
-                        title="Eliminar calificación"
-                        className="w-7 h-7 rounded-full border border-red-200 hover:bg-red-50 text-red-700 flex items-center justify-center transition-colors cursor-pointer"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
+                      <>
+                        <button
+                          onClick={() => openEditForm(rv)}
+                          title="Editar calificación"
+                          className="w-7 h-7 rounded-full border border-[#224F10]/15 hover:bg-[#EAFFD0] text-[#0D0D0D]/75 flex items-center justify-center transition-colors cursor-pointer"
+                        >
+                          <Edit3 className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(rv)}
+                          title="Eliminar calificación"
+                          className="w-7 h-7 rounded-full border border-red-200 hover:bg-red-50 text-red-700 flex items-center justify-center transition-colors cursor-pointer"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </>
                     )}
                   </div>
                 </div>

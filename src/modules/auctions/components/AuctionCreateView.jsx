@@ -11,6 +11,10 @@ import {
   PageHeader,
   Alert,
 } from '../../core/design-system/ui';
+import {
+  toIsoFromLocalInput,
+  toLocalDatetimeInputValue,
+} from '../../core/utils/formatters';
 import { PlusCircle, ArrowLeft } from 'lucide-react';
 
 export function AuctionCreateView() {
@@ -25,9 +29,7 @@ export function AuctionCreateView() {
     imageUrl: '',
     basePrice: '',
     minIncrement: '',
-    endTime: new Date(Date.now() + 24 * 3600 * 1000)
-      .toISOString()
-      .slice(0, 16),
+    endTime: toLocalDatetimeInputValue(),
   }));
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -52,6 +54,7 @@ export function AuctionCreateView() {
     try {
       const created = await createAuction({
         ...formData,
+        endTime: toIsoFromLocalInput(formData.endTime),
         sellerId: currentUser.id,
       });
       navigate(`/auctions/${created.id}`);

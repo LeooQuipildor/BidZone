@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuthStore } from '../states/authStore';
 import {
@@ -8,47 +8,20 @@ import {
   Button,
   PageHeader,
   Alert,
+  Spinner,
 } from '../../core/design-system/ui';
 import { Save, ArrowLeft } from 'lucide-react';
 
-export function UserEditView() {
-  const { id } = useParams();
-  const navigate = useNavigate();
-
-  const users = useAuthStore((s) => s.users);
-  const currentUser = useAuthStore((s) => s.currentUser);
-  const updateUser = useAuthStore((s) => s.updateUser);
-
-  const targetUser = users.find((u) => Number(u.id) === Number(id));
-
-  const [formData, setFormData] = useState(() => ({
-    name: targetUser?.name || '',
-    email: targetUser?.email || '',
-    phone: targetUser?.phone || '',
-    city: targetUser?.city || '',
-    role: targetUser?.role || 'user',
-    status: targetUser?.status || 'active',
-  }));
+function UserEditForm({ targetUser, isAdmin, updateUser, navigate }) {
+  const [formData, setFormData] = useState({
+    name: targetUser.name || '',
+    email: targetUser.email || '',
+    phone: targetUser.phone || '',
+    city: targetUser.city || '',
+    role: targetUser.role || 'user',
+    status: targetUser.status || 'active',
+  });
   const [errorMsg, setErrorMsg] = useState('');
-
-  if (!targetUser) {
-    return (
-      <div className="max-w-xl mx-auto my-12">
-        <Alert type="error" title="Usuario no encontrado">
-          El registro solicitado no existe.
-        </Alert>
-        <Button
-          variant="secondary"
-          className="mt-4"
-          onClick={() => navigate('/users')}
-        >
-          Volver a Usuarios
-        </Button>
-      </div>
-    );
-  }
-
-  const isAdmin = currentUser?.role === 'admin';
 
   const handleChange = (e) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -63,8 +36,19 @@ export function UserEditView() {
       return;
     }
 
+    const payload = {
+      name: formData.name.trim(),
+      email: formData.email.trim(),
+      phone: formData.phone.trim(),
+      city: formData.city.trim(),
+    };
+    if (isAdmin) {
+      payload.role = formData.role;
+      payload.status = formData.status;
+    }
+
     try {
-      await updateUser(targetUser.id, formData);
+      await updateUser(targetUser.id, payload);
       navigate('/users');
     } catch (err) {
       setErrorMsg(err.message);
@@ -175,6 +159,72 @@ export function UserEditView() {
         </form>
       </Card>
     </div>
+  );
+}
+
+export function UserEditView() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+
+  const users = useAuthStore((s) => s.users);
+  const usersLoading = useAuthStore((s) => s.loading);
+  const fetchUsers = useAuthStore((s) => s.fetchUsers);
+  const currentUser = useAuthStore((s) => s.currentUser);
+  const updateUser = useAuthStore((s) => s.updateUser);
+
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
+
+  const targetUser = users.find((u) => Number(u.id) === Number(id));
+  const isAdmin = currentUser?.role === 'admin';
+
+  if (usersLoading && !targetUser) {
+    return <Spinner label="Cargando perfil de usuario..." />;
+  }
+
+  if (!targetUser) {
+    return (
+      <div className="max-w-xl mx-auto my-12">
+        <Alert type="error" title="Usuario no encontrado">
+          El registro solicitado no existe.
+        </Alert>
+        <Button
+          variant="secondary"
+          className="mt-4"
+          onClick={() => navigate('/users')}
+        >
+          Volver a Usuarios
+        </Button>
+      </div>
+    );
+  }
+
+  if (!isAdmin && Number(currentUser?.id) !== Number(targetUser.id)) {
+    return (
+      <div className="max-w-xl mx-auto my-12">
+        <Alert type="error" title="Sin permisos de edición">
+          Solo puedes editar tu propio perfil o contar con permisos de administrador.
+        </Alert>
+        <Button
+          variant="secondary"
+          className="mt-4"
+          onClick={() => navigate('/users')}
+        >
+          Volver a Usuarios
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <UserEditForm
+      key={targetUser.id}
+      targetUser={targetUser}
+      isAdmin={isAdmin}
+      updateUser={updateUser}
+      navigate={navigate}
+    />
   );
 }
 

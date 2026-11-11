@@ -37,16 +37,10 @@ export function LoginView() {
     }
   };
 
-  const handleQuickDemo = async (demoEmail, demoPass) => {
+  const handlePrefillEmail = (demoEmail) => {
     setEmail(demoEmail);
-    setPassword(demoPass);
     setErrorMsg('');
-    try {
-      await login(demoEmail, demoPass);
-      navigate(from, { replace: true });
-    } catch (err) {
-      setErrorMsg(err.message);
-    }
+    document.getElementById('password')?.focus();
   };
 
   return (
@@ -103,24 +97,24 @@ export function LoginView() {
 
         <div className="mt-6 pt-5 border-t border-[#224F10]/15">
           <p className="text-[11px] font-semibold text-[#0D0D0D]/60 mb-3 text-center">
-            Acceso rápido de evaluación (Roles de cátedra)
+            Autocompletar correo registrado (ingresa la contraseña de tu entorno)
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
             <button
               type="button"
-              onClick={() => handleQuickDemo('admin@bidzone.com', 'admin123')}
+              onClick={() => handlePrefillEmail('admin@bidzone.com')}
               className="flex items-center justify-center gap-2 p-2.5 rounded-full bg-[#0D0D0D] text-[#EAFFD0] hover:bg-[#224F10] text-xs font-semibold transition-colors cursor-pointer"
             >
               <ShieldCheck className="w-4 h-4 text-[#B0E454]" />
-              Rol Administrador
+              admin@bidzone.com
             </button>
             <button
               type="button"
-              onClick={() => handleQuickDemo('mario@bidzone.com', 'user123')}
+              onClick={() => handlePrefillEmail('mario@bidzone.com')}
               className="flex items-center justify-center gap-2 p-2.5 rounded-full bg-[#B0E454] text-[#0D0D0D] hover:bg-[#224F10] hover:text-[#EAFFD0] text-xs font-semibold transition-colors cursor-pointer"
             >
               <UserCheck className="w-4 h-4" />
-              Rol Usuario (Mario)
+              mario@bidzone.com
             </button>
           </div>
         </div>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useBidStore } from '../states/bidStore';
 import { useAuctionStore } from '../../auctions/states/auctionStore';
@@ -11,6 +11,7 @@ import {
   PageHeader,
   Alert,
   Modal,
+  Spinner,
 } from '../../core/design-system/ui';
 import { formatCurrency } from '../../core/utils/formatters';
 import { Gavel, ArrowLeft, CheckCircle2 } from 'lucide-react';
@@ -19,40 +20,50 @@ export function BidCreateView() {
   const navigate = useNavigate();
   const createBid = useBidStore((s) => s.createBid);
   const auctions = useAuctionStore((s) => s.auctions);
+  const auctionsLoading = useAuctionStore((s) => s.loading);
+  const fetchAuctions = useAuctionStore((s) => s.fetchAuctions);
   const currentUser = useAuthStore((s) => s.currentUser);
 
-  const activeAuctions = auctions.filter((a) => a.status === 'activa');
-  const firstAuction = activeAuctions[0];
+  useEffect(() => {
+    fetchAuctions();
+  }, [fetchAuctions]);
 
-  const [auctionId, setAuctionId] = useState(
-    firstAuction ? String(firstAuction.id) : ''
+  const activeAuctions = useMemo(
+    () => auctions.filter((a) => a.status === 'activa'),
+    [auctions]
   );
-  const [amount, setAmount] = useState(
-    firstAuction
-      ? String(
-          Number(firstAuction.currentPrice) + Number(firstAuction.minIncrement)
-        )
-      : ''
-  );
+
+  const [selectedAuctionId, setSelectedAuctionId] = useState('');
+  const [amountInput, setAmountInput] = useState(null);
   const [note, setNote] = useState('');
   const [commitment, setCommitment] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const selectedAuction = auctions.find(
+  const auctionId = activeAuctions.some(
+    (a) => String(a.id) === String(selectedAuctionId)
+  )
+    ? String(selectedAuctionId)
+    : activeAuctions[0]
+      ? String(activeAuctions[0].id)
+      : '';
+
+  const selectedAuction = activeAuctions.find(
     (a) => Number(a.id) === Number(auctionId)
   );
 
+  const defaultAmount = selectedAuction
+    ? String(
+        Number(selectedAuction.currentPrice) +
+          Number(selectedAuction.minIncrement)
+      )
+    : '';
+  const amount = amountInput ?? defaultAmount;
+
   const handleAuctionChange = (e) => {
-    const val = e.target.value;
-    setAuctionId(val);
-    const found = auctions.find((a) => Number(a.id) === Number(val));
-    if (found) {
-      setAmount(
-        String(Number(found.currentPrice) + Number(found.minIncrement))
-      );
-    }
+    setSelectedAuctionId(e.target.value);
+    setAmountInput(null);
   };
 
   const handleOpenConfirmation = (e) => {
@@ -133,15 +144,23 @@ export function BidCreateView() {
       />
 
       <Card className="p-6 sm:p-8 rounded-3xl">
-        {errorMsg && (
-          <div className="mb-4">
-            <Alert type="error" onClose={() => setErrorMsg('')}>
-              {errorMsg}
-            </Alert>
-          </div>
-        )}
+        {auctionsLoading && auctions.length === 0 ? (
+          <Spinner label="Cargando subastas activas..." />
+        ) : activeAuctions.length === 0 ? (
+          <Alert type="info" title="Sin subastas activas">
+            Actualmente no hay subastas activas disponibles para ofertar. Puedes publicar una o esperar nuevos lotes.
+          </Alert>
+        ) : (
+          <>
+            {errorMsg && (
+              <div className="mb-4">
+                <Alert type="error" onClose={() => setErrorMsg('')}>
+                  {errorMsg}
+                </Alert>
+              </div>
+            )}
 
-        <form onSubmit={handleOpenConfirmation} className="space-y-4">
+            <form onSubmit={handleOpenConfirmation} className="space-y-4">
           <Select
             id="auctionId"
             label="Seleccionar Subasta Activa *"
@@ -210,7 +229,7 @@ export function BidCreateView() {
                 : undefined
             }
             value={amount}
-            onChange={(e) => setAmount(e.target.value)}
+            onChange={(e) => setAmountInput(e.target.value)}
           />
 
           <Input
@@ -243,6 +262,8 @@ export function BidCreateView() {
             </Button>
           </div>
         </form>
+          </>
+        )}
       </Card>
 
       {/* Modal de Confirmación de Oferta */}

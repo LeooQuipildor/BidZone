@@ -1,7 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNotificationStore } from '../../../notifications/states/notificationStore';
 import { formatDateTime } from '../../utils/formatters';
-import { Bell, CheckCheck, Trash2, Check } from 'lucide-react';
+import {
+  Bell,
+  CheckCheck,
+  Trash2,
+  Check,
+  AlertCircle,
+  X,
+} from 'lucide-react';
 
 export function DashboardNotificationsTab({
   currentUser,
@@ -12,23 +19,49 @@ export function DashboardNotificationsTab({
   const markAllAsRead = useNotificationStore((s) => s.markAllAsRead);
   const deleteNotification = useNotificationStore((s) => s.deleteNotification);
 
-  const isAdmin = currentUser?.role === 'admin';
-  const baseNotifications = isAdmin
-    ? notifications
-    : notifications.filter(
-        (n) => Number(n.userId) === Number(currentUser?.id)
-      );
+  const [errorMsg, setErrorMsg] = useState('');
+
+  const baseNotifications = notifications.filter(
+    (n) => Number(n.userId) === Number(currentUser?.id)
+  );
 
   const normalizedQuery = searchQuery.trim().toLowerCase();
   const filtered = baseNotifications.filter(
     (n) =>
       !normalizedQuery ||
-      n.title.toLowerCase().includes(normalizedQuery) ||
-      n.message.toLowerCase().includes(normalizedQuery)
+      (n.title || '').toLowerCase().includes(normalizedQuery) ||
+      (n.message || '').toLowerCase().includes(normalizedQuery)
   );
 
   const unreadCount = baseNotifications.filter((n) => !n.read).length;
   const readCount = baseNotifications.filter((n) => n.read).length;
+
+  const handleMarkAll = async () => {
+    setErrorMsg('');
+    try {
+      await markAllAsRead();
+    } catch (err) {
+      setErrorMsg(err.message);
+    }
+  };
+
+  const handleMarkOne = async (id) => {
+    setErrorMsg('');
+    try {
+      await markAsRead(id);
+    } catch (err) {
+      setErrorMsg(err.message);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    setErrorMsg('');
+    try {
+      await deleteNotification(id);
+    } catch (err) {
+      setErrorMsg(err.message);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -46,7 +79,7 @@ export function DashboardNotificationsTab({
 
         {currentUser && unreadCount > 0 && (
           <button
-            onClick={() => markAllAsRead(currentUser.id)}
+            onClick={handleMarkAll}
             className="inline-flex items-center gap-2 rounded-full bg-[#224F10] hover:bg-[#0D0D0D] text-[#EAFFD0] px-4 py-2 text-xs font-semibold transition-colors cursor-pointer shadow-xs self-start md:self-auto"
           >
             <CheckCheck className="w-3.5 h-3.5" />
@@ -54,6 +87,21 @@ export function DashboardNotificationsTab({
           </button>
         )}
       </div>
+
+      {errorMsg && (
+        <div className="flex items-center justify-between gap-3 rounded-2xl px-4 py-3 text-xs font-medium border bg-red-50 border-red-200 text-red-800">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 shrink-0" />
+            <span>{errorMsg}</span>
+          </div>
+          <button
+            onClick={() => setErrorMsg('')}
+            className="p-1 hover:opacity-70 cursor-pointer"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
 
       {/* KPI Strip */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -145,7 +193,7 @@ export function DashboardNotificationsTab({
               <div className="flex items-center justify-end gap-2 shrink-0">
                 {!item.read && (
                   <button
-                    onClick={() => markAsRead(item.id)}
+                    onClick={() => handleMarkOne(item.id)}
                     className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full border border-[#224F10]/20 hover:bg-[#EAFFD0] text-[#224F10] text-[11px] font-semibold transition-colors cursor-pointer"
                   >
                     <Check className="w-3.5 h-3.5" />
@@ -153,7 +201,7 @@ export function DashboardNotificationsTab({
                   </button>
                 )}
                 <button
-                  onClick={() => deleteNotification(item.id)}
+                  onClick={() => handleDelete(item.id)}
                   title="Eliminar notificación"
                   className="w-8 h-8 rounded-full border border-red-200 hover:bg-red-50 text-red-700 flex items-center justify-center transition-colors cursor-pointer"
                 >

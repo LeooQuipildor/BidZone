@@ -10,8 +10,10 @@ import {
   Input,
   Alert,
   Modal,
+  Spinner,
 } from '../../core/design-system/ui';
 import {
+  DEFAULT_AUCTION_IMAGE_URL,
   formatCurrency,
   formatDateTime,
   getRemainingTime,
@@ -35,22 +37,31 @@ export function AuctionDetailView() {
   const navigate = useNavigate();
 
   const auctions = useAuctionStore((s) => s.auctions);
+  const currentAuctionDetail = useAuctionStore((s) => s.currentAuctionDetail);
+  const detailLoading = useAuctionStore((s) => s.detailLoading);
+  const storeError = useAuctionStore((s) => s.error);
+  const fetchAuctionById = useAuctionStore((s) => s.fetchAuctionById);
   const closeAuctionNow = useAuctionStore((s) => s.closeAuctionNow);
+
   const bids = useBidStore((s) => s.bids);
   const createBid = useBidStore((s) => s.createBid);
   const currentUser = useAuthStore((s) => s.currentUser);
   const users = useAuthStore((s) => s.users);
 
-  const auction = auctions.find((a) => Number(a.id) === Number(id));
+  useEffect(() => {
+    fetchAuctionById(id);
+  }, [id, currentUser?.id, fetchAuctionById]);
 
-  const [remaining, setRemaining] = useState(() =>
-    auction ? getRemainingTime(auction.endTime) : { formatted: '—' }
-  );
-  const [bidAmount, setBidAmount] = useState(() =>
-    auction
-      ? String(Number(auction.currentPrice) + Number(auction.minIncrement))
-      : ''
-  );
+  const detailAuction =
+    currentAuctionDetail && Number(currentAuctionDetail.id) === Number(id)
+      ? currentAuctionDetail
+      : null;
+
+  const auction =
+    detailAuction || auctions.find((a) => Number(a.id) === Number(id));
+
+  const [nowMs, setNowMs] = useState(() => Date.now());
+  const [bidDraft, setBidDraft] = useState({ auctionId: null, value: '' });
   const [bidNote, setBidNote] = useState('');
   const [commitment, setCommitment] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
@@ -58,19 +69,36 @@ export function AuctionDetailView() {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const endTime = auction?.endTime;
+  const auctionStatus = auction?.status;
+
   useEffect(() => {
-    if (!auction || auction.status !== 'activa') return;
+    if (!endTime || auctionStatus !== 'activa') return;
     const timer = setInterval(() => {
-      setRemaining(getRemainingTime(auction.endTime));
+      setNowMs(Date.now());
     }, 1000);
     return () => clearInterval(timer);
-  }, [auction]);
+  }, [endTime, auctionStatus]);
+
+  const remaining = endTime
+    ? getRemainingTime(endTime, nowMs)
+    : { formatted: '—' };
+
+  const defaultBidAmount = auction
+    ? String(Number(auction.currentPrice) + Number(auction.minIncrement))
+    : '';
+  const bidAmount =
+    bidDraft.auctionId === String(id) ? bidDraft.value : defaultBidAmount;
+
+  if (detailLoading && !auction) {
+    return <Spinner label="Cargando subasta..." />;
+  }
 
   if (!auction) {
     return (
       <div className="max-w-xl mx-auto my-12">
         <Alert type="error" title="Subasta no encontrada">
-          El artículo que buscas no existe o fue eliminado.
+          {storeError || 'El artículo que buscas no existe o fue eliminado.'}
         </Alert>
         <Button
           variant="secondary"
@@ -83,17 +111,32 @@ export function AuctionDetailView() {
     );
   }
 
-  const auctionBids = bids
-    .filter((b) => Number(b.auctionId) === Number(auction.id))
+  const auctionBids = (
+    Array.isArray(detailAuction?.bids)
+      ? detailAuction.bids
+      : bids.filter((b) => Number(b.auctionId) === Number(auction.id))
+  )
+    .slice()
     .sort((a, b) => Number(b.amount) - Number(a.amount));
 
   const topBid = auctionBids[0];
-  const seller = users.find((u) => Number(u.id) === Number(auction.sellerId));
-  const winner = auction.winnerId
-    ? users.find((u) => Number(u.id) === Number(auction.winnerId))
-    : topBid
-      ? users.find((u) => Number(u.id) === Number(topBid.bidderId))
-      : null;
+  const seller =
+    detailAuction?.seller ||
+    users.find((u) => Number(u.id) === Number(auction.sellerId)) || {
+      id: auction.sellerId,
+      name: auction.sellerName || 'Vendedor',
+      city: auction.sellerCity || '',
+      reputation: auction.sellerReputation || 5.0,
+    };
+
+  const winner =
+    detailAuction?.winner ||
+    (auction.winnerId
+      ? users.find((u) => Number(u.id) === Number(auction.winnerId)) || {
+          id: auction.winnerId,
+          name: auction.winnerName || 'Ganador',
+        }
+      : null);
 
   const isSeller =
     currentUser && Number(currentUser.id) === Number(auction.sellerId);
@@ -104,13 +147,18 @@ export function AuctionDetailView() {
     currentUser &&
     auctionBids.some((b) => Number(b.bidderId) === Number(currentUser.id));
 
-  const canSeeUnlockedContact =
-    auction.status === 'finalizada' &&
-    winner &&
-    currentUser &&
-    (isSeller ||
-      Number(currentUser.id) === Number(winner.id) ||
-      isAdmin);
+  const canSeeUnlockedContact = detailAuction
+    ? Boolean(detailAuction.contactUnlocked)
+    : Boolean(
+        auction.status === 'finalizada' &&
+          winner &&
+          currentUser &&
+          (isSeller ||
+            Number(currentUser.id) === Number(winner.id) ||
+            isAdmin)
+      );
+
+  const counterpartUserId = isSeller ? winner?.id : seller?.id;
 
   const handleOpenConfirmation = (e) => {
     e.preventDefault();
@@ -162,21 +210,22 @@ export function AuctionDetailView() {
     setIsSubmitting(true);
     setErrorMsg('');
     setSuccessMsg('');
+    const confirmedAmount = bidAmount;
     try {
       await createBid({
         auctionId: auction.id,
         bidderId: currentUser.id,
-        amount: bidAmount,
+        amount: confirmedAmount,
         note: bidNote,
         commitmentAccepted: commitment,
       });
       setShowConfirmModal(false);
       setSuccessMsg(
         `¡Tu oferta de ${formatCurrency(
-          bidAmount
+          confirmedAmount
         )} fue registrada exitosamente! Ahora eres el postor líder.`
       );
-      setBidAmount(String(Number(bidAmount) + Number(auction.minIncrement)));
+      setBidDraft({ auctionId: null, value: '' });
       setBidNote('');
     } catch (err) {
       setShowConfirmModal(false);
@@ -191,10 +240,16 @@ export function AuctionDetailView() {
       '¿Deseas finalizar la subasta ahora mismo? Se adjudicará al postor líder y se liberarán los datos de contacto entre ambas partes.'
     );
     if (!confirmed) return;
-    await closeAuctionNow(auction.id);
-    setSuccessMsg(
-      'Subasta finalizada. Se han liberado los datos de contacto entre el vendedor y el ganador.'
-    );
+    setErrorMsg('');
+    setSuccessMsg('');
+    try {
+      await closeAuctionNow(auction.id);
+      setSuccessMsg(
+        'Subasta finalizada. Se han liberado los datos de contacto entre el vendedor y el ganador.'
+      );
+    } catch (err) {
+      setErrorMsg(err.message);
+    }
   };
 
   return (
@@ -240,7 +295,7 @@ export function AuctionDetailView() {
           <div className="rounded-3xl bg-[#F5FFEB] border border-[#224F10]/15 overflow-hidden shadow-xs">
             <div className="relative h-80 sm:h-96 bg-white">
               <img
-                src={auction.imageUrl}
+                src={auction.imageUrl || DEFAULT_AUCTION_IMAGE_URL}
                 alt={auction.title}
                 className="w-full h-full object-cover"
               />
@@ -251,7 +306,9 @@ export function AuctionDetailView() {
                 >
                   {auction.status === 'activa'
                     ? 'Subasta en Vivo'
-                    : 'Subasta Finalizada'}
+                    : auction.status === 'cancelada'
+                      ? 'Cancelada'
+                      : 'Subasta Finalizada'}
                 </Badge>
               </div>
             </div>
@@ -303,7 +360,7 @@ export function AuctionDetailView() {
                     Coordinación directa liberada (RN05 / RN06)
                   </h2>
                 </div>
-                <Badge variant="lime">Adjudicada</Badge>
+                <Badge variant="lime">{winner ? 'Adjudicada' : 'Cerrada'}</Badge>
               </div>
 
               {!winner ? (
@@ -330,15 +387,15 @@ export function AuctionDetailView() {
                       </p>
                       <p className="flex items-center gap-2 text-[#EAFFD0]">
                         <Phone className="w-3.5 h-3.5 text-[#B0E454]" />
-                        {seller?.phone}
+                        {seller?.phone || 'Sin teléfono'}
                       </p>
                       <p className="flex items-center gap-2 text-[#EAFFD0]">
                         <Mail className="w-3.5 h-3.5 text-[#B0E454]" />
-                        {seller?.email}
+                        {seller?.email || 'Sin correo'}
                       </p>
                       <p className="flex items-center gap-2 text-[#EAFFD0]">
                         <MapPin className="w-3.5 h-3.5 text-[#B0E454]" />
-                        {seller?.city}
+                        {seller?.city || 'Argentina'}
                       </p>
                     </div>
 
@@ -351,15 +408,15 @@ export function AuctionDetailView() {
                       </p>
                       <p className="flex items-center gap-2 text-[#EAFFD0]">
                         <Phone className="w-3.5 h-3.5 text-[#B0E454]" />
-                        {winner?.phone}
+                        {winner?.phone || 'Sin teléfono'}
                       </p>
                       <p className="flex items-center gap-2 text-[#EAFFD0]">
                         <Mail className="w-3.5 h-3.5 text-[#B0E454]" />
-                        {winner?.email}
+                        {winner?.email || 'Sin correo'}
                       </p>
                       <p className="flex items-center gap-2 text-[#EAFFD0]">
                         <MapPin className="w-3.5 h-3.5 text-[#B0E454]" />
-                        {winner?.city}
+                        {winner?.city || 'Argentina'}
                       </p>
                     </div>
                   </div>
@@ -371,7 +428,13 @@ export function AuctionDetailView() {
                         Calificar Operación (1 a 5 ★)
                       </Button>
                     </Link>
-                    <Link to={`/reports/new?auctionId=${auction.id}`}>
+                    <Link
+                      to={`/reports/new?auctionId=${auction.id}${
+                        counterpartUserId
+                          ? `&reportedUserId=${counterpartUserId}`
+                          : ''
+                      }`}
+                    >
                       <Button variant="secondary" size="sm">
                         <AlertOctagon className="w-4 h-4" />
                         Informar Incumplimiento / Denunciar
@@ -456,7 +519,12 @@ export function AuctionDetailView() {
                     )} (10 veces el precio inicial)`}
                     max={Number(auction.basePrice || auction.currentPrice) * 10}
                     value={bidAmount}
-                    onChange={(e) => setBidAmount(e.target.value)}
+                    onChange={(e) =>
+                      setBidDraft({
+                        auctionId: String(id),
+                        value: e.target.value,
+                      })
+                    }
                   />
                   <Input
                     id="bidNote"
@@ -512,9 +580,11 @@ export function AuctionDetailView() {
             ) : (
               <div className="space-y-2.5 max-h-80 overflow-y-auto pr-1">
                 {auctionBids.map((bid, index) => {
-                  const bidder = users.find(
-                    (u) => Number(u.id) === Number(bid.bidderId)
-                  );
+                  const bidderName =
+                    bid.bidderName ||
+                    users.find((u) => Number(u.id) === Number(bid.bidderId))
+                      ?.name ||
+                    `Usuario #${bid.bidderId}`;
                   return (
                     <div
                       key={bid.id}
@@ -526,9 +596,7 @@ export function AuctionDetailView() {
                     >
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="font-semibold">
-                            {bidder?.name || `Usuario #${bid.bidderId}`}
-                          </span>
+                          <span className="font-semibold">{bidderName}</span>
                           {index === 0 && (
                             <Badge variant="lime" className="text-[10px]">
                               Líder

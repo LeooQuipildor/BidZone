@@ -23,18 +23,23 @@ import {
 export function ReportsListView() {
   const navigate = useNavigate();
   const reports = useReportStore((s) => s.reports);
+  const reportsError = useReportStore((s) => s.error);
   const fetchReports = useReportStore((s) => s.fetchReports);
   const deleteReport = useReportStore((s) => s.deleteReport);
   const auctions = useAuctionStore((s) => s.auctions);
+  const fetchAuctions = useAuctionStore((s) => s.fetchAuctions);
   const users = useAuthStore((s) => s.users);
+  const fetchUsers = useAuthStore((s) => s.fetchUsers);
   const currentUser = useAuthStore((s) => s.currentUser);
 
   const [statusFilter, setStatusFilter] = useState('todos');
-  const [feedback, setFeedback] = useState('');
+  const [feedback, setFeedback] = useState(null);
 
   useEffect(() => {
     fetchReports();
-  }, [fetchReports]);
+    fetchAuctions();
+    fetchUsers();
+  }, [fetchReports, fetchAuctions, fetchUsers]);
 
   const isAdmin = currentUser?.role === 'admin';
 
@@ -48,8 +53,15 @@ export function ReportsListView() {
       `¿Confirmas eliminar el expediente de reporte #${report.id}?`
     );
     if (!confirmed) return;
-    await deleteReport(report.id);
-    setFeedback(`Expediente #${report.id} eliminado.`);
+    try {
+      await deleteReport(report.id);
+      setFeedback({
+        type: 'success',
+        text: `Expediente #${report.id} eliminado.`,
+      });
+    } catch (err) {
+      setFeedback({ type: 'error', text: err.message });
+    }
   };
 
   return (
@@ -66,10 +78,12 @@ export function ReportsListView() {
       />
 
       {feedback && (
-        <Alert type="success" onClose={() => setFeedback('')}>
-          {feedback}
+        <Alert type={feedback.type} onClose={() => setFeedback(null)}>
+          {feedback.text}
         </Alert>
       )}
+
+      {!feedback && reportsError && <Alert type="error">{reportsError}</Alert>}
 
       <Card className="p-5">
         <div className="max-w-xs">
@@ -108,7 +122,9 @@ export function ReportsListView() {
               (u) => Number(u.id) === Number(rep.reportedUserId)
             );
             const canEdit =
-              isAdmin || Number(currentUser?.id) === Number(rep.reporterId);
+              isAdmin ||
+              (Number(currentUser?.id) === Number(rep.reporterId) &&
+                rep.status === 'en_revision');
 
             return (
               <Card key={rep.id} className="space-y-4">
@@ -174,7 +190,7 @@ export function ReportsListView() {
                       to={`/auctions/${rep.auctionId}`}
                       className="font-semibold text-[#224F10] hover:underline"
                     >
-                      {auction?.title || `Subasta #${rep.auctionId}`}
+                      {auction?.title || rep.auctionTitle || `Subasta #${rep.auctionId}`}
                     </Link>
                   </div>
                   <div>
@@ -182,9 +198,10 @@ export function ReportsListView() {
                       Denunciante → Denunciado
                     </span>
                     <strong className="text-[#0D0D0D]">
-                      {reporter?.name || 'Usuario'} →{' '}
+                      {reporter?.name || rep.reporterName || 'Usuario'} →{' '}
                       <span className="text-red-700">
-                        {reported?.name || 'Usuario'} ({reported?.status})
+                        {reported?.name || rep.reportedUserName || 'Usuario'}
+                        {reported?.status ? ` (${reported.status})` : ''}
                       </span>
                     </strong>
                   </div>

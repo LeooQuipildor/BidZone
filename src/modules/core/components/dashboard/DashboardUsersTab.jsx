@@ -50,8 +50,8 @@ export function DashboardUsersTab({ currentUser, users, searchQuery }) {
   const filteredUsers = users.filter((u) => {
     const matchesSearch =
       !normalizedQuery ||
-      u.name.toLowerCase().includes(normalizedQuery) ||
-      u.email.toLowerCase().includes(normalizedQuery) ||
+      (u.name || '').toLowerCase().includes(normalizedQuery) ||
+      (u.email || '').toLowerCase().includes(normalizedQuery) ||
       (u.city || '').toLowerCase().includes(normalizedQuery);
     const matchesRole = roleFilter === 'todos' || u.role === roleFilter;
     const matchesStatus = statusFilter === 'todos' || u.status === statusFilter;
@@ -146,15 +146,20 @@ export function DashboardUsersTab({ currentUser, users, searchQuery }) {
       });
       return;
     }
+    const label = user.email ? `"${user.name}" (${user.email})` : `"${user.name}"`;
     const confirmed = window.confirm(
-      `¿Estás seguro de eliminar al usuario "${user.name}" (${user.email})?`
+      `¿Estás seguro de eliminar al usuario ${label}?`
     );
     if (!confirmed) return;
-    await deleteUser(user.id);
-    setFeedback({
-      type: 'success',
-      text: `Usuario "${user.name}" eliminado correctamente.`,
-    });
+    try {
+      await deleteUser(user.id);
+      setFeedback({
+        type: 'success',
+        text: `Usuario "${user.name}" eliminado correctamente.`,
+      });
+    } catch (err) {
+      setFeedback({ type: 'error', text: err.message });
+    }
   };
 
   const avatarColors = [
@@ -491,7 +496,7 @@ export function DashboardUsersTab({ currentUser, users, searchQuery }) {
                           {u.name}
                         </h3>
                         <p className="text-[11px] text-[#0D0D0D]/55 truncate">
-                          {u.email}
+                          {u.email || 'Privado hasta el cierre (RN05)'}
                         </p>
                       </div>
                     </div>
@@ -527,7 +532,8 @@ export function DashboardUsersTab({ currentUser, users, searchQuery }) {
                     <p className="flex items-center gap-2">
                       <Phone className="w-3.5 h-3.5 text-[#224F10] shrink-0" />
                       <span className="truncate">
-                        {u.phone || 'Sin teléfono'}
+                        {u.phone ||
+                          (u.contactLocked ? 'Privado (RN05)' : 'Sin teléfono')}
                       </span>
                     </p>
                     <p className="flex items-center gap-2">

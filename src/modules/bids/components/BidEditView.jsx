@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useBidStore } from '../states/bidStore';
 import { useAuctionStore } from '../../auctions/states/auctionStore';
@@ -9,55 +9,26 @@ import {
   Button,
   PageHeader,
   Alert,
+  Spinner,
 } from '../../core/design-system/ui';
+import { formatCurrency } from '../../core/utils/formatters';
 import { Save, ArrowLeft } from 'lucide-react';
 
-export function BidEditView() {
-  const { id } = useParams();
-  const navigate = useNavigate();
-
-  const bids = useBidStore((s) => s.bids);
-  const updateBid = useBidStore((s) => s.updateBid);
-  const auctions = useAuctionStore((s) => s.auctions);
-  const currentUser = useAuthStore((s) => s.currentUser);
-
-  const bid = bids.find((b) => Number(b.id) === Number(id));
-  const isAdmin = currentUser?.role === 'admin';
-
-  const [amount, setAmount] = useState(() => (bid ? String(bid.amount) : ''));
-  const [note, setNote] = useState(() => bid?.note || '');
+function BidEditForm({ bid, auction, isAdmin, updateBid, navigate }) {
+  const [amount, setAmount] = useState(String(bid.amount ?? ''));
+  const [note, setNote] = useState(bid.note || '');
   const [errorMsg, setErrorMsg] = useState('');
-
-  if (!bid) {
-    return (
-      <div className="max-w-xl mx-auto my-12">
-        <Alert type="error" title="Puja no encontrada">
-          El registro de oferta solicitado no existe.
-        </Alert>
-        <Button
-          variant="secondary"
-          className="mt-4"
-          onClick={() => navigate('/bids')}
-        >
-          Volver a Pujas
-        </Button>
-      </div>
-    );
-  }
-
-  const auction = auctions.find(
-    (a) => Number(a.id) === Number(bid.auctionId)
-  );
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMsg('');
 
+    const payload = isAdmin
+      ? { amount: Number(amount), note: note.trim() }
+      : { note: note.trim() };
+
     try {
-      await updateBid(bid.id, {
-        amount: isAdmin ? Number(amount) : bid.amount,
-        note: note.trim(),
-      });
+      await updateBid(bid.id, payload);
       navigate('/bids');
     } catch (err) {
       setErrorMsg(err.message);
@@ -68,7 +39,9 @@ export function BidEditView() {
     <div className="max-w-2xl mx-auto space-y-6">
       <PageHeader
         title={`Editar Registro de Puja #${bid.id}`}
-        subtitle={`Subasta asociada: ${auction?.title || `#${bid.auctionId}`}`}
+        subtitle={`Subasta asociada: ${
+          auction?.title || bid.auctionTitle || `#${bid.auctionId}`
+        }`}
         action={
           <Button variant="outline" onClick={() => navigate('/bids')}>
             <ArrowLeft className="w-4 h-4" />
@@ -133,6 +106,80 @@ export function BidEditView() {
         </form>
       </Card>
     </div>
+  );
+}
+
+export function BidEditView() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+
+  const bids = useBidStore((s) => s.bids);
+  const bidsLoading = useBidStore((s) => s.loading);
+  const fetchBids = useBidStore((s) => s.fetchBids);
+  const updateBid = useBidStore((s) => s.updateBid);
+  const auctions = useAuctionStore((s) => s.auctions);
+  const fetchAuctions = useAuctionStore((s) => s.fetchAuctions);
+  const currentUser = useAuthStore((s) => s.currentUser);
+
+  useEffect(() => {
+    fetchBids();
+    fetchAuctions();
+  }, [fetchBids, fetchAuctions]);
+
+  const bid = bids.find((b) => Number(b.id) === Number(id));
+  const isAdmin = currentUser?.role === 'admin';
+
+  if (bidsLoading && !bid) {
+    return <Spinner label="Cargando puja..." />;
+  }
+
+  if (!bid) {
+    return (
+      <div className="max-w-xl mx-auto my-12">
+        <Alert type="error" title="Puja no encontrada">
+          El registro de oferta solicitado no existe.
+        </Alert>
+        <Button
+          variant="secondary"
+          className="mt-4"
+          onClick={() => navigate('/bids')}
+        >
+          Volver a Pujas
+        </Button>
+      </div>
+    );
+  }
+
+  if (!isAdmin && Number(currentUser?.id) !== Number(bid.bidderId)) {
+    return (
+      <div className="max-w-xl mx-auto my-12">
+        <Alert type="error" title="Sin permisos de edición">
+          Solo el postor titular o un administrador puede modificar esta puja.
+        </Alert>
+        <Button
+          variant="secondary"
+          className="mt-4"
+          onClick={() => navigate('/bids')}
+        >
+          Volver a Pujas
+        </Button>
+      </div>
+    );
+  }
+
+  const auction = auctions.find(
+    (a) => Number(a.id) === Number(bid.auctionId)
+  );
+
+  return (
+    <BidEditForm
+      key={bid.id}
+      bid={bid}
+      auction={auction}
+      isAdmin={isAdmin}
+      updateBid={updateBid}
+      navigate={navigate}
+    />
   );
 }
 

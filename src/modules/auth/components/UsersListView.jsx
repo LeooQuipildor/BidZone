@@ -23,6 +23,7 @@ import {
 export function UsersListView() {
   const navigate = useNavigate();
   const users = useAuthStore((s) => s.users);
+  const usersError = useAuthStore((s) => s.error);
   const currentUser = useAuthStore((s) => s.currentUser);
   const fetchUsers = useAuthStore((s) => s.fetchUsers);
   const deleteUser = useAuthStore((s) => s.deleteUser);
@@ -30,16 +31,18 @@ export function UsersListView() {
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('todos');
   const [statusFilter, setStatusFilter] = useState('todos');
-  const [feedback, setFeedback] = useState('');
+  const [feedback, setFeedback] = useState(null);
 
   useEffect(() => {
     fetchUsers();
   }, [fetchUsers]);
 
+  const query = search.toLowerCase();
   const filteredUsers = users.filter((u) => {
     const matchesSearch =
-      u.name.toLowerCase().includes(search.toLowerCase()) ||
-      u.email.toLowerCase().includes(search.toLowerCase());
+      (u.name || '').toLowerCase().includes(query) ||
+      (u.email || '').toLowerCase().includes(query) ||
+      (u.city || '').toLowerCase().includes(query);
     const matchesRole = roleFilter === 'todos' || u.role === roleFilter;
     const matchesStatus = statusFilter === 'todos' || u.status === statusFilter;
     return matchesSearch && matchesRole && matchesStatus;
@@ -47,16 +50,25 @@ export function UsersListView() {
 
   const handleDelete = async (user) => {
     if (Number(user.id) === Number(currentUser?.id)) {
-      alert('No puedes eliminar tu propia sesión activa.');
+      setFeedback({
+        type: 'error',
+        text: 'No puedes eliminar tu propia sesión activa.',
+      });
       return;
     }
-    const confirmed = window.confirm(
-      `¿Estás seguro de eliminar al usuario "${user.name}" (${user.email})?`
-    );
+    const label = user.email ? `"${user.name}" (${user.email})` : `"${user.name}"`;
+    const confirmed = window.confirm(`¿Estás seguro de eliminar al usuario ${label}?`);
     if (!confirmed) return;
 
-    await deleteUser(user.id);
-    setFeedback(`Usuario "${user.name}" eliminado correctamente.`);
+    try {
+      await deleteUser(user.id);
+      setFeedback({
+        type: 'success',
+        text: `Usuario "${user.name}" eliminado correctamente.`,
+      });
+    } catch (err) {
+      setFeedback({ type: 'error', text: err.message });
+    }
   };
 
   return (
@@ -75,10 +87,12 @@ export function UsersListView() {
       />
 
       {feedback && (
-        <Alert type="success" onClose={() => setFeedback('')}>
-          {feedback}
+        <Alert type={feedback.type} onClose={() => setFeedback(null)}>
+          {feedback.text}
         </Alert>
       )}
+
+      {!feedback && usersError && <Alert type="error">{usersError}</Alert>}
 
       <Card className="p-5">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -129,7 +143,9 @@ export function UsersListView() {
                     <h3 className="font-serif-display text-2xl font-semibold text-[#0D0D0D]">
                       {user.name}
                     </h3>
-                    <p className="text-xs text-[#0D0D0D]/60">{user.email}</p>
+                    <p className="text-xs text-[#0D0D0D]/60">
+                      {user.email || 'Privado hasta el cierre (RN05)'}
+                    </p>
                   </div>
                   <div className="flex flex-col items-end gap-1">
                     <Badge variant={user.role === 'admin' ? 'lime' : 'success'}>
@@ -155,7 +171,10 @@ export function UsersListView() {
                 <div className="space-y-1.5 text-xs text-[#0D0D0D]/80 bg-white/80 p-3.5 rounded-2xl border border-[#224F10]/15">
                   <div className="flex items-center gap-2">
                     <Phone className="w-3.5 h-3.5 text-[#224F10]" />
-                    <span>{user.phone || 'Sin teléfono'}</span>
+                    <span>
+                      {user.phone ||
+                        (user.contactLocked ? 'Privado (RN05)' : 'Sin teléfono')}
+                    </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <MapPin className="w-3.5 h-3.5 text-[#224F10]" />

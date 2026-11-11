@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useReportStore } from '../../../reports/states/reportStore';
 import { formatDateTime } from '../../utils/formatters';
@@ -27,8 +27,9 @@ export function DashboardReportsTab({
   const deleteReport = useReportStore((s) => s.deleteReport);
 
   const isAdmin = currentUser?.role === 'admin';
-  const otherUsers = users.filter(
-    (u) => Number(u.id) !== Number(currentUser?.id)
+  const otherUsers = useMemo(
+    () => users.filter((u) => Number(u.id) !== Number(currentUser?.id)),
+    [users, currentUser?.id]
   );
 
   const [statusFilter, setStatusFilter] = useState('todos');
@@ -48,6 +49,28 @@ export function DashboardReportsTab({
     sanctionApplied: '',
     accountAction: 'none',
   }));
+
+  const effectiveAuctionId = editingReportId
+    ? formData.auctionId
+    : auctions.some((a) => String(a.id) === String(formData.auctionId))
+      ? String(formData.auctionId)
+      : auctions.some((a) => String(a.id) === String(prefill?.auctionId))
+        ? String(prefill.auctionId)
+        : auctions[0]
+          ? String(auctions[0].id)
+          : '';
+
+  const effectiveReportedUserId = editingReportId
+    ? formData.reportedUserId
+    : otherUsers.some((u) => String(u.id) === String(formData.reportedUserId))
+      ? String(formData.reportedUserId)
+      : otherUsers.some(
+            (u) => String(u.id) === String(prefill?.reportedUserId)
+          )
+        ? String(prefill.reportedUserId)
+        : otherUsers[0]
+          ? String(otherUsers[0].id)
+          : '';
 
   const openReports = reports.filter((r) => r.status === 'en_revision');
   const sanctionedReports = reports.filter(
@@ -69,10 +92,10 @@ export function DashboardReportsTab({
       (a) => Number(a.id) === Number(rep.auctionId)
     );
     return (
-      rep.reason.toLowerCase().includes(normalizedQuery) ||
-      rep.description.toLowerCase().includes(normalizedQuery) ||
-      (reported?.name || '').toLowerCase().includes(normalizedQuery) ||
-      (auction?.title || '').toLowerCase().includes(normalizedQuery)
+      (rep.reason || '').toLowerCase().includes(normalizedQuery) ||
+      (rep.description || '').toLowerCase().includes(normalizedQuery) ||
+      (reported?.name || rep.reportedUserName || '').toLowerCase().includes(normalizedQuery) ||
+      (auction?.title || rep.auctionTitle || '').toLowerCase().includes(normalizedQuery)
     );
   });
 
@@ -112,17 +135,42 @@ export function DashboardReportsTab({
     e.preventDefault();
     setFeedback(null);
 
+    if (!formData.reason.trim() || !formData.description.trim()) {
+      setFeedback({
+        type: 'error',
+        text: 'El motivo y la descripción detallada del caso son obligatorios.',
+      });
+      return;
+    }
+
     try {
       if (editingReportId) {
-        await updateReport(editingReportId, formData);
+        const payload = isAdmin
+          ? formData
+          : {
+              reason: formData.reason.trim(),
+              description: formData.description.trim(),
+              evidenceUrl: formData.evidenceUrl.trim(),
+            };
+        await updateReport(editingReportId, payload);
         setFeedback({
           type: 'success',
-          text: `Expediente #${editingReportId} actualizado y medidas aplicadas.`,
+          text: `Expediente #${editingReportId} actualizado.`,
         });
       } else {
+        if (!effectiveAuctionId || !effectiveReportedUserId) {
+          setFeedback({
+            type: 'error',
+            text: 'Debes seleccionar una subasta y el usuario denunciado.',
+          });
+          return;
+        }
         const created = await createReport({
-          ...formData,
-          reporterId: currentUser.id,
+          auctionId: effectiveAuctionId,
+          reportedUserId: effectiveReportedUserId,
+          reason: formData.reason.trim(),
+          description: formData.description.trim(),
+          evidenceUrl: formData.evidenceUrl.trim(),
         });
         setFeedback({
           type: 'success',
@@ -141,11 +189,15 @@ export function DashboardReportsTab({
       `¿Confirmas eliminar el expediente de reporte #${rep.id}?`
     );
     if (!confirmed) return;
-    await deleteReport(rep.id);
-    setFeedback({
-      type: 'success',
-      text: `Expediente #${rep.id} eliminado.`,
-    });
+    try {
+      await deleteReport(rep.id);
+      setFeedback({
+        type: 'success',
+        text: `Expediente #${rep.id} eliminado.`,
+      });
+    } catch (err) {
+      setFeedback({ type: 'error', text: err.message });
+    }
   };
 
   return (
@@ -287,7 +339,7 @@ export function DashboardReportsTab({
                     Subasta Involucrada *
                   </label>
                   <select
-                    value={formData.auctionId}
+                    value={effectiveAuctionId}
                     onChange={(e) =>
                       setFormData((p) => ({ ...p, auctionId: e.target.value }))
                     }
@@ -306,7 +358,7 @@ export function DashboardReportsTab({
                     Usuario Denunciado *
                   </label>
                   <select
-                    value={formData.reportedUserId}
+                    value={effectiveReportedUserId}
                     onChange={(e) =>
                       setFormData((p) => ({
                         ...p,
@@ -315,11 +367,17 @@ export function DashboardReportsTab({
                     }
                     className="w-full rounded-xl bg-[#F7FBF3] border border-[#224F10]/15 px-3 py-2 text-xs text-[#0D0D0D] focus:outline-none"
                   >
-                    {otherUsers.map((u) => (
-                      <option key={u.id} value={String(u.id)}>
-                        {u.name} ({u.email})
-                      </option>
-                    ))}
+                    {otherUsers.length > 0 ? (
+                      otherUsers.map((u) => (
+                        <option key={u.id} value={String(u.id)}>
+                          {u.email
+                            ? `${u.name} (${u.email})`
+                            : `${u.name} (${u.city || 'Socio BidZone'})`}
+                        </option>
+                      ))
+                    ) : (
+                      <option value="">Sin usuarios disponibles</option>
+                    )}
                   </select>
                 </div>
               </div>
@@ -507,7 +565,9 @@ export function DashboardReportsTab({
               (u) => Number(u.id) === Number(rep.reportedUserId)
             );
             const canEdit =
-              isAdmin || Number(currentUser?.id) === Number(rep.reporterId);
+              isAdmin ||
+              (Number(currentUser?.id) === Number(rep.reporterId) &&
+                rep.status === 'en_revision');
 
             return (
               <div
@@ -576,7 +636,7 @@ export function DashboardReportsTab({
                       to={`/auctions/${rep.auctionId}`}
                       className="font-semibold text-[#224F10] hover:underline"
                     >
-                      {auction?.title || `Subasta #${rep.auctionId}`}
+                      {auction?.title || rep.auctionTitle || `Subasta #${rep.auctionId}`}
                     </Link>
                   </div>
 
@@ -585,9 +645,10 @@ export function DashboardReportsTab({
                       Denunciante → Denunciado
                     </span>
                     <strong className="text-[#0D0D0D]">
-                      {reporter?.name || 'Usuario'} →{' '}
+                      {reporter?.name || rep.reporterName || 'Usuario'} →{' '}
                       <span className="text-red-700">
-                        {reported?.name || 'Usuario'} ({reported?.status})
+                        {reported?.name || rep.reportedUserName || 'Usuario'}
+                        {reported?.status ? ` (${reported.status})` : ''}
                       </span>
                     </strong>
                   </div>
