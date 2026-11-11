@@ -1,9 +1,17 @@
-
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../states/authStore';
 import { Card, Input, Button, Alert } from '../../core/design-system/ui';
 import { ChevronRight, ShieldCheck, UserCheck } from 'lucide-react';
+
+// Si el usuario venía de una ruta específica, volvemos ahí (si no, vamos al inicio)
+function getRedirectDestination(location) {
+  const previousPath = location.state?.from?.pathname;
+  if (previousPath && previousPath !== '/dashboard') {
+    return previousPath;
+  }
+  return '/';
+}
 
 export function LoginView() {
   const navigate = useNavigate();
@@ -15,12 +23,9 @@ export function LoginView() {
   const [password, setPassword] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
 
-  const from =
-    location.state?.from?.pathname && location.state.from.pathname !== '/dashboard'
-      ? location.state.from.pathname
-      : '/';
+  const destination = getRedirectDestination(location);
 
-  const handleSubmit = async (e) => {
+  async function handleSubmit(e) {
     e.preventDefault();
     setErrorMsg('');
 
@@ -31,17 +36,20 @@ export function LoginView() {
 
     try {
       await login(email, password);
-      navigate(from, { replace: true });
+      navigate(destination, { replace: true });
     } catch (err) {
       setErrorMsg(err.message);
     }
-  };
+  }
 
-  const handlePrefillEmail = (demoEmail) => {
+  function handlePrefillEmail(demoEmail) {
     setEmail(demoEmail);
     setErrorMsg('');
-    document.getElementById('password')?.focus();
-  };
+    const passwordInput = document.getElementById('password');
+    if (passwordInput) {
+      passwordInput.focus();
+    }
+  }
 
   return (
     <div className="max-w-md mx-auto my-8">
@@ -53,7 +61,8 @@ export function LoginView() {
           Iniciar sesión
         </h1>
         <p className="text-xs text-[#0D0D0D]/70">
-          Ingresa con tus credenciales para participar en subastas en tiempo real.
+          Ingresa con tus credenciales para participar en subastas en tiempo
+          real.
         </p>
       </div>
 
@@ -95,9 +104,11 @@ export function LoginView() {
           </Button>
         </form>
 
+        {/* Botones rápidos para autocompletar correos de prueba */}
         <div className="mt-6 pt-5 border-t border-[#224F10]/15">
           <p className="text-[11px] font-semibold text-[#0D0D0D]/60 mb-3 text-center">
-            Autocompletar correo registrado (ingresa la contraseña de tu entorno)
+            Autocompletar correo registrado (ingresa la contraseña de tu
+            entorno)
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
             <button

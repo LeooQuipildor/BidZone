@@ -10,8 +10,14 @@ import {
   PageHeader,
   Alert,
   Spinner,
+  ErrorStateCard,
 } from '../../core/design-system/ui';
-import { formatCurrency } from '../../core/utils/formatters';
+import {
+  findById,
+  formatCurrency,
+  getMaxBidAmount,
+  sameId,
+} from '../../core/utils/formatters';
 import { Save, ArrowLeft } from 'lucide-react';
 
 function BidEditForm({ bid, auction, isAdmin, updateBid, navigate }) {
@@ -19,10 +25,21 @@ function BidEditForm({ bid, auction, isAdmin, updateBid, navigate }) {
   const [note, setNote] = useState(bid.note || '');
   const [errorMsg, setErrorMsg] = useState('');
 
-  const handleSubmit = async (e) => {
+  const maxAllowed = getMaxBidAmount(auction);
+  const auctionLabel =
+    auction?.title || bid.auctionTitle || `#${bid.auctionId}`;
+
+  let amountHelper =
+    'El importe no puede reducirse ni anularse por parte del postor.';
+  if (isAdmin) {
+    amountHelper = `Modo Administrador: Puedes ajustar el importe por auditoría (Máximo 10x precio inicial: ${formatCurrency(maxAllowed || 0)}).`;
+  }
+
+  async function handleSubmit(e) {
     e.preventDefault();
     setErrorMsg('');
 
+    // Solo el admin puede cambiar el importe; un postor normal solo edita su nota (RN04)
     const payload = isAdmin
       ? { amount: Number(amount), note: note.trim() }
       : { note: note.trim() };
@@ -33,15 +50,13 @@ function BidEditForm({ bid, auction, isAdmin, updateBid, navigate }) {
     } catch (err) {
       setErrorMsg(err.message);
     }
-  };
+  }
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <PageHeader
         title={`Editar Registro de Puja #${bid.id}`}
-        subtitle={`Subasta asociada: ${
-          auction?.title || bid.auctionTitle || `#${bid.auctionId}`
-        }`}
+        subtitle={`Subasta asociada: ${auctionLabel}`}
         action={
           <Button variant="outline" onClick={() => navigate('/bids')}>
             <ArrowLeft className="w-4 h-4" />
@@ -51,8 +66,12 @@ function BidEditForm({ bid, auction, isAdmin, updateBid, navigate }) {
       />
 
       {!isAdmin && (
-        <Alert type="info" title="Regla de Negocio RN04 (Irrevocabilidad del Monto)">
-          Como postor puedes actualizar tu nota de coordinación/entrega, pero el importe económico ofertado es vinculante e irrevocable.
+        <Alert
+          type="info"
+          title="Regla de Negocio RN04 (Irrevocabilidad del Monto)"
+        >
+          Como postor puedes actualizar tu nota de coordinación/entrega, pero el
+          importe económico ofertado es vinculante e irrevocable.
         </Alert>
       )}
 
@@ -73,18 +92,8 @@ function BidEditForm({ bid, auction, isAdmin, updateBid, navigate }) {
             disabled={!isAdmin}
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
-            max={
-              auction
-                ? Number(auction.basePrice || auction.currentPrice) * 10
-                : undefined
-            }
-            helperText={
-              isAdmin
-                ? `Modo Administrador: Puedes ajustar el importe por auditoría (Máximo 10x precio inicial: ${formatCurrency(
-                    Number(auction?.basePrice || auction?.currentPrice || 0) * 10
-                  )}).`
-                : 'El importe no puede reducirse ni anularse por parte del postor.'
-            }
+            max={maxAllowed}
+            helperText={amountHelper}
           />
 
           <Input
@@ -126,7 +135,7 @@ export function BidEditView() {
     fetchAuctions();
   }, [fetchBids, fetchAuctions]);
 
-  const bid = bids.find((b) => Number(b.id) === Number(id));
+  const bid = findById(bids, id);
   const isAdmin = currentUser?.role === 'admin';
 
   if (bidsLoading && !bid) {
@@ -135,41 +144,28 @@ export function BidEditView() {
 
   if (!bid) {
     return (
-      <div className="max-w-xl mx-auto my-12">
-        <Alert type="error" title="Puja no encontrada">
-          El registro de oferta solicitado no existe.
-        </Alert>
-        <Button
-          variant="secondary"
-          className="mt-4"
-          onClick={() => navigate('/bids')}
-        >
-          Volver a Pujas
-        </Button>
-      </div>
+      <ErrorStateCard
+        title="Puja no encontrada"
+        message="El registro de oferta solicitado no existe."
+        buttonLabel="Volver a Pujas"
+        onBack={() => navigate('/bids')}
+      />
     );
   }
 
-  if (!isAdmin && Number(currentUser?.id) !== Number(bid.bidderId)) {
+  const isBidderOwner = sameId(currentUser?.id, bid.bidderId);
+  if (!isAdmin && !isBidderOwner) {
     return (
-      <div className="max-w-xl mx-auto my-12">
-        <Alert type="error" title="Sin permisos de edición">
-          Solo el postor titular o un administrador puede modificar esta puja.
-        </Alert>
-        <Button
-          variant="secondary"
-          className="mt-4"
-          onClick={() => navigate('/bids')}
-        >
-          Volver a Pujas
-        </Button>
-      </div>
+      <ErrorStateCard
+        title="Sin permisos de edición"
+        message="Solo el postor titular o un administrador puede modificar esta puja."
+        buttonLabel="Volver a Pujas"
+        onBack={() => navigate('/bids')}
+      />
     );
   }
 
-  const auction = auctions.find(
-    (a) => Number(a.id) === Number(bid.auctionId)
-  );
+  const auction = findById(auctions, bid.auctionId);
 
   return (
     <BidEditForm
@@ -182,4 +178,3 @@ export function BidEditView() {
     />
   );
 }
-

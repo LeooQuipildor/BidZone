@@ -12,15 +12,54 @@ import {
   PageHeader,
   Alert,
   Spinner,
+  ErrorStateCard,
 } from '../../core/design-system/ui';
 import {
+  AUCTION_CATEGORY_OPTIONS,
   DEFAULT_AUCTION_IMAGE_URL,
+  findById,
+  sameId,
   toIsoFromLocalInput,
   toLocalDatetimeInputValue,
 } from '../../core/utils/formatters';
 import { Save, ArrowLeft } from 'lucide-react';
 
-function AuctionEditForm({ auction, hasBids, isAdmin, updateAuction, navigate }) {
+// Calcula qué estados puede seleccionar el usuario al editar esta subasta
+function getAuctionStatusOptions(auction, hasBids, isAdmin) {
+  if (isAdmin) {
+    return [
+      { value: 'activa', label: 'Activa (En vivo)' },
+      { value: 'finalizada', label: 'Finalizada' },
+      { value: 'cancelada', label: 'Cancelada' },
+    ];
+  }
+
+  // Un vendedor solo puede cancelar su subasta si todavía no recibió ofertas
+  if (auction.status === 'activa' && !hasBids) {
+    return [
+      { value: 'activa', label: 'Activa (En vivo)' },
+      { value: 'cancelada', label: 'Cancelar subasta' },
+    ];
+  }
+
+  let currentLabel = 'Cancelada';
+  if (auction.status === 'activa') {
+    currentLabel =
+      'Activa (En vivo — usa "Finalizar y Adjudicar" en el detalle)';
+  } else if (auction.status === 'finalizada') {
+    currentLabel = 'Finalizada';
+  }
+
+  return [{ value: auction.status, label: currentLabel }];
+}
+
+function AuctionEditForm({
+  auction,
+  hasBids,
+  isAdmin,
+  updateAuction,
+  navigate,
+}) {
   const initialEndTime = toLocalDatetimeInputValue(auction.endTime);
 
   const [formData, setFormData] = useState({
@@ -35,11 +74,16 @@ function AuctionEditForm({ auction, hasBids, isAdmin, updateAuction, navigate })
   });
   const [errorMsg, setErrorMsg] = useState('');
 
-  const handleChange = (e) => {
-    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-  };
+  const lockFinancialFields = hasBids && !isAdmin;
+  const statusOptions = getAuctionStatusOptions(auction, hasBids, isAdmin);
 
-  const handleSubmit = async (e) => {
+  function handleChange(e) {
+    const fieldName = e.target.name;
+    const fieldValue = e.target.value;
+    setFormData((prev) => ({ ...prev, [fieldName]: fieldValue }));
+  }
+
+  async function handleSubmit(e) {
     e.preventDefault();
     setErrorMsg('');
 
@@ -50,7 +94,8 @@ function AuctionEditForm({ auction, hasBids, isAdmin, updateAuction, navigate })
       imageUrl: formData.imageUrl.trim() || DEFAULT_AUCTION_IMAGE_URL,
     };
 
-    if (!hasBids || isAdmin) {
+    // RN08: si ya hay pujas, solo el administrador puede cambiar precios o fecha de cierre
+    if (!lockFinancialFields) {
       payload.basePrice = formData.basePrice;
       payload.minIncrement = formData.minIncrement;
       if (formData.endTime && formData.endTime !== initialEndTime) {
@@ -68,30 +113,7 @@ function AuctionEditForm({ auction, hasBids, isAdmin, updateAuction, navigate })
     } catch (err) {
       setErrorMsg(err.message);
     }
-  };
-
-  const statusOptions = isAdmin
-    ? [
-        { value: 'activa', label: 'Activa (En vivo)' },
-        { value: 'finalizada', label: 'Finalizada' },
-        { value: 'cancelada', label: 'Cancelada' },
-      ]
-    : auction.status === 'activa' && !hasBids
-      ? [
-          { value: 'activa', label: 'Activa (En vivo)' },
-          { value: 'cancelada', label: 'Cancelar subasta' },
-        ]
-      : [
-          {
-            value: auction.status,
-            label:
-              auction.status === 'activa'
-                ? 'Activa (En vivo — usa "Finalizar y Adjudicar" en el detalle)'
-                : auction.status === 'finalizada'
-                  ? 'Finalizada'
-                  : 'Cancelada',
-          },
-        ];
+  }
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
@@ -109,9 +131,14 @@ function AuctionEditForm({ auction, hasBids, isAdmin, updateAuction, navigate })
         }
       />
 
-      {hasBids && !isAdmin && (
-        <Alert type="warning" title="Regla de Negocio RN08 (Inmutabilidad por Oferta)">
-          Esta subasta ya cuenta con ofertas registradas. El precio base, incremento mínimo y cierre quedan bloqueados para proteger la transparencia hacia los postores.
+      {lockFinancialFields && (
+        <Alert
+          type="warning"
+          title="Regla de Negocio RN08 (Inmutabilidad por Oferta)"
+        >
+          Esta subasta ya cuenta con ofertas registradas. El precio base,
+          incremento mínimo y cierre quedan bloqueados para proteger la
+          transparencia hacia los postores.
         </Alert>
       )}
 
@@ -140,14 +167,7 @@ function AuctionEditForm({ auction, hasBids, isAdmin, updateAuction, navigate })
               label="Categoría"
               value={formData.category}
               onChange={handleChange}
-              options={[
-                { value: 'Tecnología', label: 'Tecnología' },
-                { value: 'Gaming', label: 'Gaming' },
-                { value: 'Hogar y Oficina', label: 'Hogar y Oficina' },
-                { value: 'Deportes', label: 'Deportes' },
-                { value: 'Fotografía', label: 'Fotografía' },
-                { value: 'Vehículos', label: 'Vehículos' },
-              ]}
+              options={AUCTION_CATEGORY_OPTIONS}
             />
             <Select
               id="status"
@@ -162,7 +182,7 @@ function AuctionEditForm({ auction, hasBids, isAdmin, updateAuction, navigate })
               name="endTime"
               type="datetime-local"
               label="Fecha de Cierre"
-              disabled={hasBids && !isAdmin}
+              disabled={lockFinancialFields}
               value={formData.endTime}
               onChange={handleChange}
             />
@@ -174,7 +194,7 @@ function AuctionEditForm({ auction, hasBids, isAdmin, updateAuction, navigate })
               name="basePrice"
               type="number"
               label="Precio Base (ARS)"
-              disabled={hasBids && !isAdmin}
+              disabled={lockFinancialFields}
               value={formData.basePrice}
               onChange={handleChange}
             />
@@ -183,7 +203,7 @@ function AuctionEditForm({ auction, hasBids, isAdmin, updateAuction, navigate })
               name="minIncrement"
               type="number"
               label="Incremento Mínimo (ARS)"
-              disabled={hasBids && !isAdmin}
+              disabled={lockFinancialFields}
               value={formData.minIncrement}
               onChange={handleChange}
             />
@@ -241,10 +261,12 @@ export function AuctionEditView() {
     fetchBids();
   }, [id, fetchAuctionById, fetchBids]);
 
-  const auction =
-    (currentAuctionDetail && Number(currentAuctionDetail.id) === Number(id)
-      ? currentAuctionDetail
-      : null) || auctions.find((a) => Number(a.id) === Number(id));
+  let auction = null;
+  if (currentAuctionDetail && sameId(currentAuctionDetail.id, id)) {
+    auction = currentAuctionDetail;
+  } else {
+    auction = findById(auctions, id);
+  }
 
   if (detailLoading && !auction) {
     return <Spinner label="Cargando subasta..." />;
@@ -252,45 +274,33 @@ export function AuctionEditView() {
 
   if (!auction) {
     return (
-      <div className="max-w-xl mx-auto my-12">
-        <Alert type="error" title="Subasta no encontrada">
-          La subasta que intentas editar no existe.
-        </Alert>
-        <Button
-          variant="secondary"
-          className="mt-4"
-          onClick={() => navigate('/auctions')}
-        >
-          Volver al catálogo
-        </Button>
-      </div>
+      <ErrorStateCard
+        title="Subasta no encontrada"
+        message="La subasta que intentas editar no existe."
+        buttonLabel="Volver al catálogo"
+        onBack={() => navigate('/auctions')}
+      />
     );
   }
 
   const isAdmin = currentUser?.role === 'admin';
-  const isOwner = Number(currentUser?.id) === Number(auction.sellerId);
+  const isOwner = sameId(currentUser?.id, auction.sellerId);
 
   if (!isAdmin && !isOwner) {
     return (
-      <div className="max-w-xl mx-auto my-12">
-        <Alert type="error" title="Sin permisos de edición">
-          Solo el vendedor propietario o un administrador puede editar esta subasta.
-        </Alert>
-        <Button
-          variant="secondary"
-          className="mt-4"
-          onClick={() => navigate(`/auctions/${auction.id}`)}
-        >
-          Volver al detalle
-        </Button>
-      </div>
+      <ErrorStateCard
+        title="Sin permisos de edición"
+        message="Solo el vendedor propietario o un administrador puede editar esta subasta."
+        buttonLabel="Volver al detalle"
+        onBack={() => navigate(`/auctions/${auction.id}`)}
+      />
     );
   }
 
   const hasBids =
-    Number(auction.bidCount ?? 0) > 0 ||
+    Number(auction.bidCount || 0) > 0 ||
     (Array.isArray(auction.bids) && auction.bids.length > 0) ||
-    bids.some((b) => Number(b.auctionId) === Number(id));
+    bids.some((b) => sameId(b.auctionId, id));
 
   return (
     <AuctionEditForm

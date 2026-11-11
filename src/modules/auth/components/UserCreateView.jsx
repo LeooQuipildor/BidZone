@@ -26,11 +26,13 @@ export function UserCreateView() {
   });
   const [errorMsg, setErrorMsg] = useState('');
 
-  const handleChange = (e) => {
-    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-  };
+  function handleChange(e) {
+    const fieldName = e.target.name;
+    const fieldValue = e.target.value;
+    setFormData((prev) => ({ ...prev, [fieldName]: fieldValue }));
+  }
 
-  const handleSubmit = async (e) => {
+  async function handleSubmit(e) {
     e.preventDefault();
     setErrorMsg('');
 
@@ -45,7 +47,7 @@ export function UserCreateView() {
     } catch (err) {
       setErrorMsg(err.message);
     }
-  };
+  }
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
@@ -158,4 +160,3 @@ export function UserCreateView() {
     </div>
   );
 }
-

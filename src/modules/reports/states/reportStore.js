@@ -1,8 +1,10 @@
 import { create } from 'zustand';
 import { httpRequest, registerSessionReset } from '../../core/lib/apiClient';
+import { removeById, replaceById } from '../../core/utils/formatters';
 import { useAuthStore } from '../../auth/states/authStore';
 import { useNotificationStore } from '../../notifications/states/notificationStore';
 
+// Store global de reportes e infracciones RN06 (conecta con /api/reports)
 export const useReportStore = create((set) => ({
   reports: [],
   loading: false,
@@ -13,6 +15,7 @@ export const useReportStore = create((set) => ({
       set({ reports: [], loading: false });
       return [];
     }
+
     set({ loading: true, error: null });
     try {
       const data = await httpRequest('/reports');
@@ -27,15 +30,17 @@ export const useReportStore = create((set) => ({
   createReport: async (payload) => {
     set({ error: null });
     try {
+      const body = {
+        auctionId: Number(payload.auctionId),
+        reportedUserId: Number(payload.reportedUserId),
+        reason: payload.reason ? payload.reason.trim() : '',
+        description: payload.description ? payload.description.trim() : '',
+        evidenceUrl: payload.evidenceUrl ? payload.evidenceUrl.trim() : '',
+      };
+
       const created = await httpRequest('/reports', {
         method: 'POST',
-        body: JSON.stringify({
-          auctionId: Number(payload.auctionId),
-          reportedUserId: Number(payload.reportedUserId),
-          reason: payload.reason?.trim(),
-          description: payload.description?.trim(),
-          evidenceUrl: payload.evidenceUrl?.trim() || '',
-        }),
+        body: JSON.stringify(body),
       });
       set((state) => ({ reports: [created, ...state.reports] }));
       return created;
@@ -66,11 +71,10 @@ export const useReportStore = create((set) => ({
       });
 
       set((state) => ({
-        reports: state.reports.map((r) =>
-          Number(r.id) === Number(id) ? updated : r
-        ),
+        reports: replaceById(state.reports, id, updated),
       }));
 
+      // Al resolver un reporte puede cambiar el estado del usuario denunciado y generar notificaciones
       await useAuthStore.getState().fetchUsers();
       if (localStorage.getItem('bidzone_token')) {
         await useNotificationStore.getState().fetchNotifications();
@@ -87,7 +91,7 @@ export const useReportStore = create((set) => ({
     try {
       await httpRequest(`/reports/${id}`, { method: 'DELETE' });
       set((state) => ({
-        reports: state.reports.filter((r) => Number(r.id) !== Number(id)),
+        reports: removeById(state.reports, id),
       }));
     } catch (err) {
       set({ error: err.message });

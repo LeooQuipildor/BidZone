@@ -29,14 +29,14 @@ function App() {
     <BrowserRouter>
       <Layout>
         <Routes>
-          {/* Rutas Públicas */}
+          {/* Páginas públicas (no requieren iniciar sesión) */}
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<LoginView />} />
           <Route path="/register" element={<RegisterView />} />
           <Route path="/auctions" element={<AuctionsListView />} />
           <Route path="/auctions/:id" element={<AuctionDetailView />} />
 
-          {/* Panel Principal / Dashboard */}
+          {/* Panel principal dinámico */}
           <Route
             path="/dashboard"
             element={
@@ -46,7 +46,7 @@ function App() {
             }
           />
 
-          {/* Entidad 1: Subastas (Alta y Edición Protegidas) */}
+          {/* Subastas: crear y editar */}
           <Route
             path="/auctions/new"
             element={
@@ -64,7 +64,7 @@ function App() {
             }
           />
 
-          {/* Entidad 2: Pujas (Integrado al Dashboard + Alta/Edición directa) */}
+          {/* Pujas: pestaña del panel + formularios directos */}
           <Route
             path="/bids"
             element={
@@ -90,7 +90,7 @@ function App() {
             }
           />
 
-          {/* Entidad 3: Reportes e Infracciones */}
+          {/* Reportes e infracciones (RN06) */}
           <Route
             path="/reports"
             element={
@@ -116,7 +116,7 @@ function App() {
             }
           />
 
-          {/* Entidad 4: Calificaciones y Reputación */}
+          {/* Calificaciones y reputación (RN07) */}
           <Route
             path="/reviews"
             element={
@@ -142,7 +142,7 @@ function App() {
             }
           />
 
-          {/* Entidad 5: Usuarios */}
+          {/* Usuarios y roles */}
           <Route
             path="/users"
             element={
@@ -168,7 +168,7 @@ function App() {
             }
           />
 
-          {/* Centro de Notificaciones */}
+          {/* Centro de notificaciones */}
           <Route
             path="/notifications"
             element={
@@ -178,7 +178,7 @@ function App() {
             }
           />
 
-          {/* Fallback */}
+          {/* Si la ruta no existe, redirigimos al inicio */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Layout>

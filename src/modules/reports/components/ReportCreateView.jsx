@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useReportStore } from '../states/reportStore';
 import { useAuctionStore } from '../../auctions/states/auctionStore';
 import { useAuthStore } from '../../auth/states/authStore';
+import { pickValidId, sameId } from '../../core/utils/formatters';
 import {
   Card,
   Input,
@@ -13,6 +14,25 @@ import {
   Alert,
 } from '../../core/design-system/ui';
 import { AlertOctagon, ArrowLeft } from 'lucide-react';
+
+const REPORT_REASON_OPTIONS = [
+  {
+    value: 'Incumplimiento de pago en plazo acordado',
+    label: 'El ganador no realizó el pago acordado',
+  },
+  {
+    value: 'Negativa del vendedor a entregar el artículo',
+    label: 'El dueño del artículo se niega a entregarlo',
+  },
+  {
+    value: 'Falta de respuesta tras liberación de datos',
+    label: 'No responde teléfono ni correo tras ganar',
+  },
+  {
+    value: 'Artículo distinto a la descripción publicada',
+    label: 'El producto no coincide con lo publicado',
+  },
+];
 
 export function ReportCreateView() {
   const navigate = useNavigate();
@@ -32,8 +52,9 @@ export function ReportCreateView() {
     fetchUsers();
   }, [fetchAuctions, fetchUsers]);
 
+  // Excluimos al usuario actual de la lista de personas denunciables
   const otherUsers = useMemo(
-    () => users.filter((u) => Number(u.id) !== Number(currentUser?.id)),
+    () => users.filter((u) => !sameId(u.id, currentUser?.id)),
     [users, currentUser?.id]
   );
 
@@ -46,27 +67,19 @@ export function ReportCreateView() {
   });
   const [errorMsg, setErrorMsg] = useState('');
 
-  const effectiveAuctionId = auctions.some(
-    (a) => String(a.id) === String(formData.auctionId)
-  )
-    ? String(formData.auctionId)
-    : auctions[0]
-      ? String(auctions[0].id)
-      : '';
+  const effectiveAuctionId = pickValidId(auctions, formData.auctionId);
+  const effectiveReportedUserId = pickValidId(
+    otherUsers,
+    formData.reportedUserId
+  );
 
-  const effectiveReportedUserId = otherUsers.some(
-    (u) => String(u.id) === String(formData.reportedUserId)
-  )
-    ? String(formData.reportedUserId)
-    : otherUsers[0]
-      ? String(otherUsers[0].id)
-      : '';
+  function handleChange(e) {
+    const fieldName = e.target.name;
+    const fieldValue = e.target.value;
+    setFormData((prev) => ({ ...prev, [fieldName]: fieldValue }));
+  }
 
-  const handleChange = (e) => {
-    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-  };
-
-  const handleSubmit = async (e) => {
+  async function handleSubmit(e) {
     e.preventDefault();
     setErrorMsg('');
 
@@ -76,21 +89,43 @@ export function ReportCreateView() {
     }
 
     if (!formData.description.trim()) {
-      setErrorMsg('Por favor describe detalladamente los hechos del incumplimiento.');
+      setErrorMsg(
+        'Por favor describe detalladamente los hechos del incumplimiento.'
+      );
       return;
     }
 
     try {
       await createReport({
-        ...formData,
         auctionId: effectiveAuctionId,
         reportedUserId: effectiveReportedUserId,
+        reason: formData.reason,
+        description: formData.description,
+        evidenceUrl: formData.evidenceUrl,
       });
       navigate('/reports');
     } catch (err) {
       setErrorMsg(err.message);
     }
-  };
+  }
+
+  const auctionOptions =
+    auctions.length > 0
+      ? auctions.map((a) => ({
+          value: String(a.id),
+          label: `#${a.id} — ${a.title}`,
+        }))
+      : [{ value: '', label: 'Sin subastas registradas' }];
+
+  const userOptions =
+    otherUsers.length > 0
+      ? otherUsers.map((u) => ({
+          value: String(u.id),
+          label: u.email
+            ? `${u.name} (${u.email})`
+            : `${u.name} (${u.city || 'Socio BidZone'})`,
+        }))
+      : [{ value: '', label: 'Sin usuarios disponibles' }];
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
@@ -122,14 +157,7 @@ export function ReportCreateView() {
               label="Subasta Involucrada *"
               value={effectiveAuctionId}
               onChange={handleChange}
-              options={
-                auctions.length > 0
-                  ? auctions.map((a) => ({
-                      value: String(a.id),
-                      label: `#${a.id} — ${a.title}`,
-                    }))
-                  : [{ value: '', label: 'Sin subastas registradas' }]
-              }
+              options={auctionOptions}
             />
             <Select
               id="reportedUserId"
@@ -137,16 +165,7 @@ export function ReportCreateView() {
               label="Usuario Denunciado *"
               value={effectiveReportedUserId}
               onChange={handleChange}
-              options={
-                otherUsers.length > 0
-                  ? otherUsers.map((u) => ({
-                      value: String(u.id),
-                      label: u.email
-                        ? `${u.name} (${u.email})`
-                        : `${u.name} (${u.city || 'Socio BidZone'})`,
-                    }))
-                  : [{ value: '', label: 'Sin usuarios disponibles' }]
-              }
+              options={userOptions}
             />
           </div>
 
@@ -156,24 +175,7 @@ export function ReportCreateView() {
             label="Motivo Principal del Reclamo *"
             value={formData.reason}
             onChange={handleChange}
-            options={[
-              {
-                value: 'Incumplimiento de pago en plazo acordado',
-                label: 'El ganador no realizó el pago acordado',
-              },
-              {
-                value: 'Negativa del vendedor a entregar el artículo',
-                label: 'El dueño del artículo se niega a entregarlo',
-              },
-              {
-                value: 'Falta de respuesta tras liberación de datos',
-                label: 'No responde teléfono ni correo tras ganar',
-              },
-              {
-                value: 'Artículo distinto a la descripción publicada',
-                label: 'El producto no coincide con lo publicado',
-              },
-            ]}
+            options={REPORT_REASON_OPTIONS}
           />
 
           <Input
@@ -208,4 +210,3 @@ export function ReportCreateView() {
     </div>
   );
 }
-

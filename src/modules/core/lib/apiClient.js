@@ -1,35 +1,58 @@
+// URL base del backend REST (toma la variable de entorno o usa localhost:3000 por defecto)
 const API_BASE_URL =
   import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
+// Función que se ejecuta si el servidor responde 401 (sesión expirada o token inválido)
 let unauthorizedHandler = null;
-const sessionResetCallbacks = new Set();
+
+// Lista de funciones que limpian cada store cuando el usuario cierra sesión
+const sessionResetCallbacks = [];
 
 export function registerUnauthorizedHandler(handler) {
   unauthorizedHandler = handler;
 }
 
 export function registerSessionReset(callback) {
-  sessionResetCallbacks.add(callback);
-  return () => sessionResetCallbacks.delete(callback);
+  if (!sessionResetCallbacks.includes(callback)) {
+    sessionResetCallbacks.push(callback);
+  }
 }
 
 export function runSessionResets() {
-  sessionResetCallbacks.forEach((cb) => {
+  for (const resetStore of sessionResetCallbacks) {
     try {
-      cb();
+      resetStore();
     } catch {
-      // Ignorar errores en limpieza de stores
+      // Ignoramos errores puntuales para seguir limpiando el resto de los stores
     }
-  });
+  }
 }
 
+// Lee el JSON de la respuesta sin romper el programa si viene vacío o inválido
+async function parseJsonSafe(response) {
+  try {
+    return await response.json();
+  } catch {
+    return {};
+  }
+}
+
+// Función central para hacer peticiones HTTP (GET, POST, PUT, PATCH, DELETE) al backend
 export async function httpRequest(endpoint, options = {}) {
   const token = localStorage.getItem('bidzone_token');
+
+  // Armamos las cabeceras HTTP básicas
   const headers = {
     'Content-Type': 'application/json',
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    ...(options.headers || {}),
   };
+
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  if (options.headers) {
+    Object.assign(headers, options.headers);
+  }
 
   let response;
   try {
@@ -43,21 +66,23 @@ export async function httpRequest(endpoint, options = {}) {
     );
   }
 
+  // 204 No Content significa éxito sin cuerpo en la respuesta (ej: DELETE)
   if (response.status === 204) {
     return null;
   }
 
-  const data = await response.json().catch(() => ({}));
+  const data = await parseJsonSafe(response);
 
   if (!response.ok) {
-    if (
-      response.status === 401 &&
-      token &&
-      !endpoint.startsWith('/auth/login') &&
-      !endpoint.startsWith('/auth/register')
-    ) {
-      unauthorizedHandler?.();
+    const isAuthEndpoint =
+      endpoint.startsWith('/auth/login') || endpoint.startsWith('/auth/register');
+
+    if (response.status === 401 && token && !isAuthEndpoint) {
+      if (unauthorizedHandler) {
+        unauthorizedHandler();
+      }
     }
+
     throw new Error(data.message || `Error HTTP ${response.status}`);
   }
 

@@ -1,9 +1,20 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useBidStore } from '../../../bids/states/bidStore';
-import { formatCurrency, formatDateTime } from '../../utils/formatters';
+import { BidConfirmModal } from '../../../bids/components/BidConfirmModal';
+import {
+  formatCurrency,
+  formatDateTime,
+  sameId,
+  findById,
+  pickValidId,
+  matchesSearch,
+  getSuggestedBidAmount,
+  getMaxBidAmount,
+  validateBidInput,
+} from '../../utils/formatters';
 import { getInitials } from './dashboardHelpers';
-import { Modal, Button } from '../../design-system/ui';
+import { DashboardFeedback, DashboardStatCard } from './DashboardShared';
 import {
   Plus,
   X,
@@ -12,8 +23,6 @@ import {
   ExternalLink,
   Edit3,
   Trash2,
-  CheckCircle2,
-  AlertCircle,
   Save,
 } from 'lucide-react';
 
@@ -45,71 +54,64 @@ export function DashboardBidsTab({
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [isSubmittingBid, setIsSubmittingBid] = useState(false);
 
+  // Si estamos creando, garantizamos que la subasta elegida siga activa
   const effectiveAuctionId = editingBidId
     ? formAuctionId
-    : activeAuctions.some((a) => String(a.id) === String(formAuctionId))
-      ? String(formAuctionId)
-      : activeAuctions[0]
-        ? String(activeAuctions[0].id)
-        : '';
+    : pickValidId(activeAuctions, formAuctionId);
 
-  const selectedAuctionForForm = auctions.find(
-    (a) => Number(a.id) === Number(effectiveAuctionId)
-  );
-  const suggestedAmount = selectedAuctionForForm
-    ? String(
-        Number(selectedAuctionForForm.currentPrice) +
-          Number(selectedAuctionForForm.minIncrement)
-      )
-    : '';
-  const formAmount = formAmountInput ?? suggestedAmount;
+  const selectedAuctionForForm = findById(auctions, effectiveAuctionId);
+  const suggestedAmount = getSuggestedBidAmount(selectedAuctionForForm);
+  const maxBidAmount = getMaxBidAmount(selectedAuctionForForm);
+  const formAmount =
+    formAmountInput !== null ? formAmountInput : suggestedAmount;
 
-  const myBids = bids.filter(
-    (b) => Number(b.bidderId) === Number(currentUser?.id)
-  );
+  // Estadísticas rápidas del historial de pujas
+  const myBids = bids.filter((b) => sameId(b.bidderId, currentUser?.id));
   const leadingBidsCount = bids.filter((bid) => {
-    const a = auctions.find((item) => Number(item.id) === Number(bid.auctionId));
-    return a && Number(a.currentPrice) === Number(bid.amount);
+    const auction = findById(auctions, bid.auctionId);
+    return auction && Number(auction.currentPrice) === Number(bid.amount);
   }).length;
-  const highestBidAmount = bids.reduce(
-    (max, b) => (Number(b.amount) > max ? Number(b.amount) : max),
-    0
-  );
 
-  const normalizedQuery = searchQuery.trim().toLowerCase();
+  let highestBidAmount = 0;
+  for (const bid of bids) {
+    if (Number(bid.amount) > highestBidAmount) {
+      highestBidAmount = Number(bid.amount);
+    }
+  }
 
-  const filteredBids = bids.filter((b) => {
-    const auction = auctions.find(
-      (a) => Number(a.id) === Number(b.auctionId)
-    );
-    const bidder = users.find((u) => Number(u.id) === Number(b.bidderId));
+  // Filtrado por dueño, subasta elegida y buscador
+  const filteredBids = bids.filter((bid) => {
+    const auction = findById(auctions, bid.auctionId);
+    const bidder = findById(users, bid.bidderId);
 
     const matchScope =
-      scopeFilter === 'todas' ||
-      Number(b.bidderId) === Number(currentUser?.id);
+      scopeFilter === 'todas' || sameId(bid.bidderId, currentUser?.id);
     const matchAuction =
-      auctionFilter === 'todas' || Number(b.auctionId) === Number(auctionFilter);
-    const matchQuery =
-      !normalizedQuery ||
-      (auction?.title || b.auctionTitle || '').toLowerCase().includes(normalizedQuery) ||
-      (bidder?.name || b.bidderName || '').toLowerCase().includes(normalizedQuery) ||
-      (b.note || '').toLowerCase().includes(normalizedQuery);
+      auctionFilter === 'todas' || sameId(bid.auctionId, auctionFilter);
+    const matchQuery = matchesSearch(
+      [
+        auction?.title || bid.auctionTitle,
+        bidder?.name || bid.bidderName,
+        bid.note,
+      ],
+      searchQuery
+    );
 
     return matchScope && matchAuction && matchQuery;
   });
 
-  const openCreateForm = () => {
+  function openCreateForm() {
     setEditingBidId(null);
-    const first = activeAuctions[0];
-    setFormAuctionId(first ? String(first.id) : '');
+    const primeraActiva = activeAuctions[0];
+    setFormAuctionId(primeraActiva ? String(primeraActiva.id) : '');
     setFormAmountInput(null);
     setFormNote('');
     setCommitmentAccepted(true);
     setFormOpen(true);
     setFeedback(null);
-  };
+  }
 
-  const openEditForm = (bid) => {
+  function openEditForm(bid) {
     setEditingBidId(bid.id);
     setFormAuctionId(String(bid.auctionId));
     setFormAmountInput(String(bid.amount));
@@ -117,16 +119,16 @@ export function DashboardBidsTab({
     setCommitmentAccepted(true);
     setFormOpen(true);
     setFeedback(null);
-  };
+  }
 
-  const handleAuctionSelect = (val) => {
-    setFormAuctionId(val);
+  function handleAuctionSelect(value) {
+    setFormAuctionId(value);
     if (!editingBidId) {
       setFormAmountInput(null);
     }
-  };
+  }
 
-  const handleSubmit = async (e) => {
+  async function handleSubmit(e) {
     e.preventDefault();
     setFeedback(null);
 
@@ -135,6 +137,7 @@ export function DashboardBidsTab({
         const payload = isAdmin
           ? { amount: Number(formAmount), note: formNote.trim() }
           : { note: formNote.trim() };
+
         await updateBid(editingBidId, payload);
         setFeedback({
           type: 'success',
@@ -148,48 +151,23 @@ export function DashboardBidsTab({
       return;
     }
 
-    if (!selectedAuctionForForm) {
-      setFeedback({
-        type: 'error',
-        text: 'Debes seleccionar una subasta activa.',
-      });
-      return;
-    }
+    // Validamos las reglas de oferta antes de mostrar el modal de confirmación
+    const validationError = validateBidInput({
+      auction: selectedAuctionForForm,
+      amount: formAmount,
+      commitmentAccepted,
+      checkMax: true,
+    });
 
-    const numericAmount = Number(formAmount);
-    if (!formAmount || isNaN(numericAmount) || numericAmount <= 0) {
-      setFeedback({
-        type: 'error',
-        text: 'Por favor ingresa un monto numérico válido.',
-      });
-      return;
-    }
-
-    const minAllowed =
-      Number(selectedAuctionForForm.currentPrice) +
-      Number(selectedAuctionForForm.minIncrement);
-    if (numericAmount < minAllowed) {
-      setFeedback({
-        type: 'error',
-        text: `RN01: La oferta debe ser de al menos ${formatCurrency(
-          minAllowed
-        )} (Precio actual + incremento mínimo).`,
-      });
-      return;
-    }
-
-    if (!commitmentAccepted) {
-      setFeedback({
-        type: 'error',
-        text: 'Debes aceptar el compromiso vinculante (RN04) antes de enviar la oferta.',
-      });
+    if (validationError) {
+      setFeedback({ type: 'error', text: validationError });
       return;
     }
 
     setShowConfirmModal(true);
-  };
+  }
 
-  const handleConfirmBid = async () => {
+  async function handleConfirmBid() {
     setIsSubmittingBid(true);
     setFeedback(null);
 
@@ -214,13 +192,14 @@ export function DashboardBidsTab({
     } finally {
       setIsSubmittingBid(false);
     }
-  };
+  }
 
-  const handleDelete = async (bid) => {
+  async function handleDelete(bid) {
     const confirmed = window.confirm(
       `¿Confirmas eliminar el registro de puja #${bid.id} por ${formatCurrency(bid.amount)}?`
     );
     if (!confirmed) return;
+
     try {
       await deleteBid(bid.id);
       setFeedback({
@@ -230,11 +209,14 @@ export function DashboardBidsTab({
     } catch (err) {
       setFeedback({ type: 'error', text: err.message });
     }
-  };
+  }
+
+  const auctionOptionsForForm = editingBidId ? auctions : activeAuctions;
+  const formListUnavailable = !editingBidId && activeAuctions.length === 0;
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Encabezado */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pt-1">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#0D0D0D]">
@@ -247,6 +229,7 @@ export function DashboardBidsTab({
         </div>
 
         <button
+          type="button"
           onClick={openCreateForm}
           className="inline-flex items-center gap-2 rounded-full bg-[#224F10] hover:bg-[#0D0D0D] text-[#EAFFD0] px-4 py-2 text-xs font-semibold transition-colors cursor-pointer shadow-xs self-start md:self-auto"
         >
@@ -255,89 +238,37 @@ export function DashboardBidsTab({
         </button>
       </div>
 
-      {/* 4 Donezo KPI Cards */}
+      {/* Tarjetas de métricas */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-        <div className="rounded-2xl bg-gradient-to-br from-[#224F10] to-[#122B08] text-[#EAFFD0] p-5 flex flex-col justify-between shadow-sm">
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-xs font-medium text-[#EAFFD0]/90">
-              Total de Pujas
-            </span>
-            <span className="w-7 h-7 rounded-full bg-[#EAFFD0]/15 text-[#B0E454] flex items-center justify-center">
-              <TrendingUp className="w-3.5 h-3.5" />
-            </span>
-          </div>
-          <p className="text-4xl font-bold tracking-tight my-2">
-            {bids.length}
-          </p>
-          <span className="text-[11px] text-[#EAFFD0]/75">
-            Ofertas registradas en sala
-          </span>
-        </div>
-
-        <div className="rounded-2xl bg-white border border-[#224F10]/10 p-5 flex flex-col justify-between shadow-2xs">
-          <span className="text-xs font-semibold text-[#0D0D0D]/75">
-            Mis Pujas
-          </span>
-          <p className="text-4xl font-bold tracking-tight text-[#0D0D0D] my-2">
-            {myBids.length}
-          </p>
-          <span className="text-[11px] text-[#224F10] font-semibold">
-            Con compromiso RN04
-          </span>
-        </div>
-
-        <div className="rounded-2xl bg-white border border-[#224F10]/10 p-5 flex flex-col justify-between shadow-2xs">
-          <span className="text-xs font-semibold text-[#0D0D0D]/75">
-            Ofertas Líderes
-          </span>
-          <p className="text-4xl font-bold tracking-tight text-[#0D0D0D] my-2">
-            {leadingBidsCount}
-          </p>
-          <span className="text-[11px] text-[#0D0D0D]/55">
-            Encabezando subastas
-          </span>
-        </div>
-
-        <div className="rounded-2xl bg-white border border-[#224F10]/10 p-5 flex flex-col justify-between shadow-2xs">
-          <span className="text-xs font-semibold text-[#0D0D0D]/75">
-            Puja Más Alta
-          </span>
-          <p className="text-2xl sm:text-3xl font-bold tracking-tight text-[#224F10] my-2 truncate tabular-nums">
-            {formatCurrency(highestBidAmount)}
-          </p>
-          <span className="text-[11px] text-[#0D0D0D]/55">
-            Récord de la plataforma
-          </span>
-        </div>
+        <DashboardStatCard
+          highlight
+          title="Total de Pujas"
+          icon={<TrendingUp className="w-3.5 h-3.5" />}
+          value={bids.length}
+          subtitle="Ofertas registradas en sala"
+        />
+        <DashboardStatCard
+          title="Mis Pujas"
+          value={myBids.length}
+          subtitle="Con compromiso RN04"
+          subtitleClassName="text-[#224F10] font-semibold"
+        />
+        <DashboardStatCard
+          title="Ofertas Líderes"
+          value={leadingBidsCount}
+          subtitle="Encabezando subastas"
+        />
+        <DashboardStatCard
+          title="Puja Más Alta"
+          value={formatCurrency(highestBidAmount)}
+          valueClassName="text-2xl sm:text-3xl text-[#224F10] truncate tabular-nums"
+          subtitle="Récord de la plataforma"
+        />
       </div>
 
-      {/* Inline Feedback */}
-      {feedback && (
-        <div
-          className={`flex items-center justify-between gap-3 rounded-2xl px-4 py-3 text-xs font-medium border ${
-            feedback.type === 'error'
-              ? 'bg-red-50 border-red-200 text-red-800'
-              : 'bg-[#EAFFD0] border-[#224F10]/20 text-[#224F10]'
-          }`}
-        >
-          <div className="flex items-center gap-2">
-            {feedback.type === 'error' ? (
-              <AlertCircle className="w-4 h-4 shrink-0" />
-            ) : (
-              <CheckCircle2 className="w-4 h-4 shrink-0" />
-            )}
-            <span>{feedback.text}</span>
-          </div>
-          <button
-            onClick={() => setFeedback(null)}
-            className="p-1 hover:opacity-70 cursor-pointer"
-          >
-            <X className="w-3.5 h-3.5" />
-          </button>
-        </div>
-      )}
+      <DashboardFeedback feedback={feedback} onClose={() => setFeedback(null)} />
 
-      {/* Inline Create / Edit Bid Card */}
+      {/* Formulario para crear o editar una puja */}
       {formOpen && (
         <div className="rounded-2xl bg-white border border-[#224F10]/20 p-5 sm:p-6 shadow-sm space-y-4">
           <div className="flex items-center justify-between gap-2 border-b border-[#224F10]/10 pb-3">
@@ -354,6 +285,7 @@ export function DashboardBidsTab({
               </p>
             </div>
             <button
+              type="button"
               onClick={() => {
                 setFormOpen(false);
                 setEditingBidId(null);
@@ -364,7 +296,7 @@ export function DashboardBidsTab({
             </button>
           </div>
 
-          {!editingBidId && activeAuctions.length === 0 ? (
+          {formListUnavailable ? (
             <p className="text-xs text-[#0D0D0D]/60 py-2">
               No hay subastas activas disponibles para ofertar en este momento.
             </p>
@@ -381,7 +313,7 @@ export function DashboardBidsTab({
                     onChange={(e) => handleAuctionSelect(e.target.value)}
                     className="w-full rounded-xl bg-[#F7FBF3] border border-[#224F10]/15 px-3 py-2 text-xs text-[#0D0D0D] disabled:opacity-60 focus:outline-none"
                   >
-                    {(editingBidId ? auctions : activeAuctions).map((a) => (
+                    {auctionOptionsForForm.map((a) => (
                       <option key={a.id} value={String(a.id)}>
                         {a.title} (Actual: {formatCurrency(a.currentPrice)})
                       </option>
@@ -398,27 +330,17 @@ export function DashboardBidsTab({
                     disabled={Boolean(editingBidId && !isAdmin)}
                     value={formAmount}
                     onChange={(e) => setFormAmountInput(e.target.value)}
-                    max={
-                      selectedAuctionForForm
-                        ? Number(selectedAuctionForForm.basePrice || selectedAuctionForForm.currentPrice) * 10
-                        : undefined
-                    }
+                    max={maxBidAmount}
                     className="w-full rounded-xl bg-[#F7FBF3] border border-[#224F10]/15 px-3.5 py-2 text-xs font-semibold text-[#0D0D0D] disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-[#224F10]/25"
                   />
                   {selectedAuctionForForm && !editingBidId && (
                     <div className="space-y-0.5">
                       <p className="text-[10px] text-[#224F10] font-medium">
-                        Mínimo sugerido RN01:{' '}
-                        {formatCurrency(
-                          Number(selectedAuctionForForm.currentPrice) +
-                            Number(selectedAuctionForForm.minIncrement)
-                        )}
+                        Mínimo sugerido RN01: {formatCurrency(suggestedAmount)}
                       </p>
                       <p className="text-[10px] text-[#0D0D0D]/60 font-medium">
                         Máximo permitido (10x precio inicial):{' '}
-                        {formatCurrency(
-                          Number(selectedAuctionForForm.basePrice || selectedAuctionForForm.currentPrice) * 10
-                        )}
+                        {formatCurrency(maxBidAmount)}
                       </p>
                     </div>
                   )}
@@ -474,10 +396,11 @@ export function DashboardBidsTab({
         </div>
       )}
 
-      {/* Filters Card */}
+      {/* Filtros de búsqueda */}
       <div className="rounded-2xl bg-white border border-[#224F10]/10 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
         <div className="flex items-center gap-2">
           <button
+            type="button"
             onClick={() => setScopeFilter('todas')}
             className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-colors cursor-pointer ${
               scopeFilter === 'todas'
@@ -488,6 +411,7 @@ export function DashboardBidsTab({
             Todas las ofertas
           </button>
           <button
+            type="button"
             onClick={() => setScopeFilter('mias')}
             className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-colors cursor-pointer ${
               scopeFilter === 'mias'
@@ -513,7 +437,7 @@ export function DashboardBidsTab({
         </select>
       </div>
 
-      {/* Donezo Bids Feed */}
+      {/* Listado de pujas */}
       {filteredBids.length === 0 ? (
         <div className="rounded-2xl bg-white border border-[#224F10]/10 p-10 text-center text-xs text-[#0D0D0D]/60">
           No hay pujas registradas para el filtro actual.
@@ -521,16 +445,19 @@ export function DashboardBidsTab({
       ) : (
         <div className="rounded-2xl bg-white border border-[#224F10]/10 divide-y divide-[#224F10]/8 shadow-2xs overflow-hidden">
           {filteredBids.map((bid) => {
-            const auction = auctions.find(
-              (a) => Number(a.id) === Number(bid.auctionId)
-            );
-            const bidder = users.find(
-              (u) => Number(u.id) === Number(bid.bidderId)
-            );
+            const auction = findById(auctions, bid.auctionId);
+            const bidder = findById(users, bid.bidderId);
             const isTop =
               auction && Number(auction.currentPrice) === Number(bid.amount);
             const canEdit =
-              isAdmin || Number(currentUser?.id) === Number(bid.bidderId);
+              isAdmin || sameId(currentUser?.id, bid.bidderId);
+
+            const avatarStyle = isTop
+              ? 'bg-[#224F10] text-[#B0E454]'
+              : 'bg-[#EAFFD0] text-[#224F10]';
+            const topBadgeStyle = isTop
+              ? 'bg-[#B0E454] text-[#0D0D0D]'
+              : 'bg-[#F1F8E9] text-[#224F10]';
 
             return (
               <div
@@ -539,11 +466,7 @@ export function DashboardBidsTab({
               >
                 <div className="flex items-start gap-3 min-w-0">
                   <span
-                    className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-xs shrink-0 ${
-                      isTop
-                        ? 'bg-[#224F10] text-[#B0E454]'
-                        : 'bg-[#EAFFD0] text-[#224F10]'
-                    }`}
+                    className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-xs shrink-0 ${avatarStyle}`}
                   >
                     {getInitials(bidder?.name || bid.bidderName, 'PU')}
                   </span>
@@ -551,11 +474,7 @@ export function DashboardBidsTab({
                   <div className="min-w-0 space-y-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <span
-                        className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                          isTop
-                            ? 'bg-[#B0E454] text-[#0D0D0D]'
-                            : 'bg-[#F1F8E9] text-[#224F10]'
-                        }`}
+                        className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${topBadgeStyle}`}
                       >
                         {isTop ? 'Oferta Líder' : `Puja #${bid.id}`}
                       </span>
@@ -565,7 +484,9 @@ export function DashboardBidsTab({
                       >
                         <Gavel className="w-3.5 h-3.5 text-[#224F10] shrink-0" />
                         <span className="truncate">
-                          {auction?.title || bid.auctionTitle || `Subasta #${bid.auctionId}`}
+                          {auction?.title ||
+                            bid.auctionTitle ||
+                            `Subasta #${bid.auctionId}`}
                         </span>
                         <ExternalLink className="w-3 h-3 opacity-50 shrink-0" />
                       </Link>
@@ -574,7 +495,9 @@ export function DashboardBidsTab({
                     <p className="text-xs text-[#0D0D0D]/70">
                       Postor:{' '}
                       <strong className="text-[#0D0D0D]">
-                        {bidder?.name || bid.bidderName || `Usuario #${bid.bidderId}`}
+                        {bidder?.name ||
+                          bid.bidderName ||
+                          `Usuario #${bid.bidderId}`}
                       </strong>{' '}
                       · &ldquo;{bid.note || 'Sin nota adicional'}&rdquo;
                     </p>
@@ -597,6 +520,7 @@ export function DashboardBidsTab({
                   <div className="flex items-center gap-1.5">
                     {canEdit && (
                       <button
+                        type="button"
                         onClick={() => openEditForm(bid)}
                         title="Editar puja"
                         className="w-8 h-8 rounded-full border border-[#224F10]/15 hover:bg-[#EAFFD0] text-[#0D0D0D]/75 flex items-center justify-center transition-colors cursor-pointer"
@@ -606,6 +530,7 @@ export function DashboardBidsTab({
                     )}
                     {isAdmin && (
                       <button
+                        type="button"
                         onClick={() => handleDelete(bid)}
                         title="Eliminar puja"
                         className="w-8 h-8 rounded-full border border-red-200 hover:bg-red-50 text-red-700 flex items-center justify-center transition-colors cursor-pointer"
@@ -621,109 +546,16 @@ export function DashboardBidsTab({
         </div>
       )}
 
-      {/* Modal de Confirmación de Oferta */}
-      <Modal
+      {/* Modal compartido para confirmar oferta (RN04) */}
+      <BidConfirmModal
         isOpen={showConfirmModal}
-        onClose={() => !isSubmittingBid && setShowConfirmModal(false)}
-        title="Confirmar oferta"
-      >
-        <div className="space-y-5">
-          <div className="p-3.5 bg-[#B0E454]/30 rounded-2xl border border-[#224F10]/20 text-xs text-[#0D0D0D]">
-            <p className="font-bold text-sm mb-1 text-[#224F10] flex items-center gap-1.5">
-              <CheckCircle2 className="w-4 h-4 text-[#224F10]" />
-              Confirmar oferta
-            </p>
-            <p className="text-[#0D0D0D]/80">
-              ¿Estás seguro de que deseas enviar esta puja? Por favor revisa el monto antes de confirmar, ya que las ofertas son vinculantes (RN04).
-            </p>
-          </div>
-
-          <div className="bg-white/90 rounded-2xl p-4 sm:p-5 border border-[#224F10]/15 space-y-4">
-            {selectedAuctionForForm && (
-              <>
-                <div className="flex flex-col gap-1 pb-3 border-b border-[#224F10]/10">
-                  <span className="text-[10px] font-bold text-[#0D0D0D]/55 uppercase tracking-wider">
-                    Artículo / Subasta
-                  </span>
-                  <span className="text-sm font-semibold text-[#0D0D0D] line-clamp-2">
-                    {selectedAuctionForForm.title}
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3 pb-3 border-b border-[#224F10]/10 text-xs">
-                  <div>
-                    <span className="text-[11px] text-[#0D0D0D]/55 block">
-                      Oferta líder actual
-                    </span>
-                    <strong className="text-sm font-semibold text-[#0D0D0D]">
-                      {formatCurrency(selectedAuctionForForm.currentPrice)}
-                    </strong>
-                  </div>
-                  <div>
-                    <span className="text-[11px] text-[#0D0D0D]/55 block">
-                      Incremento mínimo
-                    </span>
-                    <strong className="text-sm font-semibold text-[#224F10]">
-                      +{formatCurrency(selectedAuctionForForm.minIncrement)}
-                    </strong>
-                  </div>
-                </div>
-              </>
-            )}
-
-            {/* Cuadro destacado del monto ofertado */}
-            <div className="bg-[#EAFFD0] p-4 rounded-2xl border-2 border-[#224F10]/30 shadow-xs">
-              <span className="text-xs font-bold uppercase tracking-wider text-[#224F10] block mb-1">
-                Monto que estás ofertando:
-              </span>
-              <div className="flex items-baseline justify-between gap-2">
-                <span className="font-serif-display text-3xl sm:text-4xl font-extrabold text-[#224F10]">
-                  {formatCurrency(formAmount)}
-                </span>
-                {selectedAuctionForForm && (
-                  <span className="text-[11px] font-medium text-[#224F10]/80">
-                    +{formatCurrency(Number(formAmount) - Number(selectedAuctionForForm.currentPrice))} vs actual
-                  </span>
-                )}
-              </div>
-            </div>
-
-            {formNote && (
-              <div className="text-xs text-[#0D0D0D]/80 pt-1">
-                <span className="font-semibold block text-[#0D0D0D]">
-                  Nota de coordinación:
-                </span>
-                <p className="italic bg-[#F5FFEB] p-2.5 rounded-xl border border-[#224F10]/10 mt-1">
-                  &ldquo;{formNote}&rdquo;
-                </p>
-              </div>
-            )}
-          </div>
-
-          <div className="flex flex-col-reverse sm:flex-row items-center justify-end gap-3 pt-1">
-            <Button
-              variant="outline"
-              size="md"
-              disabled={isSubmittingBid}
-              onClick={() => setShowConfirmModal(false)}
-              className="w-full sm:w-auto"
-            >
-              Cancelar
-            </Button>
-            <Button
-              variant="primary"
-              size="md"
-              disabled={isSubmittingBid}
-              onClick={handleConfirmBid}
-              className="w-full sm:w-auto"
-            >
-              <Gavel className="w-4 h-4" />
-              {isSubmittingBid ? 'Enviando...' : 'Confirmar oferta'}
-            </Button>
-          </div>
-        </div>
-      </Modal>
+        onClose={() => setShowConfirmModal(false)}
+        onConfirm={handleConfirmBid}
+        isSubmitting={isSubmittingBid}
+        auction={selectedAuctionForForm}
+        bidAmount={formAmount}
+        bidNote={formNote}
+      />
     </div>
   );
 }
-

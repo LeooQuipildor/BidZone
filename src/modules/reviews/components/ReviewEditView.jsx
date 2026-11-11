@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useReviewStore } from '../states/reviewStore';
 import { useAuthStore } from '../../auth/states/authStore';
+import { findById, sameId } from '../../core/utils/formatters';
 import {
   Card,
   Select,
@@ -10,15 +11,24 @@ import {
   PageHeader,
   Alert,
   Spinner,
+  ErrorStateCard,
 } from '../../core/design-system/ui';
 import { Save, ArrowLeft } from 'lucide-react';
+
+const EDIT_RATING_OPTIONS = [
+  { value: '5', label: '★★★★★ (5) — Excelente' },
+  { value: '4', label: '★★★★☆ (4) — Muy buena' },
+  { value: '3', label: '★★★☆☆ (3) — Regular' },
+  { value: '2', label: '★★☆☆☆ (2) — Deficiente' },
+  { value: '1', label: '★☆☆☆☆ (1) — Incumplimiento' },
+];
 
 function ReviewEditForm({ review, updateReview, navigate }) {
   const [rating, setRating] = useState(String(review.rating ?? '5'));
   const [comment, setComment] = useState(review.comment || '');
   const [errorMsg, setErrorMsg] = useState('');
 
-  const handleSubmit = async (e) => {
+  async function handleSubmit(e) {
     e.preventDefault();
     setErrorMsg('');
 
@@ -36,7 +46,7 @@ function ReviewEditForm({ review, updateReview, navigate }) {
     } catch (err) {
       setErrorMsg(err.message);
     }
-  };
+  }
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
@@ -66,13 +76,7 @@ function ReviewEditForm({ review, updateReview, navigate }) {
             label="Puntuación (1 a 5 Estrellas) *"
             value={rating}
             onChange={(e) => setRating(e.target.value)}
-            options={[
-              { value: '5', label: '★★★★★ (5) — Excelente' },
-              { value: '4', label: '★★★★☆ (4) — Muy buena' },
-              { value: '3', label: '★★★☆☆ (3) — Regular' },
-              { value: '2', label: '★★☆☆☆ (2) — Deficiente' },
-              { value: '1', label: '★☆☆☆☆ (1) — Incumplimiento' },
-            ]}
+            options={EDIT_RATING_OPTIONS}
           />
 
           <Textarea
@@ -111,7 +115,7 @@ export function ReviewEditView() {
     fetchReviews();
   }, [fetchReviews]);
 
-  const review = reviews.find((rv) => Number(rv.id) === Number(id));
+  const review = findById(reviews, id);
   const isAdmin = currentUser?.role === 'admin';
 
   if (reviewsLoading && !review) {
@@ -120,35 +124,24 @@ export function ReviewEditView() {
 
   if (!review) {
     return (
-      <div className="max-w-xl mx-auto my-12">
-        <Alert type="error" title="Calificación no encontrada">
-          El registro solicitado no existe.
-        </Alert>
-        <Button
-          variant="secondary"
-          className="mt-4"
-          onClick={() => navigate('/reviews')}
-        >
-          Volver a Calificaciones
-        </Button>
-      </div>
+      <ErrorStateCard
+        title="Calificación no encontrada"
+        message="El registro solicitado no existe."
+        buttonLabel="Volver a Calificaciones"
+        onBack={() => navigate('/reviews')}
+      />
     );
   }
 
-  if (!isAdmin && Number(currentUser?.id) !== Number(review.reviewerId)) {
+  const isReviewAuthor = sameId(currentUser?.id, review.reviewerId);
+  if (!isAdmin && !isReviewAuthor) {
     return (
-      <div className="max-w-xl mx-auto my-12">
-        <Alert type="error" title="Sin permisos de edición">
-          Solo el autor de la reseña o un administrador puede modificarla.
-        </Alert>
-        <Button
-          variant="secondary"
-          className="mt-4"
-          onClick={() => navigate('/reviews')}
-        >
-          Volver a Calificaciones
-        </Button>
-      </div>
+      <ErrorStateCard
+        title="Sin permisos de edición"
+        message="Solo el autor de la reseña o un administrador puede modificarla."
+        buttonLabel="Volver a Calificaciones"
+        onBack={() => navigate('/reviews')}
+      />
     );
   }
 
@@ -161,4 +154,3 @@ export function ReviewEditView() {
     />
   );
 }
-

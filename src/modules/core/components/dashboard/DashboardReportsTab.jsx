@@ -1,7 +1,14 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useReportStore } from '../../../reports/states/reportStore';
-import { formatDateTime } from '../../utils/formatters';
+import {
+  formatDateTime,
+  sameId,
+  findById,
+  pickValidId,
+  matchesSearch,
+} from '../../utils/formatters';
+import { DashboardFeedback, DashboardStatCard } from './DashboardShared';
 import {
   Plus,
   X,
@@ -9,10 +16,35 @@ import {
   ShieldAlert,
   Edit3,
   Trash2,
-  CheckCircle2,
-  AlertCircle,
   Save,
 } from 'lucide-react';
+
+const STATUS_FILTER_TABS = [
+  { value: 'todos', label: 'Todos los expedientes' },
+  { value: 'en_revision', label: 'En Revisión' },
+  { value: 'resuelto_sancion', label: 'Con Sanción RN06' },
+  { value: 'desestimado', label: 'Solucionados' },
+];
+
+// Devuelve el texto y los colores de la insignia según el estado del reporte
+function getReportBadgeInfo(status) {
+  if (status === 'resuelto_sancion') {
+    return {
+      label: 'Sancionado',
+      className: 'bg-red-50 text-red-700 border-red-200',
+    };
+  }
+  if (status === 'en_revision') {
+    return {
+      label: 'En Revisión',
+      className: 'bg-[#B0E454]/40 text-[#0D0D0D] border-[#224F10]/15',
+    };
+  }
+  return {
+    label: 'Solucionado',
+    className: 'bg-[#EAFFD0] text-[#224F10] border-[#224F10]/15',
+  };
+}
 
 export function DashboardReportsTab({
   currentUser,
@@ -27,10 +59,7 @@ export function DashboardReportsTab({
   const deleteReport = useReportStore((s) => s.deleteReport);
 
   const isAdmin = currentUser?.role === 'admin';
-  const otherUsers = useMemo(
-    () => users.filter((u) => Number(u.id) !== Number(currentUser?.id)),
-    [users, currentUser?.id]
-  );
+  const otherUsers = users.filter((u) => !sameId(u.id, currentUser?.id));
 
   const [statusFilter, setStatusFilter] = useState('todos');
   const [feedback, setFeedback] = useState(null);
@@ -41,7 +70,8 @@ export function DashboardReportsTab({
   const [formData, setFormData] = useState(() => ({
     auctionId: prefill?.auctionId || (auctions[0] ? String(auctions[0].id) : ''),
     reportedUserId:
-      prefill?.reportedUserId || (otherUsers[0] ? String(otherUsers[0].id) : ''),
+      prefill?.reportedUserId ||
+      (otherUsers[0] ? String(otherUsers[0].id) : ''),
     reason: 'Incumplimiento de pago en plazo acordado',
     description: '',
     evidenceUrl: '',
@@ -50,56 +80,45 @@ export function DashboardReportsTab({
     accountAction: 'none',
   }));
 
+  // Garantizamos un ID válido para los selectores cuando estamos creando un reporte nuevo
   const effectiveAuctionId = editingReportId
     ? formData.auctionId
-    : auctions.some((a) => String(a.id) === String(formData.auctionId))
-      ? String(formData.auctionId)
-      : auctions.some((a) => String(a.id) === String(prefill?.auctionId))
-        ? String(prefill.auctionId)
-        : auctions[0]
-          ? String(auctions[0].id)
-          : '';
+    : pickValidId(auctions, formData.auctionId, prefill?.auctionId);
 
   const effectiveReportedUserId = editingReportId
     ? formData.reportedUserId
-    : otherUsers.some((u) => String(u.id) === String(formData.reportedUserId))
-      ? String(formData.reportedUserId)
-      : otherUsers.some(
-            (u) => String(u.id) === String(prefill?.reportedUserId)
-          )
-        ? String(prefill.reportedUserId)
-        : otherUsers[0]
-          ? String(otherUsers[0].id)
-          : '';
+    : pickValidId(otherUsers, formData.reportedUserId, prefill?.reportedUserId);
 
+  // Contadores de resumen
   const openReports = reports.filter((r) => r.status === 'en_revision');
   const sanctionedReports = reports.filter(
     (r) => r.status === 'resuelto_sancion'
   );
   const resolvedReports = reports.filter((r) => r.status === 'desestimado');
 
-  const normalizedQuery = searchQuery.trim().toLowerCase();
-
+  // Filtrado por estado y texto buscado
   const filteredReports = reports.filter((rep) => {
-    const matchStatus =
-      statusFilter === 'todos' || rep.status === statusFilter;
-    if (!matchStatus) return false;
-    if (!normalizedQuery) return true;
-    const reported = users.find(
-      (u) => Number(u.id) === Number(rep.reportedUserId)
-    );
-    const auction = auctions.find(
-      (a) => Number(a.id) === Number(rep.auctionId)
-    );
-    return (
-      (rep.reason || '').toLowerCase().includes(normalizedQuery) ||
-      (rep.description || '').toLowerCase().includes(normalizedQuery) ||
-      (reported?.name || rep.reportedUserName || '').toLowerCase().includes(normalizedQuery) ||
-      (auction?.title || rep.auctionTitle || '').toLowerCase().includes(normalizedQuery)
+    if (statusFilter !== 'todos' && rep.status !== statusFilter) {
+      return false;
+    }
+    const reported = findById(users, rep.reportedUserId);
+    const auction = findById(auctions, rep.auctionId);
+    return matchesSearch(
+      [
+        rep.reason,
+        rep.description,
+        reported?.name || rep.reportedUserName,
+        auction?.title || rep.auctionTitle,
+      ],
+      searchQuery
     );
   });
 
-  const openCreateForm = () => {
+  function updateField(field, value) {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  }
+
+  function openCreateForm() {
     setEditingReportId(null);
     setFormData({
       auctionId: auctions[0] ? String(auctions[0].id) : '',
@@ -113,9 +132,9 @@ export function DashboardReportsTab({
     });
     setFormOpen(true);
     setFeedback(null);
-  };
+  }
 
-  const openEditForm = (rep) => {
+  function openEditForm(rep) {
     setEditingReportId(rep.id);
     setFormData({
       auctionId: String(rep.auctionId),
@@ -129,9 +148,9 @@ export function DashboardReportsTab({
     });
     setFormOpen(true);
     setFeedback(null);
-  };
+  }
 
-  const handleSubmit = async (e) => {
+  async function handleSubmit(e) {
     e.preventDefault();
     setFeedback(null);
 
@@ -182,13 +201,14 @@ export function DashboardReportsTab({
     } catch (err) {
       setFeedback({ type: 'error', text: err.message });
     }
-  };
+  }
 
-  const handleDelete = async (rep) => {
+  async function handleDelete(rep) {
     const confirmed = window.confirm(
       `¿Confirmas eliminar el expediente de reporte #${rep.id}?`
     );
     if (!confirmed) return;
+
     try {
       await deleteReport(rep.id);
       setFeedback({
@@ -198,11 +218,11 @@ export function DashboardReportsTab({
     } catch (err) {
       setFeedback({ type: 'error', text: err.message });
     }
-  };
+  }
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Encabezado */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pt-1">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#0D0D0D]">
@@ -215,6 +235,7 @@ export function DashboardReportsTab({
         </div>
 
         <button
+          type="button"
           onClick={openCreateForm}
           className="inline-flex items-center gap-2 rounded-full bg-[#224F10] hover:bg-[#0D0D0D] text-[#EAFFD0] px-4 py-2 text-xs font-semibold transition-colors cursor-pointer shadow-xs self-start md:self-auto"
         >
@@ -223,89 +244,37 @@ export function DashboardReportsTab({
         </button>
       </div>
 
-      {/* 4 Donezo KPI Cards */}
+      {/* Tarjetas de métricas */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-        <div className="rounded-2xl bg-gradient-to-br from-[#224F10] to-[#122B08] text-[#EAFFD0] p-5 flex flex-col justify-between shadow-sm">
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-xs font-medium text-[#EAFFD0]/90">
-              Total Expedientes
-            </span>
-            <span className="w-7 h-7 rounded-full bg-[#EAFFD0]/15 text-[#B0E454] flex items-center justify-center">
-              <AlertOctagon className="w-3.5 h-3.5" />
-            </span>
-          </div>
-          <p className="text-4xl font-bold tracking-tight my-2">
-            {reports.length}
-          </p>
-          <span className="text-[11px] text-[#EAFFD0]/75">
-            Historial disciplinario RN06
-          </span>
-        </div>
-
-        <div className="rounded-2xl bg-white border border-[#224F10]/10 p-5 flex flex-col justify-between shadow-2xs">
-          <span className="text-xs font-semibold text-[#0D0D0D]/75">
-            En Revisión
-          </span>
-          <p className="text-4xl font-bold tracking-tight text-[#0D0D0D] my-2">
-            {openReports.length}
-          </p>
-          <span className="text-[11px] text-[#224F10] font-semibold">
-            Pendientes de resolución
-          </span>
-        </div>
-
-        <div className="rounded-2xl bg-white border border-[#224F10]/10 p-5 flex flex-col justify-between shadow-2xs">
-          <span className="text-xs font-semibold text-[#0D0D0D]/75">
-            Con Sanción
-          </span>
-          <p className="text-4xl font-bold tracking-tight text-[#0D0D0D] my-2">
-            {sanctionedReports.length}
-          </p>
-          <span className="text-[11px] text-red-700 font-semibold">
-            Suspensión o cierre aplicado
-          </span>
-        </div>
-
-        <div className="rounded-2xl bg-white border border-[#224F10]/10 p-5 flex flex-col justify-between shadow-2xs">
-          <span className="text-xs font-semibold text-[#0D0D0D]/75">
-            Solucionados
-          </span>
-          <p className="text-4xl font-bold tracking-tight text-[#0D0D0D] my-2">
-            {resolvedReports.length}
-          </p>
-          <span className="text-[11px] text-[#0D0D0D]/55">
-            Acuerdo entre las partes
-          </span>
-        </div>
+        <DashboardStatCard
+          highlight
+          title="Total Expedientes"
+          icon={<AlertOctagon className="w-3.5 h-3.5" />}
+          value={reports.length}
+          subtitle="Historial disciplinario RN06"
+        />
+        <DashboardStatCard
+          title="En Revisión"
+          value={openReports.length}
+          subtitle="Pendientes de resolución"
+          subtitleClassName="text-[#224F10] font-semibold"
+        />
+        <DashboardStatCard
+          title="Con Sanción"
+          value={sanctionedReports.length}
+          subtitle="Suspensión o cierre aplicado"
+          subtitleClassName="text-red-700 font-semibold"
+        />
+        <DashboardStatCard
+          title="Solucionados"
+          value={resolvedReports.length}
+          subtitle="Acuerdo entre las partes"
+        />
       </div>
 
-      {/* Inline Feedback */}
-      {feedback && (
-        <div
-          className={`flex items-center justify-between gap-3 rounded-2xl px-4 py-3 text-xs font-medium border ${
-            feedback.type === 'error'
-              ? 'bg-red-50 border-red-200 text-red-800'
-              : 'bg-[#EAFFD0] border-[#224F10]/20 text-[#224F10]'
-          }`}
-        >
-          <div className="flex items-center gap-2">
-            {feedback.type === 'error' ? (
-              <AlertCircle className="w-4 h-4 shrink-0" />
-            ) : (
-              <CheckCircle2 className="w-4 h-4 shrink-0" />
-            )}
-            <span>{feedback.text}</span>
-          </div>
-          <button
-            onClick={() => setFeedback(null)}
-            className="p-1 hover:opacity-70 cursor-pointer"
-          >
-            <X className="w-3.5 h-3.5" />
-          </button>
-        </div>
-      )}
+      <DashboardFeedback feedback={feedback} onClose={() => setFeedback(null)} />
 
-      {/* Inline Create / Resolve Report Panel */}
+      {/* Formulario integrado para crear o resolver reporte */}
       {formOpen && (
         <div className="rounded-2xl bg-white border border-[#224F10]/20 p-5 sm:p-6 shadow-sm space-y-4">
           <div className="flex items-center justify-between gap-2 border-b border-[#224F10]/10 pb-3">
@@ -321,6 +290,7 @@ export function DashboardReportsTab({
               </p>
             </div>
             <button
+              type="button"
               onClick={() => {
                 setFormOpen(false);
                 setEditingReportId(null);
@@ -340,9 +310,7 @@ export function DashboardReportsTab({
                   </label>
                   <select
                     value={effectiveAuctionId}
-                    onChange={(e) =>
-                      setFormData((p) => ({ ...p, auctionId: e.target.value }))
-                    }
+                    onChange={(e) => updateField('auctionId', e.target.value)}
                     className="w-full rounded-xl bg-[#F7FBF3] border border-[#224F10]/15 px-3 py-2 text-xs text-[#0D0D0D] focus:outline-none"
                   >
                     {auctions.map((a) => (
@@ -360,21 +328,21 @@ export function DashboardReportsTab({
                   <select
                     value={effectiveReportedUserId}
                     onChange={(e) =>
-                      setFormData((p) => ({
-                        ...p,
-                        reportedUserId: e.target.value,
-                      }))
+                      updateField('reportedUserId', e.target.value)
                     }
                     className="w-full rounded-xl bg-[#F7FBF3] border border-[#224F10]/15 px-3 py-2 text-xs text-[#0D0D0D] focus:outline-none"
                   >
                     {otherUsers.length > 0 ? (
-                      otherUsers.map((u) => (
-                        <option key={u.id} value={String(u.id)}>
-                          {u.email
-                            ? `${u.name} (${u.email})`
-                            : `${u.name} (${u.city || 'Socio BidZone'})`}
-                        </option>
-                      ))
+                      otherUsers.map((u) => {
+                        const detalle = u.email
+                          ? u.email
+                          : u.city || 'Socio BidZone';
+                        return (
+                          <option key={u.id} value={String(u.id)}>
+                            {u.name} ({detalle})
+                          </option>
+                        );
+                      })
                     ) : (
                       <option value="">Sin usuarios disponibles</option>
                     )}
@@ -392,17 +360,13 @@ export function DashboardReportsTab({
                   <input
                     type="text"
                     value={formData.reason}
-                    onChange={(e) =>
-                      setFormData((p) => ({ ...p, reason: e.target.value }))
-                    }
+                    onChange={(e) => updateField('reason', e.target.value)}
                     className="w-full rounded-xl bg-[#F7FBF3] border border-[#224F10]/15 px-3.5 py-2 text-xs text-[#0D0D0D] focus:outline-none"
                   />
                 ) : (
                   <select
                     value={formData.reason}
-                    onChange={(e) =>
-                      setFormData((p) => ({ ...p, reason: e.target.value }))
-                    }
+                    onChange={(e) => updateField('reason', e.target.value)}
                     className="w-full rounded-xl bg-[#F7FBF3] border border-[#224F10]/15 px-3 py-2 text-xs text-[#0D0D0D] focus:outline-none"
                   >
                     <option value="Incumplimiento de pago en plazo acordado">
@@ -428,9 +392,7 @@ export function DashboardReportsTab({
                 <input
                   type="url"
                   value={formData.evidenceUrl}
-                  onChange={(e) =>
-                    setFormData((p) => ({ ...p, evidenceUrl: e.target.value }))
-                  }
+                  onChange={(e) => updateField('evidenceUrl', e.target.value)}
                   placeholder="https://..."
                   className="w-full rounded-xl bg-[#F7FBF3] border border-[#224F10]/15 px-3.5 py-2 text-xs text-[#0D0D0D] focus:outline-none"
                 />
@@ -444,9 +406,7 @@ export function DashboardReportsTab({
               <textarea
                 rows={2}
                 value={formData.description}
-                onChange={(e) =>
-                  setFormData((p) => ({ ...p, description: e.target.value }))
-                }
+                onChange={(e) => updateField('description', e.target.value)}
                 placeholder="Explica los hechos y plazos incumplidos..."
                 className="w-full rounded-xl bg-[#F7FBF3] border border-[#224F10]/15 px-3.5 py-2 text-xs text-[#0D0D0D] focus:outline-none"
               />
@@ -461,9 +421,7 @@ export function DashboardReportsTab({
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <select
                     value={formData.status}
-                    onChange={(e) =>
-                      setFormData((p) => ({ ...p, status: e.target.value }))
-                    }
+                    onChange={(e) => updateField('status', e.target.value)}
                     className="rounded-xl bg-white border border-[#224F10]/15 px-3 py-2 text-xs text-[#0D0D0D] focus:outline-none"
                   >
                     <option value="en_revision">En revisión</option>
@@ -476,10 +434,7 @@ export function DashboardReportsTab({
                   <select
                     value={formData.accountAction}
                     onChange={(e) =>
-                      setFormData((p) => ({
-                        ...p,
-                        accountAction: e.target.value,
-                      }))
+                      updateField('accountAction', e.target.value)
                     }
                     className="rounded-xl bg-white border border-[#224F10]/15 px-3 py-2 text-xs text-[#0D0D0D] focus:outline-none"
                   >
@@ -493,10 +448,7 @@ export function DashboardReportsTab({
                     type="text"
                     value={formData.sanctionApplied}
                     onChange={(e) =>
-                      setFormData((p) => ({
-                        ...p,
-                        sanctionApplied: e.target.value,
-                      }))
+                      updateField('sanctionApplied', e.target.value)
                     }
                     placeholder="Dictamen aplicado..."
                     className="rounded-xl bg-white border border-[#224F10]/15 px-3 py-2 text-xs text-[#0D0D0D] focus:outline-none"
@@ -525,29 +477,28 @@ export function DashboardReportsTab({
         </div>
       )}
 
-      {/* Pill Filters */}
+      {/* Filtros por estado */}
       <div className="rounded-2xl bg-white border border-[#224F10]/10 p-4 flex flex-wrap items-center gap-2 shadow-2xs">
-        {[
-          { value: 'todos', label: 'Todos los expedientes' },
-          { value: 'en_revision', label: 'En Revisión' },
-          { value: 'resuelto_sancion', label: 'Con Sanción RN06' },
-          { value: 'desestimado', label: 'Solucionados' },
-        ].map((tab) => (
-          <button
-            key={tab.value}
-            onClick={() => setStatusFilter(tab.value)}
-            className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-colors cursor-pointer ${
-              statusFilter === tab.value
-                ? 'bg-[#224F10] text-[#EAFFD0]'
-                : 'bg-[#F7FBF3] text-[#0D0D0D]/70 hover:bg-[#EAFFD0]'
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
+        {STATUS_FILTER_TABS.map((tab) => {
+          const isSelected = statusFilter === tab.value;
+          const tabStyle = isSelected
+            ? 'bg-[#224F10] text-[#EAFFD0]'
+            : 'bg-[#F7FBF3] text-[#0D0D0D]/70 hover:bg-[#EAFFD0]';
+
+          return (
+            <button
+              key={tab.value}
+              type="button"
+              onClick={() => setStatusFilter(tab.value)}
+              className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-colors cursor-pointer ${tabStyle}`}
+            >
+              {tab.label}
+            </button>
+          );
+        })}
       </div>
 
-      {/* Reports List */}
+      {/* Lista de expedientes */}
       {filteredReports.length === 0 ? (
         <div className="rounded-2xl bg-white border border-[#224F10]/10 p-10 text-center text-xs text-[#0D0D0D]/60">
           No hay reportes registrados con los criterios actuales.
@@ -555,19 +506,14 @@ export function DashboardReportsTab({
       ) : (
         <div className="space-y-4">
           {filteredReports.map((rep) => {
-            const auction = auctions.find(
-              (a) => Number(a.id) === Number(rep.auctionId)
-            );
-            const reporter = users.find(
-              (u) => Number(u.id) === Number(rep.reporterId)
-            );
-            const reported = users.find(
-              (u) => Number(u.id) === Number(rep.reportedUserId)
-            );
+            const auction = findById(auctions, rep.auctionId);
+            const reporter = findById(users, rep.reporterId);
+            const reported = findById(users, rep.reportedUserId);
             const canEdit =
               isAdmin ||
-              (Number(currentUser?.id) === Number(rep.reporterId) &&
+              (sameId(currentUser?.id, rep.reporterId) &&
                 rep.status === 'en_revision');
+            const badge = getReportBadgeInfo(rep.status);
 
             return (
               <div
@@ -577,20 +523,10 @@ export function DashboardReportsTab({
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#224F10]/8 pb-3">
                   <div className="flex flex-wrap items-center gap-2">
                     <span
-                      className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${
-                        rep.status === 'resuelto_sancion'
-                          ? 'bg-red-50 text-red-700 border-red-200'
-                          : rep.status === 'en_revision'
-                            ? 'bg-[#B0E454]/40 text-[#0D0D0D] border-[#224F10]/15'
-                            : 'bg-[#EAFFD0] text-[#224F10] border-[#224F10]/15'
-                      }`}
+                      className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${badge.className}`}
                     >
                       <AlertOctagon className="w-3 h-3" />
-                      {rep.status === 'resuelto_sancion'
-                        ? 'Sancionado'
-                        : rep.status === 'en_revision'
-                          ? 'En Revisión'
-                          : 'Solucionado'}
+                      {badge.label}
                     </span>
                     <span className="text-[11px] text-[#0D0D0D]/55">
                       Expediente #{rep.id} · {formatDateTime(rep.createdAt)}
@@ -600,6 +536,7 @@ export function DashboardReportsTab({
                   <div className="flex items-center gap-1.5">
                     {canEdit && (
                       <button
+                        type="button"
                         onClick={() => openEditForm(rep)}
                         className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-[#224F10]/20 hover:bg-[#EAFFD0] text-[#0D0D0D] text-[11px] font-semibold transition-colors cursor-pointer"
                       >
@@ -609,6 +546,7 @@ export function DashboardReportsTab({
                     )}
                     {isAdmin && (
                       <button
+                        type="button"
                         onClick={() => handleDelete(rep)}
                         className="w-7 h-7 rounded-full border border-red-200 hover:bg-red-50 text-red-700 flex items-center justify-center transition-colors cursor-pointer"
                       >
@@ -636,7 +574,9 @@ export function DashboardReportsTab({
                       to={`/auctions/${rep.auctionId}`}
                       className="font-semibold text-[#224F10] hover:underline"
                     >
-                      {auction?.title || rep.auctionTitle || `Subasta #${rep.auctionId}`}
+                      {auction?.title ||
+                        rep.auctionTitle ||
+                        `Subasta #${rep.auctionId}`}
                     </Link>
                   </div>
 
@@ -671,4 +611,3 @@ export function DashboardReportsTab({
     </div>
   );
 }
-

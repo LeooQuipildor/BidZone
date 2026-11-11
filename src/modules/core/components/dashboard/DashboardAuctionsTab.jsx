@@ -6,12 +6,16 @@ import {
   formatCurrency,
   toIsoFromLocalInput,
   toLocalDatetimeInputValue,
+  sameId,
+  findById,
+  matchesSearch,
 } from '../../utils/formatters';
 import {
   AUCTION_CATEGORY_OPTIONS,
   DASHBOARD_CATEGORIES,
   formatCountdownFromNow,
 } from './dashboardHelpers';
+import { DashboardFeedback, DashboardStatCard } from './DashboardShared';
 import {
   Plus,
   X,
@@ -19,11 +23,105 @@ import {
   Clock,
   Edit3,
   Trash2,
-  CheckCircle2,
-  AlertCircle,
   Save,
   Gavel,
 } from 'lucide-react';
+
+// Valores iniciales cuando se abre el formulario para publicar una subasta nueva
+function createEmptyAuctionForm() {
+  const unDiaDespues = Date.now() + 24 * 3600 * 1000;
+  return {
+    title: '',
+    description: '',
+    category: 'Tecnología',
+    imageUrl: '',
+    basePrice: '',
+    minIncrement: '',
+    status: 'activa',
+    endTime: toLocalDatetimeInputValue(unDiaDespues),
+  };
+}
+
+// Filtra y ordena la lista de subastas según categoría, estado, búsqueda y criterio de orden
+function filterAndSortAuctions(
+  auctions,
+  searchQuery,
+  category,
+  statusFilter,
+  sortBy
+) {
+  const filtered = auctions.filter((auction) => {
+    const matchSearch = matchesSearch(
+      [auction.title, auction.description, auction.category],
+      searchQuery
+    );
+    const matchCategory = category === 'Todas' || auction.category === category;
+    const matchStatus =
+      statusFilter === 'todas' || auction.status === statusFilter;
+    return matchSearch && matchCategory && matchStatus;
+  });
+
+  filtered.sort((a, b) => {
+    if (sortBy === 'priceAsc') {
+      return Number(a.currentPrice) - Number(b.currentPrice);
+    }
+    if (sortBy === 'priceDesc') {
+      return Number(b.currentPrice) - Number(a.currentPrice);
+    }
+    return new Date(a.endTime).getTime() - new Date(b.endTime).getTime();
+  });
+
+  return filtered;
+}
+
+// Devuelve las opciones del selector de estado al editar una subasta
+function getEditableStatusOptions(isAdmin, editingAuction, editingHasBids) {
+  if (isAdmin) {
+    return [
+      { value: 'activa', label: 'Activa' },
+      { value: 'finalizada', label: 'Finalizada' },
+      { value: 'cancelada', label: 'Cancelada' },
+    ];
+  }
+
+  if (editingAuction?.status === 'activa' && !editingHasBids) {
+    return [
+      { value: 'activa', label: 'Activa' },
+      { value: 'cancelada', label: 'Cancelada' },
+    ];
+  }
+
+  if (editingAuction?.status === 'finalizada') {
+    return [{ value: 'finalizada', label: 'Finalizada' }];
+  }
+  if (editingAuction?.status === 'cancelada') {
+    return [{ value: 'cancelada', label: 'Cancelada' }];
+  }
+  return [{ value: 'activa', label: 'Activa' }];
+}
+
+// Calcula qué etiqueta mostrar en la tarjeta de cada subasta
+function getCardStatusInfo(auction, isLive, countdown) {
+  if (auction.status === 'cancelada') {
+    return {
+      timerText: 'Cancelada',
+      badgeText: 'Cancelada',
+      badgeClass: 'bg-red-50 text-red-700 border-red-200',
+    };
+  }
+  if (isLive) {
+    return {
+      timerText: countdown,
+      badgeText: 'En subasta',
+      badgeClass: 'bg-[#EAFFD0] text-[#224F10] border-[#224F10]/20',
+    };
+  }
+  return {
+    timerText: 'Finalizada',
+    badgeText: 'Finalizada',
+    badgeClass: 'bg-red-50 text-red-700 border-red-200',
+  };
+}
 
 export function DashboardAuctionsTab({
   currentUser,
@@ -50,67 +148,41 @@ export function DashboardAuctionsTab({
   const [formOpen, setFormOpen] = useState(Boolean(prefill?.openCreate));
   const [editingAuctionId, setEditingAuctionId] = useState(null);
   const [editingInitialEndTime, setEditingInitialEndTime] = useState('');
-  const [formData, setFormData] = useState(() => ({
-    title: '',
-    description: '',
-    category: 'Tecnología',
-    imageUrl: '',
-    basePrice: '',
-    minIncrement: '',
-    status: 'activa',
-    endTime: toLocalDatetimeInputValue(Date.now() + 24 * 3600 * 1000),
-  }));
+  const [formData, setFormData] = useState(() => createEmptyAuctionForm());
 
   const activeAuctions = auctions.filter((a) => a.status === 'activa');
   const awardedAuctions = auctions.filter(
     (a) => a.status === 'finalizada' && a.winnerId
   );
-  const myAuctions = auctions.filter(
-    (a) => Number(a.sellerId) === Number(currentUser?.id)
+  const myAuctions = auctions.filter((a) =>
+    sameId(a.sellerId, currentUser?.id)
   );
 
-  const normalizedQuery = searchQuery.trim().toLowerCase();
+  const filteredAuctions = filterAndSortAuctions(
+    auctions,
+    searchQuery,
+    category,
+    statusFilter,
+    sortBy
+  );
 
-  const filteredAuctions = auctions
-    .filter((a) => {
-      const matchSearch =
-        !normalizedQuery ||
-        (a.title || '').toLowerCase().includes(normalizedQuery) ||
-        (a.description || '').toLowerCase().includes(normalizedQuery) ||
-        (a.category || '').toLowerCase().includes(normalizedQuery);
-      const matchCategory = category === 'Todas' || a.category === category;
-      const matchStatus = statusFilter === 'todas' || a.status === statusFilter;
-      return matchSearch && matchCategory && matchStatus;
-    })
-    .sort((a, b) => {
-      if (sortBy === 'priceAsc')
-        return Number(a.currentPrice) - Number(b.currentPrice);
-      if (sortBy === 'priceDesc')
-        return Number(b.currentPrice) - Number(a.currentPrice);
-      return new Date(a.endTime).getTime() - new Date(b.endTime).getTime();
-    });
+  function updateField(field, value) {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  }
 
-  const openCreateForm = () => {
+  function openCreateForm() {
     setEditingAuctionId(null);
     setEditingInitialEndTime('');
-    setFormData({
-      title: '',
-      description: '',
-      category: 'Tecnología',
-      imageUrl: '',
-      basePrice: '',
-      minIncrement: '',
-      status: 'activa',
-      endTime: toLocalDatetimeInputValue(Date.now() + 24 * 3600 * 1000),
-    });
+    setFormData(createEmptyAuctionForm());
     setFormOpen(true);
     setFeedback(null);
-  };
+  }
 
-  const openEditForm = (auction) => {
+  function openEditForm(auction) {
     const localEnd = auction.endTime
       ? toLocalDatetimeInputValue(auction.endTime)
       : toLocalDatetimeInputValue(Date.now() + 24 * 3600 * 1000);
+
     setEditingAuctionId(auction.id);
     setEditingInitialEndTime(localEnd);
     setFormData({
@@ -125,18 +197,27 @@ export function DashboardAuctionsTab({
     });
     setFormOpen(true);
     setFeedback(null);
-  };
+  }
 
   const editingAuction = editingAuctionId
-    ? auctions.find((a) => Number(a.id) === Number(editingAuctionId))
+    ? findById(auctions, editingAuctionId)
     : null;
 
   const editingHasBids = editingAuctionId
     ? Number(editingAuction?.bidCount ?? 0) > 0 ||
-      bids.some((b) => Number(b.auctionId) === Number(editingAuctionId))
+      bids.some((b) => sameId(b.auctionId, editingAuctionId))
     : false;
 
-  const handleSubmit = async (e) => {
+  const lockPricingFields = Boolean(
+    editingAuctionId && editingHasBids && !isAdmin
+  );
+  const statusOptions = getEditableStatusOptions(
+    isAdmin,
+    editingAuction,
+    editingHasBids
+  );
+
+  async function handleSubmit(e) {
     e.preventDefault();
     setFeedback(null);
 
@@ -157,6 +238,7 @@ export function DashboardAuctionsTab({
           imageUrl: formData.imageUrl.trim() || DEFAULT_AUCTION_IMAGE_URL,
         };
 
+        // RN08: si ya tiene pujas, solo un admin puede cambiar precio base, incremento o cierre
         if (!editingHasBids || isAdmin) {
           payload.basePrice = formData.basePrice;
           payload.minIncrement = formData.minIncrement;
@@ -183,6 +265,7 @@ export function DashboardAuctionsTab({
           });
           return;
         }
+
         const created = await createAuction({
           title: formData.title.trim(),
           description: formData.description.trim(),
@@ -197,18 +280,20 @@ export function DashboardAuctionsTab({
           text: `Subasta "${created.title}" publicada en el panel sin salir de la vista.`,
         });
       }
+
       setFormOpen(false);
       setEditingAuctionId(null);
     } catch (err) {
       setFeedback({ type: 'error', text: err.message });
     }
-  };
+  }
 
-  const handleCloseNow = async (auction) => {
+  async function handleCloseNow(auction) {
     const confirmed = window.confirm(
       `¿Confirmas cerrar y adjudicar ahora la subasta "${auction.title}"? Si hay postores se adjudicará al mejor postor y se liberarán los contactos (RN05).`
     );
     if (!confirmed) return;
+
     try {
       await closeAuctionNow(auction.id);
       setFeedback({
@@ -220,13 +305,14 @@ export function DashboardAuctionsTab({
     } catch (err) {
       setFeedback({ type: 'error', text: err.message });
     }
-  };
+  }
 
-  const handleDelete = async (auction) => {
+  async function handleDelete(auction) {
     const confirmed = window.confirm(
       `¿Confirmas eliminar la subasta "${auction.title}"?`
     );
     if (!confirmed) return;
+
     try {
       await deleteAuction(auction.id);
       setFeedback({
@@ -236,11 +322,11 @@ export function DashboardAuctionsTab({
     } catch (err) {
       setFeedback({ type: 'error', text: err.message });
     }
-  };
+  }
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Encabezado */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pt-1">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#0D0D0D]">
@@ -254,6 +340,7 @@ export function DashboardAuctionsTab({
 
         <div className="flex flex-wrap items-center gap-2.5">
           <button
+            type="button"
             onClick={openCreateForm}
             className="inline-flex items-center gap-2 rounded-full bg-[#224F10] hover:bg-[#0D0D0D] text-[#EAFFD0] px-4 py-2 text-xs font-semibold transition-colors cursor-pointer shadow-xs"
           >
@@ -261,6 +348,7 @@ export function DashboardAuctionsTab({
             <span>Publicar Subasta</span>
           </button>
           <button
+            type="button"
             onClick={() => navigate('/auctions')}
             className="inline-flex items-center gap-1.5 rounded-full bg-white hover:bg-[#EAFFD0] border border-[#224F10]/20 text-[#0D0D0D] px-4 py-2 text-xs font-semibold transition-colors cursor-pointer"
           >
@@ -270,89 +358,36 @@ export function DashboardAuctionsTab({
         </div>
       </div>
 
-      {/* 4 Donezo KPI Cards */}
+      {/* Tarjetas de métricas */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-        <div className="rounded-2xl bg-gradient-to-br from-[#224F10] to-[#122B08] text-[#EAFFD0] p-5 flex flex-col justify-between shadow-sm">
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-xs font-medium text-[#EAFFD0]/90">
-              Total Publicadas
-            </span>
-            <span className="w-7 h-7 rounded-full bg-[#EAFFD0]/15 text-[#B0E454] flex items-center justify-center">
-              <Gavel className="w-3.5 h-3.5" />
-            </span>
-          </div>
-          <p className="text-4xl font-bold tracking-tight my-2">
-            {auctions.length}
-          </p>
-          <span className="text-[11px] text-[#EAFFD0]/75">
-            {filteredAuctions.length} visibles con filtro actual
-          </span>
-        </div>
-
-        <div className="rounded-2xl bg-white border border-[#224F10]/10 p-5 flex flex-col justify-between shadow-2xs">
-          <span className="text-xs font-semibold text-[#0D0D0D]/75">
-            Salas en Vivo
-          </span>
-          <p className="text-4xl font-bold tracking-tight text-[#0D0D0D] my-2">
-            {activeAuctions.length}
-          </p>
-          <span className="text-[11px] text-[#224F10] font-semibold">
-            Abiertas a pujas RN01
-          </span>
-        </div>
-
-        <div className="rounded-2xl bg-white border border-[#224F10]/10 p-5 flex flex-col justify-between shadow-2xs">
-          <span className="text-xs font-semibold text-[#0D0D0D]/75">
-            Adjudicadas
-          </span>
-          <p className="text-4xl font-bold tracking-tight text-[#0D0D0D] my-2">
-            {awardedAuctions.length}
-          </p>
-          <span className="text-[11px] text-[#0D0D0D]/55">
-            Cierre con trato directo RN05
-          </span>
-        </div>
-
-        <div className="rounded-2xl bg-white border border-[#224F10]/10 p-5 flex flex-col justify-between shadow-2xs">
-          <span className="text-xs font-semibold text-[#0D0D0D]/75">
-            Mis Publicaciones
-          </span>
-          <p className="text-4xl font-bold tracking-tight text-[#0D0D0D] my-2">
-            {myAuctions.length}
-          </p>
-          <span className="text-[11px] text-[#0D0D0D]/55">
-            Creadas con tu cuenta
-          </span>
-        </div>
+        <DashboardStatCard
+          highlight
+          title="Total Publicadas"
+          icon={<Gavel className="w-3.5 h-3.5" />}
+          value={auctions.length}
+          subtitle={`${filteredAuctions.length} visibles con filtro actual`}
+        />
+        <DashboardStatCard
+          title="Salas en Vivo"
+          value={activeAuctions.length}
+          subtitle="Abiertas a pujas RN01"
+          subtitleClassName="text-[#224F10] font-semibold"
+        />
+        <DashboardStatCard
+          title="Adjudicadas"
+          value={awardedAuctions.length}
+          subtitle="Cierre con trato directo RN05"
+        />
+        <DashboardStatCard
+          title="Mis Publicaciones"
+          value={myAuctions.length}
+          subtitle="Creadas con tu cuenta"
+        />
       </div>
 
-      {/* Inline Feedback Banner */}
-      {feedback && (
-        <div
-          className={`flex items-center justify-between gap-3 rounded-2xl px-4 py-3 text-xs font-medium border ${
-            feedback.type === 'error'
-              ? 'bg-red-50 border-red-200 text-red-800'
-              : 'bg-[#EAFFD0] border-[#224F10]/20 text-[#224F10]'
-          }`}
-        >
-          <div className="flex items-center gap-2">
-            {feedback.type === 'error' ? (
-              <AlertCircle className="w-4 h-4 shrink-0" />
-            ) : (
-              <CheckCircle2 className="w-4 h-4 shrink-0" />
-            )}
-            <span>{feedback.text}</span>
-          </div>
-          <button
-            onClick={() => setFeedback(null)}
-            className="p-1 hover:opacity-70 cursor-pointer"
-          >
-            <X className="w-3.5 h-3.5" />
-          </button>
-        </div>
-      )}
+      <DashboardFeedback feedback={feedback} onClose={() => setFeedback(null)} />
 
-      {/* Inline Create / Edit Auction Panel */}
+      {/* Formulario integrado para crear o editar */}
       {formOpen && (
         <div className="rounded-2xl bg-white border border-[#224F10]/20 p-5 sm:p-6 shadow-sm space-y-4">
           <div className="flex items-center justify-between gap-2 border-b border-[#224F10]/10 pb-3">
@@ -363,12 +398,13 @@ export function DashboardAuctionsTab({
                   : 'Publicar Nueva Subasta'}
               </h2>
               <p className="text-[11px] text-[#0D0D0D]/60">
-                {editingAuctionId && editingHasBids && !isAdmin
+                {lockPricingFields
                   ? 'RN08: Esta subasta ya tiene pujas; el precio base queda bloqueado.'
                   : 'Define título, categoría, precio base e incremento mínimo.'}
               </p>
             </div>
             <button
+              type="button"
               onClick={() => {
                 setFormOpen(false);
                 setEditingAuctionId(null);
@@ -388,9 +424,7 @@ export function DashboardAuctionsTab({
                 <input
                   type="text"
                   value={formData.title}
-                  onChange={(e) =>
-                    setFormData((p) => ({ ...p, title: e.target.value }))
-                  }
+                  onChange={(e) => updateField('title', e.target.value)}
                   placeholder="Ej: iPhone 15 Pro Max 256GB"
                   className="w-full rounded-xl bg-[#F7FBF3] border border-[#224F10]/15 px-3.5 py-2 text-xs text-[#0D0D0D] focus:outline-none focus:ring-2 focus:ring-[#224F10]/25"
                 />
@@ -403,9 +437,7 @@ export function DashboardAuctionsTab({
                   </label>
                   <select
                     value={formData.category}
-                    onChange={(e) =>
-                      setFormData((p) => ({ ...p, category: e.target.value }))
-                    }
+                    onChange={(e) => updateField('category', e.target.value)}
                     className="w-full rounded-xl bg-[#F7FBF3] border border-[#224F10]/15 px-3 py-2 text-xs text-[#0D0D0D] focus:outline-none focus:ring-2 focus:ring-[#224F10]/25"
                   >
                     {AUCTION_CATEGORY_OPTIONS.map((opt) => (
@@ -423,31 +455,14 @@ export function DashboardAuctionsTab({
                     </label>
                     <select
                       value={formData.status}
-                      onChange={(e) =>
-                        setFormData((p) => ({ ...p, status: e.target.value }))
-                      }
+                      onChange={(e) => updateField('status', e.target.value)}
                       className="w-full rounded-xl bg-[#F7FBF3] border border-[#224F10]/15 px-3 py-2 text-xs text-[#0D0D0D] focus:outline-none focus:ring-2 focus:ring-[#224F10]/25"
                     >
-                      {isAdmin ? (
-                        <>
-                          <option value="activa">Activa</option>
-                          <option value="finalizada">Finalizada</option>
-                          <option value="cancelada">Cancelada</option>
-                        </>
-                      ) : editingAuction?.status === 'activa' && !editingHasBids ? (
-                        <>
-                          <option value="activa">Activa</option>
-                          <option value="cancelada">Cancelada</option>
-                        </>
-                      ) : (
-                        <option value={editingAuction?.status || 'activa'}>
-                          {editingAuction?.status === 'finalizada'
-                            ? 'Finalizada'
-                            : editingAuction?.status === 'cancelada'
-                              ? 'Cancelada'
-                              : 'Activa'}
+                      {statusOptions.map((opt) => (
+                        <option key={opt.value} value={opt.value}>
+                          {opt.label}
                         </option>
-                      )}
+                      ))}
                     </select>
                   </div>
                 ) : (
@@ -458,9 +473,7 @@ export function DashboardAuctionsTab({
                     <input
                       type="datetime-local"
                       value={formData.endTime}
-                      onChange={(e) =>
-                        setFormData((p) => ({ ...p, endTime: e.target.value }))
-                      }
+                      onChange={(e) => updateField('endTime', e.target.value)}
                       className="w-full rounded-xl bg-[#F7FBF3] border border-[#224F10]/15 px-3 py-2 text-xs text-[#0D0D0D] focus:outline-none"
                     />
                   </div>
@@ -475,11 +488,9 @@ export function DashboardAuctionsTab({
                 </label>
                 <input
                   type="datetime-local"
-                  disabled={Boolean(editingHasBids && !isAdmin)}
+                  disabled={lockPricingFields}
                   value={formData.endTime}
-                  onChange={(e) =>
-                    setFormData((p) => ({ ...p, endTime: e.target.value }))
-                  }
+                  onChange={(e) => updateField('endTime', e.target.value)}
                   className="w-full sm:max-w-xs rounded-xl bg-[#F7FBF3] border border-[#224F10]/15 px-3 py-2 text-xs text-[#0D0D0D] disabled:opacity-55 focus:outline-none"
                 />
               </div>
@@ -492,11 +503,9 @@ export function DashboardAuctionsTab({
                 </label>
                 <input
                   type="number"
-                  disabled={Boolean(editingAuctionId && editingHasBids && !isAdmin)}
+                  disabled={lockPricingFields}
                   value={formData.basePrice}
-                  onChange={(e) =>
-                    setFormData((p) => ({ ...p, basePrice: e.target.value }))
-                  }
+                  onChange={(e) => updateField('basePrice', e.target.value)}
                   placeholder="100000"
                   className="w-full rounded-xl bg-[#F7FBF3] border border-[#224F10]/15 px-3.5 py-2 text-xs text-[#0D0D0D] disabled:opacity-55 focus:outline-none focus:ring-2 focus:ring-[#224F10]/25"
                 />
@@ -508,11 +517,9 @@ export function DashboardAuctionsTab({
                 </label>
                 <input
                   type="number"
-                  disabled={Boolean(editingAuctionId && editingHasBids && !isAdmin)}
+                  disabled={lockPricingFields}
                   value={formData.minIncrement}
-                  onChange={(e) =>
-                    setFormData((p) => ({ ...p, minIncrement: e.target.value }))
-                  }
+                  onChange={(e) => updateField('minIncrement', e.target.value)}
                   placeholder="5000"
                   className="w-full rounded-xl bg-[#F7FBF3] border border-[#224F10]/15 px-3.5 py-2 text-xs text-[#0D0D0D] disabled:opacity-55 focus:outline-none focus:ring-2 focus:ring-[#224F10]/25"
                 />
@@ -525,9 +532,7 @@ export function DashboardAuctionsTab({
                 <input
                   type="url"
                   value={formData.imageUrl}
-                  onChange={(e) =>
-                    setFormData((p) => ({ ...p, imageUrl: e.target.value }))
-                  }
+                  onChange={(e) => updateField('imageUrl', e.target.value)}
                   placeholder="https://..."
                   className="w-full rounded-xl bg-[#F7FBF3] border border-[#224F10]/15 px-3.5 py-2 text-xs text-[#0D0D0D] focus:outline-none focus:ring-2 focus:ring-[#224F10]/25"
                 />
@@ -541,9 +546,7 @@ export function DashboardAuctionsTab({
               <textarea
                 rows={2}
                 value={formData.description}
-                onChange={(e) =>
-                  setFormData((p) => ({ ...p, description: e.target.value }))
-                }
+                onChange={(e) => updateField('description', e.target.value)}
                 placeholder="Detalle técnico, estado del artículo y condiciones de entrega..."
                 className="w-full rounded-xl bg-[#F7FBF3] border border-[#224F10]/15 px-3.5 py-2 text-xs text-[#0D0D0D] focus:outline-none focus:ring-2 focus:ring-[#224F10]/25"
               />
@@ -583,22 +586,26 @@ export function DashboardAuctionsTab({
         </div>
       )}
 
-      {/* Donezo Filter Bar */}
+      {/* Barra de filtros */}
       <div className="rounded-2xl bg-white border border-[#224F10]/10 p-4 space-y-3 shadow-2xs">
         <div className="flex flex-wrap items-center gap-2">
-          {DASHBOARD_CATEGORIES.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setCategory(cat)}
-              className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-colors cursor-pointer ${
-                category === cat
-                  ? 'bg-[#224F10] text-[#EAFFD0]'
-                  : 'bg-[#F7FBF3] text-[#0D0D0D]/70 hover:bg-[#EAFFD0]'
-              }`}
-            >
-              {cat}
-            </button>
-          ))}
+          {DASHBOARD_CATEGORIES.map((cat) => {
+            const isSelected = category === cat;
+            const buttonClass = isSelected
+              ? 'bg-[#224F10] text-[#EAFFD0]'
+              : 'bg-[#F7FBF3] text-[#0D0D0D]/70 hover:bg-[#EAFFD0]';
+
+            return (
+              <button
+                key={cat}
+                type="button"
+                onClick={() => setCategory(cat)}
+                className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-colors cursor-pointer ${buttonClass}`}
+              >
+                {cat}
+              </button>
+            );
+          })}
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
@@ -635,7 +642,7 @@ export function DashboardAuctionsTab({
         </div>
       </div>
 
-      {/* Bento Grid of Auctions inside Dashboard */}
+      {/* Grilla de subastas */}
       {filteredAuctions.length === 0 ? (
         <div className="rounded-2xl bg-white border border-[#224F10]/10 p-10 text-center text-xs text-[#0D0D0D]/60">
           No hay subastas que coincidan con la búsqueda actual.
@@ -643,17 +650,17 @@ export function DashboardAuctionsTab({
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {filteredAuctions.map((auction) => {
-            const auctionBids = bids.filter(
-              (b) => Number(b.auctionId) === Number(auction.id)
+            const auctionBids = bids.filter((b) =>
+              sameId(b.auctionId, auction.id)
             );
             const bidsCount = Number(auction.bidCount ?? auctionBids.length);
-            const seller = users.find(
-              (u) => Number(u.id) === Number(auction.sellerId)
-            );
+            const seller = findById(users, auction.sellerId);
             const countdown = formatCountdownFromNow(auction.endTime, nowMs);
-            const isLive = auction.status === 'activa' && countdown !== '00:00:00';
+            const isLive =
+              auction.status === 'activa' && countdown !== '00:00:00';
             const canManage =
-              isAdmin || Number(currentUser?.id) === Number(auction.sellerId);
+              isAdmin || sameId(currentUser?.id, auction.sellerId);
+            const statusInfo = getCardStatusInfo(auction, isLive, countdown);
 
             return (
               <div
@@ -677,11 +684,7 @@ export function DashboardAuctionsTab({
                       </span>
                       <span className="px-2.5 py-0.5 rounded-full bg-black/45 backdrop-blur-md text-white text-[10px] font-semibold border border-white/20 inline-flex items-center gap-1 tabular-nums">
                         <Clock className="w-3 h-3 text-[#B0E454]" />
-                        {auction.status === 'cancelada'
-                          ? 'Cancelada'
-                          : isLive
-                            ? countdown
-                            : 'Finalizada'}
+                        {statusInfo.timerText}
                       </span>
                     </div>
                   </div>
@@ -695,23 +698,15 @@ export function DashboardAuctionsTab({
                         {auction.title}
                       </h3>
                       <span
-                        className={`px-2 py-0.5 rounded-full text-[10px] font-semibold shrink-0 border ${
-                          isLive
-                            ? 'bg-[#EAFFD0] text-[#224F10] border-[#224F10]/20'
-                            : 'bg-red-50 text-red-700 border-red-200'
-                        }`}
+                        className={`px-2 py-0.5 rounded-full text-[10px] font-semibold shrink-0 border ${statusInfo.badgeClass}`}
                       >
-                        {auction.status === 'cancelada'
-                          ? 'Cancelada'
-                          : isLive
-                            ? 'En subasta'
-                            : 'Finalizada'}
+                        {statusInfo.badgeText}
                       </span>
                     </div>
 
                     <p className="text-[11px] text-[#0D0D0D]/55 truncate">
-                      {bidsCount} {bidsCount === 1 ? 'oferta' : 'ofertas'} · Vende:{' '}
-                      {seller?.name || auction.sellerName || 'Socio'}
+                      {bidsCount} {bidsCount === 1 ? 'oferta' : 'ofertas'} ·
+                      Vende: {seller?.name || auction.sellerName || 'Socio'}
                     </p>
                   </div>
                 </div>
@@ -730,6 +725,7 @@ export function DashboardAuctionsTab({
                     {canManage && (
                       <>
                         <button
+                          type="button"
                           onClick={() => openEditForm(auction)}
                           title="Editar en el panel"
                           className="w-8 h-8 rounded-full border border-[#224F10]/15 hover:bg-[#EAFFD0] text-[#0D0D0D]/75 flex items-center justify-center transition-colors cursor-pointer"
@@ -737,6 +733,7 @@ export function DashboardAuctionsTab({
                           <Edit3 className="w-3.5 h-3.5" />
                         </button>
                         <button
+                          type="button"
                           onClick={() => handleDelete(auction)}
                           title="Eliminar subasta"
                           className="w-8 h-8 rounded-full border border-red-200 hover:bg-red-50 text-red-700 flex items-center justify-center transition-colors cursor-pointer"
@@ -747,6 +744,7 @@ export function DashboardAuctionsTab({
                     )}
 
                     <button
+                      type="button"
                       onClick={() => navigate(`/auctions/${auction.id}`)}
                       className="inline-flex items-center gap-1.5 rounded-full bg-[#224F10] hover:bg-[#0D0D0D] text-[#EAFFD0] pl-3.5 pr-1.5 py-1 text-[11px] font-semibold transition-colors cursor-pointer"
                     >

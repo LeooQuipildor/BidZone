@@ -19,11 +19,13 @@ export function RegisterView() {
   });
   const [errorMsg, setErrorMsg] = useState('');
 
-  const handleChange = (e) => {
-    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-  };
+  function handleChange(e) {
+    const fieldName = e.target.name;
+    const fieldValue = e.target.value;
+    setFormData((prev) => ({ ...prev, [fieldName]: fieldValue }));
+  }
 
-  const handleSubmit = async (e) => {
+  async function handleSubmit(e) {
     e.preventDefault();
     setErrorMsg('');
 
@@ -55,7 +57,7 @@ export function RegisterView() {
     } catch (err) {
       setErrorMsg(err.message);
     }
-  };
+  }
 
   return (
     <div className="max-w-lg mx-auto my-8">
@@ -67,7 +69,8 @@ export function RegisterView() {
           Crear cuenta
         </h1>
         <p className="text-xs text-[#0D0D0D]/70 max-w-sm mx-auto">
-          Tus datos de contacto permanecerán privados y solo se liberarán cuando ganes o cierres una subasta.
+          Tus datos de contacto permanecerán privados y solo se liberarán cuando
+          ganes o cierres una subasta.
         </p>
       </div>
 

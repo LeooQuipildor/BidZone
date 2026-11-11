@@ -12,6 +12,7 @@ import {
   Alert,
 } from '../../core/design-system/ui';
 import {
+  AUCTION_CATEGORY_OPTIONS,
   toIsoFromLocalInput,
   toLocalDatetimeInputValue,
 } from '../../core/utils/formatters';
@@ -33,11 +34,13 @@ export function AuctionCreateView() {
   }));
   const [errorMsg, setErrorMsg] = useState('');
 
-  const handleChange = (e) => {
-    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-  };
+  function handleChange(e) {
+    const fieldName = e.target.name;
+    const fieldValue = e.target.value;
+    setFormData((prev) => ({ ...prev, [fieldName]: fieldValue }));
+  }
 
-  const handleSubmit = async (e) => {
+  async function handleSubmit(e) {
     e.preventDefault();
     setErrorMsg('');
 
@@ -46,22 +49,31 @@ export function AuctionCreateView() {
       return;
     }
 
-    if (new Date(formData.endTime).getTime() <= Date.now()) {
-      setErrorMsg('La fecha y hora de cierre debe ser posterior al momento actual.');
+    const endTimestamp = new Date(formData.endTime).getTime();
+    if (Number.isNaN(endTimestamp) || endTimestamp <= Date.now()) {
+      setErrorMsg(
+        'La fecha y hora de cierre debe ser posterior al momento actual.'
+      );
       return;
     }
 
     try {
-      const created = await createAuction({
-        ...formData,
+      const payload = {
+        title: formData.title.trim(),
+        description: formData.description.trim(),
+        category: formData.category,
+        imageUrl: formData.imageUrl,
+        basePrice: formData.basePrice,
+        minIncrement: formData.minIncrement,
         endTime: toIsoFromLocalInput(formData.endTime),
         sellerId: currentUser.id,
-      });
+      };
+      const created = await createAuction(payload);
       navigate(`/auctions/${created.id}`);
     } catch (err) {
       setErrorMsg(err.message);
     }
-  };
+  }
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
@@ -102,14 +114,7 @@ export function AuctionCreateView() {
               label="Categoría *"
               value={formData.category}
               onChange={handleChange}
-              options={[
-                { value: 'Tecnología', label: 'Tecnología' },
-                { value: 'Gaming', label: 'Gaming' },
-                { value: 'Hogar y Oficina', label: 'Hogar y Oficina' },
-                { value: 'Deportes', label: 'Deportes' },
-                { value: 'Fotografía', label: 'Fotografía' },
-                { value: 'Vehículos', label: 'Vehículos' },
-              ]}
+              options={AUCTION_CATEGORY_OPTIONS}
             />
             <Input
               id="endTime"
@@ -177,4 +182,3 @@ export function AuctionCreateView() {
     </div>
   );
 }
-

@@ -1,5 +1,15 @@
-import React from 'react';
-import { X, AlertTriangle, CheckCircle2, Info, ChevronRight } from 'lucide-react';
+import React, { useEffect } from 'react';
+import {
+  X,
+  AlertTriangle,
+  CheckCircle2,
+  Info,
+  ChevronRight,
+} from 'lucide-react';
+
+// ============================================================================
+// Componentes básicos de la interfaz de BidZone (botones, inputs, tarjetas, etc.)
+// ============================================================================
 
 export function Button({
   children,
@@ -15,23 +25,21 @@ export function Button({
   const baseStyles =
     'group inline-flex items-center justify-between gap-2.5 font-semibold rounded-full transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none';
 
-  const variants = {
-    primary:
-      'bg-[#224F10] text-[#EAFFD0] hover:bg-[#0D0D0D] shadow-xs',
+  const variantClasses = {
+    primary: 'bg-[#224F10] text-[#EAFFD0] hover:bg-[#0D0D0D] shadow-xs',
     secondary:
       'bg-[#B0E454] text-[#0D0D0D] hover:bg-[#224F10] hover:text-[#EAFFD0]',
-    dark:
-      'bg-[#0D0D0D] text-[#EAFFD0] hover:bg-[#224F10]',
+    dark: 'bg-[#0D0D0D] text-[#EAFFD0] hover:bg-[#224F10]',
     outline:
       'bg-white/85 text-[#0D0D0D] border border-[#224F10]/20 hover:border-[#224F10] hover:bg-white',
-    danger:
-      'bg-red-700 text-white hover:bg-red-800',
+    danger: 'bg-red-700 text-white hover:bg-red-800',
     ghost:
       'bg-transparent text-[#0D0D0D]/75 hover:text-[#224F10] hover:bg-[#224F10]/10',
   };
 
-  const circleStyles = {
-    primary: 'bg-[#EAFFD0] text-[#224F10] group-hover:bg-[#B0E454] group-hover:text-[#0D0D0D]',
+  const circleClasses = {
+    primary:
+      'bg-[#EAFFD0] text-[#224F10] group-hover:bg-[#B0E454] group-hover:text-[#0D0D0D]',
     secondary: 'bg-[#0D0D0D] text-[#EAFFD0]',
     dark: 'bg-[#B0E454] text-[#0D0D0D]',
     outline: 'bg-[#224F10]/10 text-[#224F10]',
@@ -39,30 +47,34 @@ export function Button({
     ghost: 'bg-[#224F10]/10 text-[#224F10]',
   };
 
-  const sizes = {
-    sm: withArrow ? 'pl-3.5 pr-1 py-1 text-xs' : 'px-3.5 py-1.5 text-xs',
-    md: withArrow ? 'pl-4 pr-1.5 py-1.5 text-xs sm:text-sm' : 'px-5 py-2.5 text-xs sm:text-sm',
-    lg: withArrow ? 'pl-6 pr-1.5 py-1.5 text-sm' : 'px-7 py-3 text-sm',
-  };
+  let sizeClass = 'pl-4 pr-1.5 py-1.5 text-xs sm:text-sm';
+  let circleSizeClass = 'w-6 h-6';
 
-  const circleSizes = {
-    sm: 'w-5 h-5',
-    md: 'w-6 h-6',
-    lg: 'w-7 h-7',
-  };
+  if (size === 'sm') {
+    sizeClass = withArrow ? 'pl-3.5 pr-1 py-1 text-xs' : 'px-3.5 py-1.5 text-xs';
+    circleSizeClass = 'w-5 h-5';
+  } else if (size === 'lg') {
+    sizeClass = withArrow ? 'pl-6 pr-1.5 py-1.5 text-sm' : 'px-7 py-3 text-sm';
+    circleSizeClass = 'w-7 h-7';
+  } else if (!withArrow) {
+    sizeClass = 'px-5 py-2.5 text-xs sm:text-sm';
+  }
+
+  const chosenVariant = variantClasses[variant] || variantClasses.primary;
+  const chosenCircle = circleClasses[variant] || circleClasses.primary;
 
   return (
     <button
       type={type}
       disabled={disabled}
       onClick={onClick}
-      className={`${baseStyles} ${variants[variant] || variants.primary} ${sizes[size] || sizes.md} ${className}`}
+      className={`${baseStyles} ${chosenVariant} ${sizeClass} ${className}`}
       {...props}
     >
       <span className="inline-flex items-center gap-2">{children}</span>
       {withArrow && variant !== 'ghost' && (
         <span
-          className={`rounded-full flex items-center justify-center shrink-0 transition-colors ${circleSizes[size] || circleSizes.md} ${circleStyles[variant] || circleStyles.primary}`}
+          className={`rounded-full flex items-center justify-center shrink-0 transition-colors ${circleSizeClass} ${chosenCircle}`}
         >
           <ChevronRight className="w-3.5 h-3.5" />
         </span>
@@ -79,6 +91,8 @@ export function Input({
   id,
   ...props
 }) {
+  const borderClass = error ? 'border-red-600' : 'border-[#224F10]/20';
+
   return (
     <div className={`flex flex-col gap-1.5 ${className}`}>
       {label && (
@@ -91,9 +105,7 @@ export function Input({
       )}
       <input
         id={id}
-        className={`w-full rounded-2xl bg-white/90 border ${
-          error ? 'border-red-600' : 'border-[#224F10]/20'
-        } px-4 py-2.5 text-sm text-[#0D0D0D] placeholder-[#0D0D0D]/40 focus:border-[#224F10] focus:ring-2 focus:ring-[#B0E454]/50 focus:outline-none transition-all`}
+        className={`w-full rounded-2xl bg-white/90 border ${borderClass} px-4 py-2.5 text-sm text-[#0D0D0D] placeholder-[#0D0D0D]/40 focus:border-[#224F10] focus:ring-2 focus:ring-[#B0E454]/50 focus:outline-none transition-all`}
         {...props}
       />
       {helperText && !error && (
@@ -114,6 +126,8 @@ export function Select({
   id,
   ...props
 }) {
+  const borderClass = error ? 'border-red-600' : 'border-[#224F10]/20';
+
   return (
     <div className={`flex flex-col gap-1.5 ${className}`}>
       {label && (
@@ -126,9 +140,7 @@ export function Select({
       )}
       <select
         id={id}
-        className={`w-full rounded-2xl bg-white/90 border ${
-          error ? 'border-red-600' : 'border-[#224F10]/20'
-        } px-4 py-2.5 text-sm font-medium text-[#0D0D0D] focus:border-[#224F10] focus:ring-2 focus:ring-[#B0E454]/50 focus:outline-none transition-all`}
+        className={`w-full rounded-2xl bg-white/90 border ${borderClass} px-4 py-2.5 text-sm font-medium text-[#0D0D0D] focus:border-[#224F10] focus:ring-2 focus:ring-[#B0E454]/50 focus:outline-none transition-all`}
         {...props}
       >
         {options.map((opt) => (
@@ -149,6 +161,8 @@ export function Select({
 }
 
 export function Textarea({ label, error, className = '', id, ...props }) {
+  const borderClass = error ? 'border-red-600' : 'border-[#224F10]/20';
+
   return (
     <div className={`flex flex-col gap-1.5 ${className}`}>
       {label && (
@@ -162,9 +176,7 @@ export function Textarea({ label, error, className = '', id, ...props }) {
       <textarea
         id={id}
         rows={4}
-        className={`w-full rounded-2xl bg-white/90 border ${
-          error ? 'border-red-600' : 'border-[#224F10]/20'
-        } px-4 py-2.5 text-sm text-[#0D0D0D] placeholder-[#0D0D0D]/40 focus:border-[#224F10] focus:ring-2 focus:ring-[#B0E454]/50 focus:outline-none transition-all`}
+        className={`w-full rounded-2xl bg-white/90 border ${borderClass} px-4 py-2.5 text-sm text-[#0D0D0D] placeholder-[#0D0D0D]/40 focus:border-[#224F10] focus:ring-2 focus:ring-[#B0E454]/50 focus:outline-none transition-all`}
         {...props}
       />
       {error && (
@@ -175,7 +187,7 @@ export function Textarea({ label, error, className = '', id, ...props }) {
 }
 
 export function Badge({ children, variant = 'default', className = '' }) {
-  const variants = {
+  const variantClasses = {
     default: 'bg-[#224F10]/12 text-[#224F10]',
     lime: 'bg-[#B0E454] text-[#0D0D0D] font-bold',
     success: 'bg-[#224F10] text-[#EAFFD0]',
@@ -184,9 +196,11 @@ export function Badge({ children, variant = 'default', className = '' }) {
     muted: 'bg-[#0D0D0D]/10 text-[#0D0D0D]/70',
   };
 
+  const chosenStyle = variantClasses[variant] || variantClasses.default;
+
   return (
     <span
-      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold tracking-wide ${variants[variant] || variants.default} ${className}`}
+      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold tracking-wide ${chosenStyle} ${className}`}
     >
       {children}
     </span>
@@ -250,18 +264,23 @@ export function Spinner({ label = 'Cargando...' }) {
 }
 
 export function Modal({ isOpen, onClose, title, children }) {
-  React.useEffect(() => {
+  // Permite cerrar el modal presionando la tecla Escape
+  useEffect(() => {
     if (!isOpen) return;
-    const handleKeyDown = (e) => {
-      if (e.key === 'Escape') {
-        onClose?.();
+
+    function handleKeyDown(event) {
+      if (event.key === 'Escape' && onClose) {
+        onClose();
       }
-    };
+    }
+
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
-  if (!isOpen) return null;
+  if (!isOpen) {
+    return null;
+  }
 
   return (
     <div
@@ -308,6 +327,22 @@ export function PageHeader({ title, subtitle, action }) {
         )}
       </div>
       {action && <div className="shrink-0">{action}</div>}
+    </div>
+  );
+}
+
+// Tarjeta reutilizable para mostrar errores de carga o falta de permisos con botón para volver
+export function ErrorStateCard({ title, message, buttonLabel, onBack }) {
+  return (
+    <div className="max-w-xl mx-auto my-12">
+      <Alert type="error" title={title}>
+        {message}
+      </Alert>
+      {buttonLabel && onBack && (
+        <Button variant="secondary" className="mt-4" onClick={onBack}>
+          {buttonLabel}
+        </Button>
+      )}
     </div>
   );
 }

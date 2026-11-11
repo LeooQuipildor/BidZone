@@ -4,6 +4,11 @@ import { useAuctionStore } from '../states/auctionStore';
 import { useAuthStore } from '../../auth/states/authStore';
 import { AuctionCard } from './AuctionCard';
 import {
+  AUCTION_FILTER_CATEGORIES,
+  matchesSearch,
+  sameId,
+} from '../../core/utils/formatters';
+import {
   Card,
   Button,
   Input,
@@ -11,11 +16,33 @@ import {
   PageHeader,
   Alert,
 } from '../../core/design-system/ui';
-import {
-  PlusCircle,
-  ArrowRight,
-  Sparkles,
-} from 'lucide-react';
+import { PlusCircle, ArrowRight, Sparkles } from 'lucide-react';
+
+// Filtra y ordena la lista de subastas según los controles elegidos
+function filterAndSortAuctions(auctions, filters) {
+  const filtered = auctions.filter((auction) => {
+    const matchText = matchesSearch(
+      [auction.title, auction.description],
+      filters.search
+    );
+    const matchCategory =
+      filters.category === 'Todas' || auction.category === filters.category;
+    const matchStatus =
+      filters.status === 'todas' || auction.status === filters.status;
+
+    return matchText && matchCategory && matchStatus;
+  });
+
+  return filtered.sort((a, b) => {
+    if (filters.sortBy === 'priceAsc') {
+      return Number(a.currentPrice) - Number(b.currentPrice);
+    }
+    if (filters.sortBy === 'priceDesc') {
+      return Number(b.currentPrice) - Number(a.currentPrice);
+    }
+    return new Date(a.endTime).getTime() - new Date(b.endTime).getTime();
+  });
+}
 
 export function AuctionsListView() {
   const navigate = useNavigate();
@@ -33,41 +60,14 @@ export function AuctionsListView() {
     fetchAuctions();
   }, [fetchAuctions]);
 
-  const categories = [
-    'Todas',
-    'Tecnología',
-    'Gaming',
-    'Hogar y Oficina',
-    'Deportes',
-    'Fotografía',
-    'Vehículos',
-  ];
+  const filteredAuctions = filterAndSortAuctions(auctions, filters);
 
-  const filtered = auctions
-    .filter((a) => {
-      const searchLower = filters.search.toLowerCase();
-      const matchSearch =
-        (a.title || '').toLowerCase().includes(searchLower) ||
-        (a.description || '').toLowerCase().includes(searchLower);
-      const matchCategory =
-        filters.category === 'Todas' || a.category === filters.category;
-      const matchStatus =
-        filters.status === 'todas' || a.status === filters.status;
-      return matchSearch && matchCategory && matchStatus;
-    })
-    .sort((a, b) => {
-      if (filters.sortBy === 'priceAsc')
-        return Number(a.currentPrice) - Number(b.currentPrice);
-      if (filters.sortBy === 'priceDesc')
-        return Number(b.currentPrice) - Number(a.currentPrice);
-      return new Date(a.endTime).getTime() - new Date(b.endTime).getTime();
-    });
-
-  const handleDelete = async (auction) => {
+  async function handleDelete(auction) {
     const confirmed = window.confirm(
       `¿Confirmas la eliminación de la subasta "${auction.title}"?`
     );
     if (!confirmed) return;
+
     setFeedback(null);
     try {
       await deleteAuction(auction.id);
@@ -76,12 +76,9 @@ export function AuctionsListView() {
         text: `Subasta "${auction.title}" eliminada exitosamente.`,
       });
     } catch (err) {
-      setFeedback({
-        type: 'error',
-        text: err.message,
-      });
+      setFeedback({ type: 'error', text: err.message });
     }
-  };
+  }
 
   return (
     <div className="space-y-8">
@@ -107,22 +104,25 @@ export function AuctionsListView() {
         </Alert>
       )}
 
-      {/* Category Filter Pills Bar + Search Controls */}
+      {/* Botones de categorías y filtros de búsqueda */}
       <div className="space-y-4">
         <div className="flex flex-wrap items-center gap-2">
-          {categories.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setFilters({ category: cat })}
-              className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
-                filters.category === cat
-                  ? 'bg-[#224F10] text-[#EAFFD0]'
-                  : 'bg-white/80 text-[#0D0D0D]/75 hover:bg-white border border-[#224F10]/12'
-              }`}
-            >
-              {cat}
-            </button>
-          ))}
+          {AUCTION_FILTER_CATEGORIES.map((cat) => {
+            const isSelected = filters.category === cat;
+            const buttonStyle = isSelected
+              ? 'bg-[#224F10] text-[#EAFFD0]'
+              : 'bg-white/80 text-[#0D0D0D]/75 hover:bg-white border border-[#224F10]/12';
+
+            return (
+              <button
+                key={cat}
+                onClick={() => setFilters({ category: cat })}
+                className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${buttonStyle}`}
+              >
+                {cat}
+              </button>
+            );
+          })}
         </div>
 
         <Card className="p-4 sm:p-5">
@@ -161,7 +161,7 @@ export function AuctionsListView() {
         </Card>
       </div>
 
-      {filtered.length === 0 ? (
+      {filteredAuctions.length === 0 ? (
         <Card className="text-center py-12">
           <p className="text-sm text-[#0D0D0D]/65">
             No se encontraron subastas con los criterios seleccionados.
@@ -169,11 +169,10 @@ export function AuctionsListView() {
         </Card>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {filtered.map((auction) => {
-            const canManage =
-              currentUser &&
-              (currentUser.role === 'admin' ||
-                Number(currentUser.id) === Number(auction.sellerId));
+          {filteredAuctions.map((auction) => {
+            const isAdmin = currentUser?.role === 'admin';
+            const isSeller = sameId(currentUser?.id, auction.sellerId);
+            const canManage = Boolean(currentUser && (isAdmin || isSeller));
 
             return (
               <AuctionCard
@@ -185,7 +184,7 @@ export function AuctionsListView() {
             );
           })}
 
-          {/* Dark Forest Green Summary Card at the end of the grid */}
+          {/* Tarjeta final de invitación para publicar una nueva subasta */}
           <div className="rounded-[28px] bg-[#224F10] text-[#EAFFD0] p-6 sm:p-7 flex flex-col justify-between min-h-[320px] shadow-sm">
             <span className="w-10 h-10 rounded-full bg-[#EAFFD0] text-[#224F10] flex items-center justify-center">
               <Sparkles className="w-5 h-5" />
@@ -197,8 +196,8 @@ export function AuctionsListView() {
                   ¿Tienes un artículo para subastar?
                 </h3>
                 <p className="text-xs text-[#EAFFD0]/75 leading-relaxed">
-                  Publica tu lote con precio base e incremento mínimo. Al
-                  cerrar la subasta coordinas directamente con el ganador.
+                  Publica tu lote con precio base e incremento mínimo. Al cerrar
+                  la subasta coordinas directamente con el ganador.
                 </p>
               </div>
 

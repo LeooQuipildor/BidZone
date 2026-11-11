@@ -1,7 +1,13 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { formatCurrency } from '../../utils/formatters';
+import {
+  formatCurrency,
+  sameId,
+  findById,
+  matchesSearch,
+} from '../../utils/formatters';
 import { formatCountdownFromNow, getInitials } from './dashboardHelpers';
+import { DashboardStatCard } from './DashboardShared';
 import {
   Gavel,
   Plus,
@@ -18,6 +24,105 @@ import {
   AlertOctagon,
 } from 'lucide-react';
 
+const RECENT_BADGE_COLORS = [
+  'bg-[#224F10] text-[#EAFFD0]',
+  'bg-[#B0E454] text-[#0D0D0D]',
+  'bg-[#EAFFD0] text-[#224F10]',
+  'bg-[#0D0D0D] text-[#EAFFD0]',
+  'bg-[#B0E454]/40 text-[#224F10]',
+];
+
+const USER_AVATAR_COLORS = [
+  'bg-[#EAFFD0] text-[#224F10]',
+  'bg-[#B0E454] text-[#0D0D0D]',
+  'bg-[#224F10] text-[#EAFFD0]',
+  'bg-[#0D0D0D] text-[#B0E454]',
+];
+
+// Devuelve el color de fondo de cada barra según su tipo visual
+function getActivityBarColor(type) {
+  if (type === 'solid-dark') {
+    return 'bg-[#224F10]';
+  }
+  if (type === 'solid-green') {
+    return 'bg-[#3A7D20]';
+  }
+  if (type === 'solid-lime') {
+    return 'bg-[#B0E454]';
+  }
+  return 'border border-[#224F10]/15 bg-[#F8FDF4]';
+}
+
+// Calcula la etiqueta y color de estado de un usuario en la lista de comunidad
+function getCommunityUserBadge(user) {
+  const estaSancionado =
+    user.status === 'suspended' || user.status === 'closed';
+
+  if (estaSancionado) {
+    return {
+      label: 'Sancionado',
+      className: 'bg-red-50 text-red-700 border-red-200',
+    };
+  }
+  if (user.role === 'admin') {
+    return {
+      label: 'Moderador',
+      className: 'bg-[#B0E454]/40 text-[#0D0D0D] border-[#224F10]/15',
+    };
+  }
+  return {
+    label: 'Verificado',
+    className: 'bg-[#EAFFD0] text-[#224F10] border-[#224F10]/15',
+  };
+}
+
+// Etiqueta que muestra qué rol tuvo el usuario actual dentro de una subasta cerrada
+function getDealRoleLabel(deal, currentUserId) {
+  if (sameId(currentUserId, deal.winnerId)) {
+    return 'Ganaste esta subasta';
+  }
+  if (sameId(currentUserId, deal.sellerId)) {
+    return 'Artículo vendido';
+  }
+  return 'Auditoría Admin';
+}
+
+// Columna reutilizable para mostrar los datos de contacto liberados (RN05)
+function DealContactColumn({
+  title,
+  person,
+  fallbackName,
+  fallbackEmail,
+  withDivider = false,
+}) {
+  const dividerClass = withDivider
+    ? 'border-t sm:border-t-0 sm:border-l border-[#224F10]/10 pt-2.5 sm:pt-0 sm:pl-3'
+    : '';
+
+  return (
+    <div className={`space-y-1 ${dividerClass}`}>
+      <p className="font-bold text-[#224F10] uppercase tracking-wider text-[10px]">
+        {title}
+      </p>
+      <p className="font-semibold text-[#0D0D0D]">
+        {person?.name || fallbackName}
+      </p>
+      <p className="flex items-center gap-1.5 text-[#0D0D0D]/75">
+        <Phone className="w-3 h-3 text-[#224F10]" />
+        {person?.phone || 'Sin teléfono'}
+      </p>
+      <p className="flex items-center gap-1.5 text-[#0D0D0D]/75 truncate">
+        <Mail className="w-3 h-3 text-[#224F10]" />
+        {person?.email || fallbackEmail}
+      </p>
+      <p className="flex items-center gap-1.5 text-[#0D0D0D]/75">
+        <MapPin className="w-3 h-3 text-[#224F10]" />
+        {person?.city || 'Argentina'}
+      </p>
+    </div>
+  );
+}
+
 export function DashboardOverviewTab({
   currentUser,
   users,
@@ -33,68 +138,62 @@ export function DashboardOverviewTab({
   const navigate = useNavigate();
   const isAdmin = currentUser?.role === 'admin';
 
+  // Métricas generales para las tarjetas y gráficos
   const activeAuctions = auctions.filter((a) => a.status === 'activa');
   const awardedAuctions = auctions.filter(
     (a) => a.status === 'finalizada' && a.winnerId
   );
-  const myBids = bids.filter(
-    (b) => Number(b.bidderId) === Number(currentUser?.id)
-  );
+  const myBids = bids.filter((b) => sameId(b.bidderId, currentUser?.id));
   const openReports = reports.filter((r) => r.status === 'en_revision');
 
-  const closedDealsInvolved = auctions.filter(
-    (a) =>
-      a.status === 'finalizada' &&
-      a.winnerId &&
-      (Number(a.winnerId) === Number(currentUser?.id) ||
-        Number(a.sellerId) === Number(currentUser?.id) ||
-        isAdmin)
-  );
+  // Operaciones finalizadas en las que participa el usuario (o todas si es admin)
+  const closedDealsInvolved = auctions.filter((a) => {
+    const esAdjudicada = a.status === 'finalizada' && a.winnerId;
+    if (!esAdjudicada) {
+      return false;
+    }
+    const participa =
+      sameId(a.winnerId, currentUser?.id) || sameId(a.sellerId, currentUser?.id);
+    return isAdmin || participa;
+  });
 
-  const nextClosingAuction = [...activeAuctions].sort(
+  // Buscamos la subasta activa que cierra más pronto
+  const sortedActive = [...activeAuctions].sort(
     (a, b) => new Date(a.endTime).getTime() - new Date(b.endTime).getTime()
-  )[0];
-
+  );
+  const nextClosingAuction = sortedActive[0] || null;
   const nextClosingCountdown = nextClosingAuction
     ? formatCountdownFromNow(nextClosingAuction.endTime, nowMs)
     : '00:00:00';
 
+  // Porcentajes para el gráfico semicircular de progreso
   const totalCount = Math.max(auctions.length, 1);
   const awardedPct = Math.round((awardedAuctions.length / totalCount) * 100);
   const activePct = Math.round((activeAuctions.length / totalCount) * 100);
 
-  const normalizedQuery = searchQuery.trim().toLowerCase();
-
+  // Listas filtradas según lo escrito en el buscador superior
   const filteredAuctionsList = auctions
-    .filter(
-      (a) =>
-        !normalizedQuery ||
-        (a.title || '').toLowerCase().includes(normalizedQuery) ||
-        (a.category || '').toLowerCase().includes(normalizedQuery)
-    )
+    .filter((a) => matchesSearch([a.title, a.category], searchQuery))
     .slice(0, 5);
 
   const filteredUsersList = users
-    .filter(
-      (u) =>
-        !normalizedQuery ||
-        (u.name || '').toLowerCase().includes(normalizedQuery) ||
-        (u.email || '').toLowerCase().includes(normalizedQuery) ||
-        (u.city || '').toLowerCase().includes(normalizedQuery)
-    )
+    .filter((u) => matchesSearch([u.name, u.email, u.city], searchQuery))
     .slice(0, 4);
 
   const filteredClosedDeals = closedDealsInvolved.filter((deal) => {
-    if (!normalizedQuery) return true;
-    const seller = users.find((u) => Number(u.id) === Number(deal.sellerId));
-    const winner = users.find((u) => Number(u.id) === Number(deal.winnerId));
-    return (
-      (deal.title || '').toLowerCase().includes(normalizedQuery) ||
-      (seller?.name || deal.sellerName || '').toLowerCase().includes(normalizedQuery) ||
-      (winner?.name || deal.winnerName || '').toLowerCase().includes(normalizedQuery)
+    const seller = findById(users, deal.sellerId);
+    const winner = findById(users, deal.winnerId);
+    return matchesSearch(
+      [
+        deal.title,
+        seller?.name || deal.sellerName,
+        winner?.name || deal.winnerName,
+      ],
+      searchQuery
     );
   });
 
+  // Datos visuales para el gráfico de barras de la semana
   const weeklyActivity = [
     { day: 'D', count: 2, heightPct: 58, type: 'hatched' },
     { day: 'L', count: 5, heightPct: 74, type: 'solid-green' },
@@ -111,28 +210,50 @@ export function DashboardOverviewTab({
     { day: 'S', count: 4, heightPct: 64, type: 'hatched' },
   ];
 
+  // Cálculo de la longitud de los arcos del semicírculo (strokeDasharray)
+  // El radio del arco SVG es 82, así que medio círculo mide Math.PI * 82
   const radius = 82;
   const halfCircumference = Math.PI * radius;
   const awardedLen = (awardedPct / 100) * halfCircumference;
   const activeLen = (activePct / 100) * halfCircumference;
+  const combinedArcLen = Math.min(halfCircumference, awardedLen + activeLen);
+
+  function handleNextClosingClick() {
+    if (nextClosingAuction) {
+      navigate(`/auctions/${nextClosingAuction.id}`);
+    } else {
+      onSelectSection('auctions', { openCreate: true });
+    }
+  }
+
+  function handleOpenAuctionFromTracker() {
+    if (nextClosingAuction) {
+      navigate(`/auctions/${nextClosingAuction.id}`);
+    } else {
+      onSelectSection('auctions');
+    }
+  }
+
+  const headerSubtitle = isAdmin
+    ? 'Supervisa subastas en tiempo real, pujas vinculantes, sanciones y calificaciones.'
+    : 'Planifica tus pujas, administra tus publicaciones y coordina cierres adjudicados.';
 
   return (
     <div className="space-y-6">
-      {/* Title & Action Pills */}
+      {/* Encabezado y botones rápidos */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pt-1">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#0D0D0D]">
             Panel Principal
           </h1>
           <p className="text-xs sm:text-sm text-[#0D0D0D]/60 mt-1">
-            {isAdmin
-              ? 'Supervisa subastas en tiempo real, pujas vinculantes, sanciones y calificaciones.'
-              : 'Planifica tus pujas, administra tus publicaciones y coordina cierres adjudicados.'}
+            {headerSubtitle}
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5">
           <button
+            type="button"
             onClick={() => onSelectSection('auctions', { openCreate: true })}
             className="inline-flex items-center gap-2 rounded-full bg-[#224F10] hover:bg-[#0D0D0D] text-[#EAFFD0] px-4 py-2 text-xs font-semibold transition-colors cursor-pointer shadow-xs"
           >
@@ -141,6 +262,7 @@ export function DashboardOverviewTab({
           </button>
 
           <button
+            type="button"
             onClick={() => onSelectSection('reports', { openCreate: true })}
             className="inline-flex items-center gap-2 rounded-full bg-white hover:bg-[#EAFFD0] border border-[#224F10]/20 text-[#0D0D0D] px-4 py-2 text-xs font-semibold transition-colors cursor-pointer"
           >
@@ -149,114 +271,105 @@ export function DashboardOverviewTab({
         </div>
       </div>
 
-      {/* ROW 1: 4 KPI SUMMARY CARDS */}
+      {/* Fila 1: 4 tarjetas de resumen (KPI) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-        <div className="rounded-2xl bg-gradient-to-br from-[#224F10] to-[#122B08] text-[#EAFFD0] p-5 flex flex-col justify-between shadow-sm">
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-xs font-medium text-[#EAFFD0]/90">
-              Total Subastas
-            </span>
+        <DashboardStatCard
+          highlight
+          title="Total Subastas"
+          value={auctions.length}
+          topAction={
             <button
+              type="button"
               onClick={() => onSelectSection('auctions')}
               className="w-8 h-8 rounded-full bg-[#EAFFD0] hover:bg-[#B0E454] text-[#0D0D0D] flex items-center justify-center transition-colors cursor-pointer"
               title="Ver todas las subastas"
             >
               <ArrowUpRight className="w-4 h-4" />
             </button>
-          </div>
+          }
+          footer={
+            <div className="flex items-center gap-2 text-[11px]">
+              <span className="px-1.5 py-0.5 rounded bg-[#B0E454]/20 text-[#B0E454] font-bold">
+                {activeAuctions.length} ↑
+              </span>
+              <span className="text-[#EAFFD0]/75">En vivo actualmente</span>
+            </div>
+          }
+        />
 
-          <p className="text-4xl font-bold tracking-tight my-3">
-            {auctions.length}
-          </p>
-
-          <div className="flex items-center gap-2 text-[11px]">
-            <span className="px-1.5 py-0.5 rounded bg-[#B0E454]/20 text-[#B0E454] font-bold">
-              {activeAuctions.length} ↑
-            </span>
-            <span className="text-[#EAFFD0]/75">En vivo actualmente</span>
-          </div>
-        </div>
-
-        <div className="rounded-2xl bg-white border border-[#224F10]/10 p-5 flex flex-col justify-between shadow-2xs">
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-xs font-semibold text-[#0D0D0D]/80">
-              Subastas Adjudicadas
-            </span>
+        <DashboardStatCard
+          title="Subastas Adjudicadas"
+          value={awardedAuctions.length}
+          topAction={
             <button
-              onClick={() => onSelectSection('auctions', { status: 'finalizada' })}
+              type="button"
+              onClick={() =>
+                onSelectSection('auctions', { status: 'finalizada' })
+              }
               className="w-8 h-8 rounded-full border border-[#224F10]/20 hover:bg-[#EAFFD0] text-[#0D0D0D] flex items-center justify-center transition-colors cursor-pointer"
               title="Explorar adjudicadas"
             >
               <ArrowUpRight className="w-4 h-4" />
             </button>
-          </div>
+          }
+          footer={
+            <div className="flex items-center gap-2 text-[11px]">
+              <span className="px-1.5 py-0.5 rounded bg-[#EAFFD0] text-[#224F10] font-bold">
+                {closedDealsInvolved.length} ↑
+              </span>
+              <span className="text-[#0D0D0D]/55">Con datos liberados RN05</span>
+            </div>
+          }
+        />
 
-          <p className="text-4xl font-bold tracking-tight text-[#0D0D0D] my-3">
-            {awardedAuctions.length}
-          </p>
-
-          <div className="flex items-center gap-2 text-[11px]">
-            <span className="px-1.5 py-0.5 rounded bg-[#EAFFD0] text-[#224F10] font-bold">
-              {closedDealsInvolved.length} ↑
-            </span>
-            <span className="text-[#0D0D0D]/55">Con datos liberados RN05</span>
-          </div>
-        </div>
-
-        <div className="rounded-2xl bg-white border border-[#224F10]/10 p-5 flex flex-col justify-between shadow-2xs">
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-xs font-semibold text-[#0D0D0D]/80">
-              Pujas Registradas
-            </span>
+        <DashboardStatCard
+          title="Pujas Registradas"
+          value={bids.length}
+          topAction={
             <button
+              type="button"
               onClick={() => onSelectSection('bids')}
               className="w-8 h-8 rounded-full border border-[#224F10]/20 hover:bg-[#EAFFD0] text-[#0D0D0D] flex items-center justify-center transition-colors cursor-pointer"
               title="Historial de pujas"
             >
               <ArrowUpRight className="w-4 h-4" />
             </button>
-          </div>
+          }
+          footer={
+            <div className="flex items-center gap-2 text-[11px]">
+              <span className="px-1.5 py-0.5 rounded bg-[#EAFFD0] text-[#224F10] font-bold">
+                {myBids.length} ↑
+              </span>
+              <span className="text-[#0D0D0D]/55">Ofertas realizadas por ti</span>
+            </div>
+          }
+        />
 
-          <p className="text-4xl font-bold tracking-tight text-[#0D0D0D] my-3">
-            {bids.length}
-          </p>
-
-          <div className="flex items-center gap-2 text-[11px]">
-            <span className="px-1.5 py-0.5 rounded bg-[#EAFFD0] text-[#224F10] font-bold">
-              {myBids.length} ↑
-            </span>
-            <span className="text-[#0D0D0D]/55">Ofertas realizadas por ti</span>
-          </div>
-        </div>
-
-        <div className="rounded-2xl bg-white border border-[#224F10]/10 p-5 flex flex-col justify-between shadow-2xs">
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-xs font-semibold text-[#0D0D0D]/80">
-              Reportes Activos
-            </span>
+        <DashboardStatCard
+          title="Reportes Activos"
+          value={openReports.length}
+          topAction={
             <button
+              type="button"
               onClick={() => onSelectSection('reports')}
               className="w-8 h-8 rounded-full border border-[#224F10]/20 hover:bg-[#EAFFD0] text-[#0D0D0D] flex items-center justify-center transition-colors cursor-pointer"
               title="Centro de reportes"
             >
               <ArrowUpRight className="w-4 h-4" />
             </button>
-          </div>
-
-          <p className="text-4xl font-bold tracking-tight text-[#0D0D0D] my-3">
-            {openReports.length}
-          </p>
-
-          <div className="flex items-center gap-2 text-[11px]">
-            <span className="px-1.5 py-0.5 rounded bg-[#B0E454]/35 text-[#224F10] font-bold">
-              {currentUser?.reputation || '5.0'} ★
-            </span>
-            <span className="text-[#0D0D0D]/55">Reputación actual</span>
-          </div>
-        </div>
+          }
+          footer={
+            <div className="flex items-center gap-2 text-[11px]">
+              <span className="px-1.5 py-0.5 rounded bg-[#B0E454]/35 text-[#224F10] font-bold">
+                {currentUser?.reputation || '5.0'} ★
+              </span>
+              <span className="text-[#0D0D0D]/55">Reputación actual</span>
+            </div>
+          }
+        />
       </div>
 
-      {/* ROW 2: ANALYTICS BAR CHART + NEXT CLOSING + RECENT AUCTIONS */}
+      {/* Fila 2: gráfico de barras + próximo cierre + subastas recientes */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
         <div className="lg:col-span-5 rounded-2xl bg-white border border-[#224F10]/10 p-5 flex flex-col justify-between shadow-2xs">
           <div className="flex items-center justify-between gap-2">
@@ -269,46 +382,43 @@ export function DashboardOverviewTab({
           </div>
 
           <div className="h-44 flex items-end justify-between gap-2.5 sm:gap-3 pt-8 pb-1">
-            {weeklyActivity.map((item) => (
-              <div
-                key={item.day}
-                className="flex-1 flex flex-col items-center justify-end h-full gap-2"
-              >
-                <div className="relative w-full max-w-[34px] h-full flex items-end justify-center">
-                  <div
-                    title={`${item.day}: ${item.count} movimientos`}
-                    style={{
-                      height: `${item.heightPct}%`,
-                      backgroundImage:
-                        item.type === 'hatched'
-                          ? 'repeating-linear-gradient(135deg, rgba(34,79,16,0.16), rgba(34,79,16,0.16) 4px, transparent 4px, transparent 8px)'
-                          : undefined,
-                    }}
-                    className={`relative w-full rounded-full transition-all duration-300 ${
-                      item.type === 'solid-dark'
-                        ? 'bg-[#224F10]'
-                        : item.type === 'solid-green'
-                          ? 'bg-[#3A7D20]'
-                          : item.type === 'solid-lime'
-                            ? 'bg-[#B0E454]'
-                            : 'border border-[#224F10]/15 bg-[#F8FDF4]'
-                    }`}
-                  >
-                    {item.badge && (
-                      <>
-                        <span className="absolute -top-7 left-1/2 -translate-x-1/2 px-1.5 py-0.5 rounded-full bg-[#EAFFD0] border border-[#224F10]/20 text-[#224F10] text-[9px] font-bold whitespace-nowrap shadow-2xs z-10 pointer-events-none">
-                          {item.badge}
-                        </span>
-                        <span className="absolute -top-1 left-1/2 -translate-x-1/2 w-2.5 h-2.5 rounded-full bg-white border-2 border-[#224F10]" />
-                      </>
-                    )}
+            {weeklyActivity.map((item) => {
+              const barColorClass = getActivityBarColor(item.type);
+              const hatchedPattern =
+                item.type === 'hatched'
+                  ? 'repeating-linear-gradient(135deg, rgba(34,79,16,0.16), rgba(34,79,16,0.16) 4px, transparent 4px, transparent 8px)'
+                  : undefined;
+
+              return (
+                <div
+                  key={item.day}
+                  className="flex-1 flex flex-col items-center justify-end h-full gap-2"
+                >
+                  <div className="relative w-full max-w-[34px] h-full flex items-end justify-center">
+                    <div
+                      title={`${item.day}: ${item.count} movimientos`}
+                      style={{
+                        height: `${item.heightPct}%`,
+                        backgroundImage: hatchedPattern,
+                      }}
+                      className={`relative w-full rounded-full transition-all duration-300 ${barColorClass}`}
+                    >
+                      {item.badge && (
+                        <>
+                          <span className="absolute -top-7 left-1/2 -translate-x-1/2 px-1.5 py-0.5 rounded-full bg-[#EAFFD0] border border-[#224F10]/20 text-[#224F10] text-[9px] font-bold whitespace-nowrap shadow-2xs z-10 pointer-events-none">
+                            {item.badge}
+                          </span>
+                          <span className="absolute -top-1 left-1/2 -translate-x-1/2 w-2.5 h-2.5 rounded-full bg-white border-2 border-[#224F10]" />
+                        </>
+                      )}
+                    </div>
                   </div>
+                  <span className="text-[11px] font-semibold text-[#0D0D0D]/55">
+                    {item.day}
+                  </span>
                 </div>
-                <span className="text-[11px] font-semibold text-[#0D0D0D]/55">
-                  {item.day}
-                </span>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
@@ -349,13 +459,8 @@ export function DashboardOverviewTab({
           )}
 
           <button
-            onClick={() => {
-              if (nextClosingAuction) {
-                navigate(`/auctions/${nextClosingAuction.id}`);
-              } else {
-                onSelectSection('auctions', { openCreate: true });
-              }
-            }}
+            type="button"
+            onClick={handleNextClosingClick}
             className="w-full py-2.5 px-4 rounded-full bg-[#224F10] hover:bg-[#0D0D0D] text-[#EAFFD0] text-xs font-semibold inline-flex items-center justify-center gap-2 transition-colors cursor-pointer"
           >
             <Gavel className="w-3.5 h-3.5" />
@@ -369,6 +474,7 @@ export function DashboardOverviewTab({
           <div className="flex items-center justify-between gap-2 pb-3">
             <h2 className="text-sm font-bold text-[#0D0D0D]">Subastas</h2>
             <button
+              type="button"
               onClick={() => onSelectSection('auctions', { openCreate: true })}
               className="px-2.5 py-1 rounded-full border border-[#224F10]/20 hover:bg-[#EAFFD0] text-[11px] font-semibold text-[#0D0D0D] transition-colors cursor-pointer"
             >
@@ -382,34 +488,30 @@ export function DashboardOverviewTab({
                 Sin coincidencias.
               </p>
             ) : (
-              filteredAuctionsList.map((a, idx) => {
-                const badgeStyles = [
-                  'bg-[#224F10] text-[#EAFFD0]',
-                  'bg-[#B0E454] text-[#0D0D0D]',
-                  'bg-[#EAFFD0] text-[#224F10]',
-                  'bg-[#0D0D0D] text-[#EAFFD0]',
-                  'bg-[#B0E454]/40 text-[#224F10]',
-                ];
+              filteredAuctionsList.map((auction, idx) => {
+                const badgeColor =
+                  RECENT_BADGE_COLORS[idx % RECENT_BADGE_COLORS.length];
+                const estadoTexto =
+                  auction.status === 'activa' ? 'En subasta' : 'Finalizada';
+
                 return (
                   <button
-                    key={a.id}
-                    onClick={() => navigate(`/auctions/${a.id}`)}
+                    key={auction.id}
+                    type="button"
+                    onClick={() => navigate(`/auctions/${auction.id}`)}
                     className="w-full flex items-center gap-2.5 text-left hover:bg-[#F7FBF3] p-1.5 -mx-1.5 rounded-xl transition-colors cursor-pointer"
                   >
                     <span
-                      className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${
-                        badgeStyles[idx % badgeStyles.length]
-                      }`}
+                      className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${badgeColor}`}
                     >
                       <Tag className="w-3.5 h-3.5" />
                     </span>
                     <div className="min-w-0 flex-1">
                       <p className="text-xs font-semibold text-[#0D0D0D] truncate">
-                        {a.title}
+                        {auction.title}
                       </p>
                       <p className="text-[10px] text-[#0D0D0D]/50 truncate">
-                        {formatCurrency(a.currentPrice)} ·{' '}
-                        {a.status === 'activa' ? 'En subasta' : 'Finalizada'}
+                        {formatCurrency(auction.currentPrice)} · {estadoTexto}
                       </p>
                     </div>
                   </button>
@@ -420,7 +522,7 @@ export function DashboardOverviewTab({
         </div>
       </div>
 
-      {/* ROW 3: COMMUNITY + PROGRESS GAUGE + LIVE TRACKER */}
+      {/* Fila 3: comunidad + medidor de progreso + cronómetro */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
         <div className="lg:col-span-5 rounded-2xl bg-white border border-[#224F10]/10 p-5 flex flex-col justify-between shadow-2xs">
           <div className="flex items-center justify-between gap-2 pb-4">
@@ -428,6 +530,7 @@ export function DashboardOverviewTab({
               Participación y Comunidad
             </h2>
             <button
+              type="button"
               onClick={() => onSelectSection('users')}
               className="px-3 py-1 rounded-full border border-[#224F10]/20 hover:bg-[#EAFFD0] text-[11px] font-semibold text-[#0D0D0D] transition-colors cursor-pointer"
             >
@@ -436,35 +539,28 @@ export function DashboardOverviewTab({
           </div>
 
           <div className="space-y-3">
-            {filteredUsersList.map((u, idx) => {
-              const userLastBid = bids.find(
-                (b) => Number(b.bidderId) === Number(u.id)
+            {filteredUsersList.map((user, idx) => {
+              const userLastBid = bids.find((b) =>
+                sameId(b.bidderId, user.id)
               );
-              const avatarColors = [
-                'bg-[#EAFFD0] text-[#224F10]',
-                'bg-[#B0E454] text-[#0D0D0D]',
-                'bg-[#224F10] text-[#EAFFD0]',
-                'bg-[#0D0D0D] text-[#B0E454]',
-              ];
-              const isSuspended =
-                u.status === 'suspended' || u.status === 'closed';
+              const avatarColor =
+                USER_AVATAR_COLORS[idx % USER_AVATAR_COLORS.length];
+              const badge = getCommunityUserBadge(user);
 
               return (
                 <div
-                  key={u.id}
+                  key={user.id}
                   className="flex items-center justify-between gap-3"
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
                     <span
-                      className={`w-9 h-9 rounded-full font-bold text-xs flex items-center justify-center shrink-0 ${
-                        avatarColors[idx % avatarColors.length]
-                      }`}
+                      className={`w-9 h-9 rounded-full font-bold text-xs flex items-center justify-center shrink-0 ${avatarColor}`}
                     >
-                      {getInitials(u.name)}
+                      {getInitials(user.name)}
                     </span>
                     <div className="min-w-0">
                       <p className="text-xs font-bold text-[#0D0D0D] truncate">
-                        {u.name}
+                        {user.name}
                       </p>
                       <p className="text-[11px] text-[#0D0D0D]/55 truncate">
                         {userLastBid ? (
@@ -475,26 +571,16 @@ export function DashboardOverviewTab({
                             </span>
                           </>
                         ) : (
-                          `${u.city || 'Argentina'} · ${u.reputation || '5.0'} ★`
+                          `${user.city || 'Argentina'} · ${user.reputation || '5.0'} ★`
                         )}
                       </p>
                     </div>
                   </div>
 
                   <span
-                    className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold shrink-0 border ${
-                      isSuspended
-                        ? 'bg-red-50 text-red-700 border-red-200'
-                        : u.role === 'admin'
-                          ? 'bg-[#B0E454]/40 text-[#0D0D0D] border-[#224F10]/15'
-                          : 'bg-[#EAFFD0] text-[#224F10] border-[#224F10]/15'
-                    }`}
+                    className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold shrink-0 border ${badge.className}`}
                   >
-                    {isSuspended
-                      ? 'Sancionado'
-                      : u.role === 'admin'
-                        ? 'Moderador'
-                        : 'Verificado'}
+                    {badge.label}
                   </span>
                 </div>
               );
@@ -502,6 +588,7 @@ export function DashboardOverviewTab({
           </div>
         </div>
 
+        {/* Medidor semicircular de progreso de subastas */}
         <div className="lg:col-span-4 rounded-2xl bg-white border border-[#224F10]/10 p-5 flex flex-col justify-between shadow-2xs">
           <h2 className="text-sm font-bold text-[#0D0D0D]">
             Progreso de Subastas
@@ -540,17 +627,14 @@ export function DashboardOverviewTab({
                 strokeLinecap="round"
               />
 
-              {awardedLen + activeLen > 0 && (
+              {combinedArcLen > 0 && (
                 <path
                   d="M 28 110 A 82 82 0 0 1 192 110"
                   fill="none"
                   stroke="#B0E454"
                   strokeWidth="22"
                   strokeLinecap="round"
-                  strokeDasharray={`${Math.min(
-                    halfCircumference,
-                    awardedLen + activeLen
-                  )} ${halfCircumference}`}
+                  strokeDasharray={`${combinedArcLen} ${halfCircumference}`}
                 />
               )}
 
@@ -592,6 +676,7 @@ export function DashboardOverviewTab({
           </div>
         </div>
 
+        {/* Cronómetro en vivo */}
         <div className="lg:col-span-3 relative rounded-2xl bg-gradient-to-br from-[#0D0D0D] via-[#132B08] to-[#224F10] text-[#EAFFD0] p-5 flex flex-col justify-between overflow-hidden min-h-[210px] shadow-sm">
           <svg
             viewBox="0 0 240 240"
@@ -646,6 +731,7 @@ export function DashboardOverviewTab({
 
           <div className="relative z-10 flex items-center justify-center gap-3">
             <button
+              type="button"
               onClick={onTogglePause}
               title={trackerPaused ? 'Reanudar reloj' : 'Pausar reloj'}
               className="w-10 h-10 rounded-full bg-white hover:bg-[#B0E454] text-[#0D0D0D] flex items-center justify-center transition-colors shadow-sm cursor-pointer"
@@ -658,13 +744,8 @@ export function DashboardOverviewTab({
             </button>
 
             <button
-              onClick={() => {
-                if (nextClosingAuction) {
-                  navigate(`/auctions/${nextClosingAuction.id}`);
-                } else {
-                  onSelectSection('auctions');
-                }
-              }}
+              type="button"
+              onClick={handleOpenAuctionFromTracker}
               title="Ir a la sala de subasta"
               className="w-10 h-10 rounded-full bg-[#B0E454] hover:bg-[#EAFFD0] text-[#0D0D0D] flex items-center justify-center transition-colors shadow-sm cursor-pointer"
             >
@@ -674,7 +755,7 @@ export function DashboardOverviewTab({
         </div>
       </div>
 
-      {/* ROW 4: COORDINACIÓN DIRECTA RN05 */}
+      {/* Fila 4: Coordinación directa RN05 */}
       <section className="space-y-4 pt-2">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
           <div>
@@ -698,14 +779,11 @@ export function DashboardOverviewTab({
         ) : (
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
             {filteredClosedDeals.map((deal) => {
-              const seller = users.find(
-                (u) => Number(u.id) === Number(deal.sellerId)
-              );
-              const winner = users.find(
-                (u) => Number(u.id) === Number(deal.winnerId)
-              );
-              const isWinner = Number(currentUser?.id) === Number(deal.winnerId);
+              const seller = findById(users, deal.sellerId);
+              const winner = findById(users, deal.winnerId);
+              const isWinner = sameId(currentUser?.id, deal.winnerId);
               const counterpartId = isWinner ? deal.sellerId : deal.winnerId;
+              const roleBadge = getDealRoleLabel(deal, currentUser?.id);
 
               return (
                 <div
@@ -715,11 +793,7 @@ export function DashboardOverviewTab({
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <span className="inline-block px-2.5 py-0.5 rounded-full bg-[#EAFFD0] text-[#224F10] border border-[#224F10]/15 text-[10px] font-bold mb-1.5">
-                        {isWinner
-                          ? 'Ganaste esta subasta'
-                          : Number(currentUser?.id) === Number(deal.sellerId)
-                            ? 'Artículo vendido'
-                            : 'Auditoría Admin'}
+                        {roleBadge}
                       </span>
                       <h3 className="text-base font-bold text-[#0D0D0D]">
                         {deal.title}
@@ -741,51 +815,24 @@ export function DashboardOverviewTab({
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs bg-[#F7FBF3] p-3.5 rounded-xl border border-[#224F10]/10">
-                    <div className="space-y-1">
-                      <p className="font-bold text-[#224F10] uppercase tracking-wider text-[10px]">
-                        Dueño del Artículo
-                      </p>
-                      <p className="font-semibold text-[#0D0D0D]">
-                        {seller?.name || deal.sellerName || 'Vendedor'}
-                      </p>
-                      <p className="flex items-center gap-1.5 text-[#0D0D0D]/75">
-                        <Phone className="w-3 h-3 text-[#224F10]" />
-                        {seller?.phone || 'Sin teléfono'}
-                      </p>
-                      <p className="flex items-center gap-1.5 text-[#0D0D0D]/75 truncate">
-                        <Mail className="w-3 h-3 text-[#224F10]" />
-                        {seller?.email || 'Privado (RN05)'}
-                      </p>
-                      <p className="flex items-center gap-1.5 text-[#0D0D0D]/75">
-                        <MapPin className="w-3 h-3 text-[#224F10]" />
-                        {seller?.city || 'Argentina'}
-                      </p>
-                    </div>
-
-                    <div className="space-y-1 border-t sm:border-t-0 sm:border-l border-[#224F10]/10 pt-2.5 sm:pt-0 sm:pl-3">
-                      <p className="font-bold text-[#224F10] uppercase tracking-wider text-[10px]">
-                        Ganador Adjudicado
-                      </p>
-                      <p className="font-semibold text-[#0D0D0D]">
-                        {winner?.name || deal.winnerName || 'Comprador'}
-                      </p>
-                      <p className="flex items-center gap-1.5 text-[#0D0D0D]/75">
-                        <Phone className="w-3 h-3 text-[#224F10]" />
-                        {winner?.phone || 'Sin teléfono'}
-                      </p>
-                      <p className="flex items-center gap-1.5 text-[#0D0D0D]/75 truncate">
-                        <Mail className="w-3 h-3 text-[#224F10]" />
-                        {winner?.email || 'Privado (RN05)'}
-                      </p>
-                      <p className="flex items-center gap-1.5 text-[#0D0D0D]/75">
-                        <MapPin className="w-3 h-3 text-[#224F10]" />
-                        {winner?.city || 'Argentina'}
-                      </p>
-                    </div>
+                    <DealContactColumn
+                      title="Dueño del Artículo"
+                      person={seller}
+                      fallbackName={deal.sellerName || 'Vendedor'}
+                      fallbackEmail="Privado (RN05)"
+                    />
+                    <DealContactColumn
+                      title="Ganador Adjudicado"
+                      person={winner}
+                      fallbackName={deal.winnerName || 'Comprador'}
+                      fallbackEmail="Privado (RN05)"
+                      withDivider
+                    />
                   </div>
 
                   <div className="flex flex-wrap items-center justify-end gap-2">
                     <button
+                      type="button"
                       onClick={() =>
                         onSelectSection('reviews', {
                           openCreate: true,
@@ -799,6 +846,7 @@ export function DashboardOverviewTab({
                       Calificar Contraparte
                     </button>
                     <button
+                      type="button"
                       onClick={() =>
                         onSelectSection('reports', {
                           openCreate: true,
@@ -821,4 +869,3 @@ export function DashboardOverviewTab({
     </div>
   );
 }
-

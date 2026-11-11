@@ -1,7 +1,25 @@
 import { create } from 'zustand';
 import { httpRequest, registerSessionReset } from '../../core/lib/apiClient';
+import {
+  findById,
+  removeById,
+  replaceById,
+  sameId,
+} from '../../core/utils/formatters';
 import { useAuctionStore } from '../../auctions/states/auctionStore';
 
+// Cuando cambia una puja, también cambia el precio actual de la subasta asociada
+async function refreshAuctionAfterBid(auctionId) {
+  const auctionStore = useAuctionStore.getState();
+  await auctionStore.fetchAuctions();
+
+  const detail = auctionStore.currentAuctionDetail;
+  if (detail && sameId(detail.id, auctionId)) {
+    await auctionStore.fetchAuctionById(auctionId);
+  }
+}
+
+// Store global de pujas / ofertas (conecta con /api/bids)
 export const useBidStore = create((set, get) => ({
   bids: [],
   loading: false,
@@ -12,6 +30,7 @@ export const useBidStore = create((set, get) => ({
       set({ bids: [], loading: false });
       return [];
     }
+
     set({ loading: true, error: null });
     try {
       const data = await httpRequest('/bids');
@@ -26,22 +45,20 @@ export const useBidStore = create((set, get) => ({
   createBid: async ({ auctionId, amount, note, commitmentAccepted }) => {
     set({ error: null });
     try {
+      const body = {
+        auctionId: Number(auctionId),
+        amount: Number(amount),
+        note: note ? note.trim() : '',
+        commitmentAccepted: Boolean(commitmentAccepted),
+      };
+
       const created = await httpRequest('/bids', {
         method: 'POST',
-        body: JSON.stringify({
-          auctionId: Number(auctionId),
-          amount: Number(amount),
-          note: note?.trim() || '',
-          commitmentAccepted: Boolean(commitmentAccepted),
-        }),
+        body: JSON.stringify(body),
       });
       set((state) => ({ bids: [created, ...state.bids] }));
 
-      const auctionState = useAuctionStore.getState();
-      await auctionState.fetchAuctions();
-      if (Number(auctionState.currentAuctionDetail?.id) === Number(auctionId)) {
-        await auctionState.fetchAuctionById(auctionId);
-      }
+      await refreshAuctionAfterBid(auctionId);
       return created;
     } catch (err) {
       set({ error: err.message });
@@ -65,17 +82,10 @@ export const useBidStore = create((set, get) => ({
         body: JSON.stringify(body),
       });
       set((state) => ({
-        bids: state.bids.map((b) => (Number(b.id) === Number(id) ? updated : b)),
+        bids: replaceById(state.bids, id, updated),
       }));
 
-      const auctionState = useAuctionStore.getState();
-      await auctionState.fetchAuctions();
-      if (
-        Number(auctionState.currentAuctionDetail?.id) ===
-        Number(updated.auctionId)
-      ) {
-        await auctionState.fetchAuctionById(updated.auctionId);
-      }
+      await refreshAuctionAfterBid(updated.auctionId);
       return updated;
     } catch (err) {
       set({ error: err.message });
@@ -85,21 +95,16 @@ export const useBidStore = create((set, get) => ({
 
   deleteBid: async (id) => {
     set({ error: null });
-    const existing = get().bids.find((b) => Number(b.id) === Number(id));
+    const existingBid = findById(get().bids, id);
+
     try {
       await httpRequest(`/bids/${id}`, { method: 'DELETE' });
       set((state) => ({
-        bids: state.bids.filter((b) => Number(b.id) !== Number(id)),
+        bids: removeById(state.bids, id),
       }));
 
-      const auctionState = useAuctionStore.getState();
-      await auctionState.fetchAuctions();
-      if (
-        existing &&
-        Number(auctionState.currentAuctionDetail?.id) ===
-          Number(existing.auctionId)
-      ) {
-        await auctionState.fetchAuctionById(existing.auctionId);
+      if (existingBid) {
+        await refreshAuctionAfterBid(existingBid.auctionId);
       }
     } catch (err) {
       set({ error: err.message });

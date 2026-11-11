@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useReportStore } from '../states/reportStore';
 import { useAuthStore } from '../../auth/states/authStore';
+import { findById, sameId } from '../../core/utils/formatters';
 import {
   Card,
   Input,
@@ -11,10 +12,17 @@ import {
   PageHeader,
   Alert,
   Spinner,
+  ErrorStateCard,
 } from '../../core/design-system/ui';
 import { Save, ArrowLeft, ShieldAlert } from 'lucide-react';
 
-function ReportEditForm({ report, reportedUser, isAdmin, updateReport, navigate }) {
+function ReportEditForm({
+  report,
+  reportedUser,
+  isAdmin,
+  updateReport,
+  navigate,
+}) {
   const [formData, setFormData] = useState({
     reason: report.reason || '',
     description: report.description || '',
@@ -25,13 +33,16 @@ function ReportEditForm({ report, reportedUser, isAdmin, updateReport, navigate 
   });
   const [errorMsg, setErrorMsg] = useState('');
 
+  // Si el expediente ya fue cerrado por moderación, el denunciante común no puede editarlo
   const isLockedForReporter = !isAdmin && report.status !== 'en_revision';
 
-  const handleChange = (e) => {
-    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-  };
+  function handleChange(e) {
+    const fieldName = e.target.name;
+    const fieldValue = e.target.value;
+    setFormData((prev) => ({ ...prev, [fieldName]: fieldValue }));
+  }
 
-  const handleSubmit = async (e) => {
+  async function handleSubmit(e) {
     e.preventDefault();
     setErrorMsg('');
 
@@ -49,8 +60,12 @@ function ReportEditForm({ report, reportedUser, isAdmin, updateReport, navigate 
     } catch (err) {
       setErrorMsg(err.message);
     }
-  };
+  }
 
+  const reportedName =
+    reportedUser?.name ||
+    report.reportedUserName ||
+    `#${report.reportedUserId}`;
   const reportedStatus = reportedUser?.status
     ? `Estado actual: ${reportedUser.status}`
     : 'En evaluación';
@@ -59,11 +74,7 @@ function ReportEditForm({ report, reportedUser, isAdmin, updateReport, navigate 
     <div className="max-w-2xl mx-auto space-y-6">
       <PageHeader
         title={`Expediente de reporte #${report.id}`}
-        subtitle={`Usuario denunciado: ${
-          reportedUser?.name ||
-          report.reportedUserName ||
-          `#${report.reportedUserId}`
-        } (${reportedStatus})`}
+        subtitle={`Usuario denunciado: ${reportedName} (${reportedStatus})`}
         action={
           <Button variant="outline" onClick={() => navigate('/reports')}>
             <ArrowLeft className="w-4 h-4" />
@@ -74,7 +85,8 @@ function ReportEditForm({ report, reportedUser, isAdmin, updateReport, navigate 
 
       {isLockedForReporter && (
         <Alert type="warning" title="Expediente cerrado para edición">
-          Este expediente ya fue resuelto por moderación y no admite cambios del denunciante.
+          Este expediente ya fue resuelto por moderación y no admite cambios del
+          denunciante.
         </Alert>
       )}
 
@@ -115,6 +127,7 @@ function ReportEditForm({ report, reportedUser, isAdmin, updateReport, navigate 
             onChange={handleChange}
           />
 
+          {/* Panel exclusivo de administradores para aplicar sanciones (RN06) */}
           {isAdmin && (
             <div className="space-y-4 pt-4 border-t border-[#224F10]/20">
               <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#224F10]">
@@ -208,7 +221,7 @@ export function ReportEditView() {
     fetchUsers();
   }, [fetchReports, fetchUsers]);
 
-  const report = reports.find((r) => Number(r.id) === Number(id));
+  const report = findById(reports, id);
   const isAdmin = currentUser?.role === 'admin';
 
   if (reportsLoading && !report) {
@@ -217,42 +230,28 @@ export function ReportEditView() {
 
   if (!report) {
     return (
-      <div className="max-w-xl mx-auto my-12">
-        <Alert type="error" title="Reporte no encontrado">
-          El expediente solicitado no existe o no tienes acceso para consultarlo.
-        </Alert>
-        <Button
-          variant="secondary"
-          className="mt-4"
-          onClick={() => navigate('/reports')}
-        >
-          Volver a Reportes
-        </Button>
-      </div>
+      <ErrorStateCard
+        title="Reporte no encontrado"
+        message="El expediente solicitado no existe o no tienes acceso para consultarlo."
+        buttonLabel="Volver a Reportes"
+        onBack={() => navigate('/reports')}
+      />
     );
   }
 
-  const isReporter = Number(currentUser?.id) === Number(report.reporterId);
+  const isReporter = sameId(currentUser?.id, report.reporterId);
   if (!isAdmin && !isReporter) {
     return (
-      <div className="max-w-xl mx-auto my-12">
-        <Alert type="error" title="Sin permisos de edición">
-          Solo el denunciante original o un administrador puede modificar este reporte.
-        </Alert>
-        <Button
-          variant="secondary"
-          className="mt-4"
-          onClick={() => navigate('/reports')}
-        >
-          Volver a Reportes
-        </Button>
-      </div>
+      <ErrorStateCard
+        title="Sin permisos de edición"
+        message="Solo el denunciante original o un administrador puede modificar este reporte."
+        buttonLabel="Volver a Reportes"
+        onBack={() => navigate('/reports')}
+      />
     );
   }
 
-  const reportedUser = users.find(
-    (u) => Number(u.id) === Number(report.reportedUserId)
-  );
+  const reportedUser = findById(users, report.reportedUserId);
 
   return (
     <ReportEditForm

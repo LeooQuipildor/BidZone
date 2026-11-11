@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import { httpRequest, registerSessionReset } from '../../core/lib/apiClient';
+import { removeById, sameId } from '../../core/utils/formatters';
 
+// Store global de notificaciones del usuario (conecta con /api/notifications)
 export const useNotificationStore = create((set) => ({
   notifications: [],
   loading: false,
@@ -11,6 +13,7 @@ export const useNotificationStore = create((set) => ({
       set({ notifications: [], loading: false });
       return [];
     }
+
     set({ loading: true, error: null });
     try {
       const data = await httpRequest('/notifications');
@@ -29,9 +32,12 @@ export const useNotificationStore = create((set) => ({
         method: 'PATCH',
       });
       set((state) => ({
-        notifications: state.notifications.map((n) =>
-          Number(n.id) === Number(id) ? { ...n, ...updated, read: true } : n
-        ),
+        notifications: state.notifications.map((notif) => {
+          if (sameId(notif.id, id)) {
+            return { ...notif, ...updated, read: true };
+          }
+          return notif;
+        }),
       }));
       return updated;
     } catch (err) {
@@ -47,7 +53,10 @@ export const useNotificationStore = create((set) => ({
         method: 'PATCH',
       });
       set((state) => ({
-        notifications: state.notifications.map((n) => ({ ...n, read: true })),
+        notifications: state.notifications.map((notif) => ({
+          ...notif,
+          read: true,
+        })),
       }));
     } catch (err) {
       set({ error: err.message });
@@ -60,9 +69,7 @@ export const useNotificationStore = create((set) => ({
     try {
       await httpRequest(`/notifications/${id}`, { method: 'DELETE' });
       set((state) => ({
-        notifications: state.notifications.filter(
-          (n) => Number(n.id) !== Number(id)
-        ),
+        notifications: removeById(state.notifications, id),
       }));
     } catch (err) {
       set({ error: err.message });
@@ -72,5 +79,9 @@ export const useNotificationStore = create((set) => ({
 }));
 
 registerSessionReset(() => {
-  useNotificationStore.setState({ notifications: [], error: null, loading: false });
+  useNotificationStore.setState({
+    notifications: [],
+    error: null,
+    loading: false,
+  });
 });

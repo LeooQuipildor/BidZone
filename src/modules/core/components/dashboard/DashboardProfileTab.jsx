@@ -1,18 +1,11 @@
 import React, { useState } from 'react';
 import { useAuthStore } from '../../../auth/states/authStore';
+import { sameId } from '../../utils/formatters';
 import { getInitials } from './dashboardHelpers';
-import {
-  Save,
-  Star,
-  MapPin,
-  Phone,
-  Mail,
-  ShieldCheck,
-  CheckCircle2,
-  AlertCircle,
-  X,
-} from 'lucide-react';
+import { DashboardFeedback } from './DashboardShared';
+import { Save, Star, MapPin, Phone, Mail, ShieldCheck } from 'lucide-react';
 
+// Formulario separado con `key` para que se reinicie limpio cuando cambia `currentUser`
 function ProfileFormCard({ currentUser, updateUser, onFeedback }) {
   const [formData, setFormData] = useState(() => ({
     name: currentUser?.name || '',
@@ -21,7 +14,11 @@ function ProfileFormCard({ currentUser, updateUser, onFeedback }) {
     city: currentUser?.city || '',
   }));
 
-  const handleSubmit = async (e) => {
+  function updateField(field, value) {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  }
+
+  async function handleSubmit(e) {
     e.preventDefault();
     onFeedback(null);
 
@@ -42,7 +39,7 @@ function ProfileFormCard({ currentUser, updateUser, onFeedback }) {
     } catch (err) {
       onFeedback({ type: 'error', text: err.message });
     }
-  };
+  }
 
   return (
     <div className="lg:col-span-8 rounded-2xl bg-white border border-[#224F10]/10 p-6 shadow-2xs">
@@ -59,9 +56,7 @@ function ProfileFormCard({ currentUser, updateUser, onFeedback }) {
             <input
               type="text"
               value={formData.name}
-              onChange={(e) =>
-                setFormData((p) => ({ ...p, name: e.target.value }))
-              }
+              onChange={(e) => updateField('name', e.target.value)}
               className="w-full rounded-xl bg-[#F7FBF3] border border-[#224F10]/15 px-3.5 py-2.5 text-xs text-[#0D0D0D] focus:outline-none focus:ring-2 focus:ring-[#224F10]/25"
             />
           </div>
@@ -73,9 +68,7 @@ function ProfileFormCard({ currentUser, updateUser, onFeedback }) {
             <input
               type="email"
               value={formData.email}
-              onChange={(e) =>
-                setFormData((p) => ({ ...p, email: e.target.value }))
-              }
+              onChange={(e) => updateField('email', e.target.value)}
               className="w-full rounded-xl bg-[#F7FBF3] border border-[#224F10]/15 px-3.5 py-2.5 text-xs text-[#0D0D0D] focus:outline-none focus:ring-2 focus:ring-[#224F10]/25"
             />
           </div>
@@ -89,9 +82,7 @@ function ProfileFormCard({ currentUser, updateUser, onFeedback }) {
             <input
               type="text"
               value={formData.phone}
-              onChange={(e) =>
-                setFormData((p) => ({ ...p, phone: e.target.value }))
-              }
+              onChange={(e) => updateField('phone', e.target.value)}
               className="w-full rounded-xl bg-[#F7FBF3] border border-[#224F10]/15 px-3.5 py-2.5 text-xs text-[#0D0D0D] focus:outline-none focus:ring-2 focus:ring-[#224F10]/25"
             />
           </div>
@@ -103,9 +94,7 @@ function ProfileFormCard({ currentUser, updateUser, onFeedback }) {
             <input
               type="text"
               value={formData.city}
-              onChange={(e) =>
-                setFormData((p) => ({ ...p, city: e.target.value }))
-              }
+              onChange={(e) => updateField('city', e.target.value)}
               className="w-full rounded-xl bg-[#F7FBF3] border border-[#224F10]/15 px-3.5 py-2.5 text-xs text-[#0D0D0D] focus:outline-none focus:ring-2 focus:ring-[#224F10]/25"
             />
           </div>
@@ -129,16 +118,21 @@ export function DashboardProfileTab({ currentUser, auctions, bids }) {
   const updateUser = useAuthStore((s) => s.updateUser);
   const [feedback, setFeedback] = useState(null);
 
-  const myAuctionsCount = auctions.filter(
-    (a) => Number(a.sellerId) === Number(currentUser?.id)
+  const myAuctionsCount = auctions.filter((a) =>
+    sameId(a.sellerId, currentUser?.id)
   ).length;
-  const myBidsCount = bids.filter(
-    (b) => Number(b.bidderId) === Number(currentUser?.id)
+  const myBidsCount = bids.filter((b) =>
+    sameId(b.bidderId, currentUser?.id)
   ).length;
+
+  const roleLabel =
+    currentUser?.role === 'admin' ? 'Administrador' : 'Socio';
+
+  const profileCardKey = `${currentUser?.id || 'anon'}-${currentUser?.name || ''}-${currentUser?.email || ''}-${currentUser?.phone || ''}-${currentUser?.city || ''}`;
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Encabezado */}
       <div className="pt-1">
         <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#0D0D0D]">
           Mi Perfil
@@ -149,34 +143,10 @@ export function DashboardProfileTab({ currentUser, auctions, bids }) {
         </p>
       </div>
 
-      {/* Feedback */}
-      {feedback && (
-        <div
-          className={`flex items-center justify-between gap-3 rounded-2xl px-4 py-3 text-xs font-medium border ${
-            feedback.type === 'error'
-              ? 'bg-red-50 border-red-200 text-red-800'
-              : 'bg-[#EAFFD0] border-[#224F10]/20 text-[#224F10]'
-          }`}
-        >
-          <div className="flex items-center gap-2">
-            {feedback.type === 'error' ? (
-              <AlertCircle className="w-4 h-4 shrink-0" />
-            ) : (
-              <CheckCircle2 className="w-4 h-4 shrink-0" />
-            )}
-            <span>{feedback.text}</span>
-          </div>
-          <button
-            onClick={() => setFeedback(null)}
-            className="p-1 hover:opacity-70 cursor-pointer"
-          >
-            <X className="w-3.5 h-3.5" />
-          </button>
-        </div>
-      )}
+      <DashboardFeedback feedback={feedback} onClose={() => setFeedback(null)} />
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-        {/* Left Identity Summary Bento Card */}
+        {/* Tarjeta izquierda con resumen de identidad */}
         <div className="lg:col-span-4 rounded-2xl bg-gradient-to-br from-[#224F10] to-[#122B08] text-[#EAFFD0] p-6 flex flex-col justify-between gap-6 shadow-sm">
           <div className="space-y-4">
             <div className="flex items-center gap-3.5">
@@ -189,7 +159,7 @@ export function DashboardProfileTab({ currentUser, auctions, bids }) {
                 </h2>
                 <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#B0E454]/20 text-[#B0E454] text-[10px] font-bold uppercase mt-1">
                   <ShieldCheck className="w-3 h-3" />
-                  {currentUser?.role === 'admin' ? 'Administrador' : 'Socio'}
+                  {roleLabel}
                 </span>
               </div>
             </div>
@@ -226,9 +196,9 @@ export function DashboardProfileTab({ currentUser, auctions, bids }) {
           </div>
         </div>
 
-        {/* Right Edit Profile Card */}
+        {/* Formulario derecho */}
         <ProfileFormCard
-          key={`${currentUser?.id || 'anon'}-${currentUser?.name || ''}-${currentUser?.email || ''}-${currentUser?.phone || ''}-${currentUser?.city || ''}`}
+          key={profileCardKey}
           currentUser={currentUser}
           updateUser={updateUser}
           onFeedback={setFeedback}
@@ -237,4 +207,3 @@ export function DashboardProfileTab({ currentUser, auctions, bids }) {
     </div>
   );
 }
-

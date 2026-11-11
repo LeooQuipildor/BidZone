@@ -4,6 +4,7 @@ import { useAuthStore } from '../../auth/states/authStore';
 import { Card, Button } from '../design-system/ui';
 import { ShieldAlert } from 'lucide-react';
 
+// Protege rutas privadas: si no hay sesión, manda al login; si exige un rol, lo valida
 export function ProtectedRoute({ children, allowedRoles = [] }) {
   const currentUser = useAuthStore((s) => s.currentUser);
   const location = useLocation();
@@ -12,10 +13,10 @@ export function ProtectedRoute({ children, allowedRoles = [] }) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  if (
-    allowedRoles.length > 0 &&
-    !allowedRoles.includes(currentUser.role)
-  ) {
+  const requiresSpecificRole = allowedRoles.length > 0;
+  const userHasPermission = allowedRoles.includes(currentUser.role);
+
+  if (requiresSpecificRole && !userHasPermission) {
     return (
       <div className="max-w-lg mx-auto my-16 px-4">
         <Card className="text-center p-8 rounded-3xl">

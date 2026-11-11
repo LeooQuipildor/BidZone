@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuthStore } from '../states/authStore';
+import { findById, sameId } from '../../core/utils/formatters';
 import {
   Card,
   Input,
@@ -9,9 +10,11 @@ import {
   PageHeader,
   Alert,
   Spinner,
+  ErrorStateCard,
 } from '../../core/design-system/ui';
 import { Save, ArrowLeft } from 'lucide-react';
 
+// Subcomponente con el formulario una vez que ya tenemos los datos del usuario
 function UserEditForm({ targetUser, isAdmin, updateUser, navigate }) {
   const [formData, setFormData] = useState({
     name: targetUser.name || '',
@@ -23,11 +26,13 @@ function UserEditForm({ targetUser, isAdmin, updateUser, navigate }) {
   });
   const [errorMsg, setErrorMsg] = useState('');
 
-  const handleChange = (e) => {
-    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-  };
+  function handleChange(e) {
+    const fieldName = e.target.name;
+    const fieldValue = e.target.value;
+    setFormData((prev) => ({ ...prev, [fieldName]: fieldValue }));
+  }
 
-  const handleSubmit = async (e) => {
+  async function handleSubmit(e) {
     e.preventDefault();
     setErrorMsg('');
 
@@ -53,7 +58,7 @@ function UserEditForm({ targetUser, isAdmin, updateUser, navigate }) {
     } catch (err) {
       setErrorMsg(err.message);
     }
-  };
+  }
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
@@ -176,7 +181,7 @@ export function UserEditView() {
     fetchUsers();
   }, [fetchUsers]);
 
-  const targetUser = users.find((u) => Number(u.id) === Number(id));
+  const targetUser = findById(users, id);
   const isAdmin = currentUser?.role === 'admin';
 
   if (usersLoading && !targetUser) {
@@ -185,35 +190,24 @@ export function UserEditView() {
 
   if (!targetUser) {
     return (
-      <div className="max-w-xl mx-auto my-12">
-        <Alert type="error" title="Usuario no encontrado">
-          El registro solicitado no existe.
-        </Alert>
-        <Button
-          variant="secondary"
-          className="mt-4"
-          onClick={() => navigate('/users')}
-        >
-          Volver a Usuarios
-        </Button>
-      </div>
+      <ErrorStateCard
+        title="Usuario no encontrado"
+        message="El registro solicitado no existe."
+        buttonLabel="Volver a Usuarios"
+        onBack={() => navigate('/users')}
+      />
     );
   }
 
-  if (!isAdmin && Number(currentUser?.id) !== Number(targetUser.id)) {
+  const isOwnProfile = sameId(currentUser?.id, targetUser.id);
+  if (!isAdmin && !isOwnProfile) {
     return (
-      <div className="max-w-xl mx-auto my-12">
-        <Alert type="error" title="Sin permisos de edición">
-          Solo puedes editar tu propio perfil o contar con permisos de administrador.
-        </Alert>
-        <Button
-          variant="secondary"
-          className="mt-4"
-          onClick={() => navigate('/users')}
-        >
-          Volver a Usuarios
-        </Button>
-      </div>
+      <ErrorStateCard
+        title="Sin permisos de edición"
+        message="Solo puedes editar tu propio perfil o contar con permisos de administrador."
+        buttonLabel="Volver a Usuarios"
+        onBack={() => navigate('/users')}
+      />
     );
   }
 
@@ -227,4 +221,3 @@ export function UserEditView() {
     />
   );
 }
-

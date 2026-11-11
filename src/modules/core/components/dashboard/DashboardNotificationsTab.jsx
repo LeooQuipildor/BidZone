@@ -1,14 +1,12 @@
 import React, { useState } from 'react';
 import { useNotificationStore } from '../../../notifications/states/notificationStore';
-import { formatDateTime } from '../../utils/formatters';
 import {
-  Bell,
-  CheckCheck,
-  Trash2,
-  Check,
-  AlertCircle,
-  X,
-} from 'lucide-react';
+  formatDateTime,
+  sameId,
+  matchesSearch,
+} from '../../utils/formatters';
+import { DashboardFeedback, DashboardStatCard } from './DashboardShared';
+import { Bell, CheckCheck, Trash2, Check } from 'lucide-react';
 
 export function DashboardNotificationsTab({
   currentUser,
@@ -21,51 +19,50 @@ export function DashboardNotificationsTab({
 
   const [errorMsg, setErrorMsg] = useState('');
 
-  const baseNotifications = notifications.filter(
-    (n) => Number(n.userId) === Number(currentUser?.id)
+  // Solo mostramos las notificaciones que pertenecen al usuario actual
+  const myNotifications = notifications.filter((n) =>
+    sameId(n.userId, currentUser?.id)
   );
 
-  const normalizedQuery = searchQuery.trim().toLowerCase();
-  const filtered = baseNotifications.filter(
-    (n) =>
-      !normalizedQuery ||
-      (n.title || '').toLowerCase().includes(normalizedQuery) ||
-      (n.message || '').toLowerCase().includes(normalizedQuery)
+  const filtered = myNotifications.filter((n) =>
+    matchesSearch([n.title, n.message], searchQuery)
   );
 
-  const unreadCount = baseNotifications.filter((n) => !n.read).length;
-  const readCount = baseNotifications.filter((n) => n.read).length;
+  const unreadCount = myNotifications.filter((n) => !n.read).length;
+  const readCount = myNotifications.filter((n) => n.read).length;
 
-  const handleMarkAll = async () => {
+  async function handleMarkAll() {
     setErrorMsg('');
     try {
       await markAllAsRead();
     } catch (err) {
       setErrorMsg(err.message);
     }
-  };
+  }
 
-  const handleMarkOne = async (id) => {
+  async function handleMarkOne(id) {
     setErrorMsg('');
     try {
       await markAsRead(id);
     } catch (err) {
       setErrorMsg(err.message);
     }
-  };
+  }
 
-  const handleDelete = async (id) => {
+  async function handleDelete(id) {
     setErrorMsg('');
     try {
       await deleteNotification(id);
     } catch (err) {
       setErrorMsg(err.message);
     }
-  };
+  }
+
+  const errorFeedback = errorMsg ? { type: 'error', text: errorMsg } : null;
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Encabezado */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pt-1">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#0D0D0D]">
@@ -79,6 +76,7 @@ export function DashboardNotificationsTab({
 
         {currentUser && unreadCount > 0 && (
           <button
+            type="button"
             onClick={handleMarkAll}
             className="inline-flex items-center gap-2 rounded-full bg-[#224F10] hover:bg-[#0D0D0D] text-[#EAFFD0] px-4 py-2 text-xs font-semibold transition-colors cursor-pointer shadow-xs self-start md:self-auto"
           >
@@ -88,131 +86,102 @@ export function DashboardNotificationsTab({
         )}
       </div>
 
-      {errorMsg && (
-        <div className="flex items-center justify-between gap-3 rounded-2xl px-4 py-3 text-xs font-medium border bg-red-50 border-red-200 text-red-800">
-          <div className="flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 shrink-0" />
-            <span>{errorMsg}</span>
-          </div>
-          <button
-            onClick={() => setErrorMsg('')}
-            className="p-1 hover:opacity-70 cursor-pointer"
-          >
-            <X className="w-3.5 h-3.5" />
-          </button>
-        </div>
-      )}
+      <DashboardFeedback
+        feedback={errorFeedback}
+        onClose={() => setErrorMsg('')}
+      />
 
-      {/* KPI Strip */}
+      {/* Tarjetas de métricas */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="rounded-2xl bg-gradient-to-br from-[#224F10] to-[#122B08] text-[#EAFFD0] p-5 flex flex-col justify-between shadow-sm">
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-xs font-medium text-[#EAFFD0]/90">
-              Total Alertas
-            </span>
-            <span className="w-7 h-7 rounded-full bg-[#EAFFD0]/15 text-[#B0E454] flex items-center justify-center">
-              <Bell className="w-3.5 h-3.5" />
-            </span>
-          </div>
-          <p className="text-4xl font-bold tracking-tight my-2">
-            {baseNotifications.length}
-          </p>
-          <span className="text-[11px] text-[#EAFFD0]/75">
-            Bandeja del sistema
-          </span>
-        </div>
-
-        <div className="rounded-2xl bg-white border border-[#224F10]/10 p-5 flex flex-col justify-between shadow-2xs">
-          <span className="text-xs font-semibold text-[#0D0D0D]/75">
-            Pendientes sin leer
-          </span>
-          <p className="text-4xl font-bold tracking-tight text-[#224F10] my-2">
-            {unreadCount}
-          </p>
-          <span className="text-[11px] text-[#0D0D0D]/55">
-            Requieren atención
-          </span>
-        </div>
-
-        <div className="rounded-2xl bg-white border border-[#224F10]/10 p-5 flex flex-col justify-between shadow-2xs">
-          <span className="text-xs font-semibold text-[#0D0D0D]/75">
-            Leídas
-          </span>
-          <p className="text-4xl font-bold tracking-tight text-[#0D0D0D] my-2">
-            {readCount}
-          </p>
-          <span className="text-[11px] text-[#0D0D0D]/55">
-            Historial archivado
-          </span>
-        </div>
+        <DashboardStatCard
+          highlight
+          title="Total Alertas"
+          icon={<Bell className="w-3.5 h-3.5" />}
+          value={myNotifications.length}
+          subtitle="Bandeja del sistema"
+        />
+        <DashboardStatCard
+          title="Pendientes sin leer"
+          value={unreadCount}
+          valueClassName="text-4xl text-[#224F10]"
+          subtitle="Requieren atención"
+        />
+        <DashboardStatCard
+          title="Leídas"
+          value={readCount}
+          subtitle="Historial archivado"
+        />
       </div>
 
-      {/* Feed */}
+      {/* Lista de alertas */}
       {filtered.length === 0 ? (
         <div className="rounded-2xl bg-white border border-[#224F10]/10 p-10 text-center text-xs text-[#0D0D0D]/60">
           No tienes notificaciones para mostrar.
         </div>
       ) : (
         <div className="rounded-2xl bg-white border border-[#224F10]/10 divide-y divide-[#224F10]/8 shadow-2xs overflow-hidden">
-          {filtered.map((item) => (
-            <div
-              key={item.id}
-              className={`p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-colors ${
-                !item.read ? 'bg-[#F7FBF3]/80' : 'bg-white'
-              }`}
-            >
-              <div className="flex items-start gap-3.5 min-w-0">
-                <span
-                  className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
-                    !item.read
-                      ? 'bg-[#224F10] text-[#B0E454]'
-                      : 'bg-[#F1F8E9] text-[#224F10]/60'
-                  }`}
-                >
-                  <Bell className="w-4 h-4" />
-                </span>
+          {filtered.map((item) => {
+            const isUnread = !item.read;
+            const rowStyle = isUnread ? 'bg-[#F7FBF3]/80' : 'bg-white';
+            const iconStyle = isUnread
+              ? 'bg-[#224F10] text-[#B0E454]'
+              : 'bg-[#F1F8E9] text-[#224F10]/60';
 
-                <div className="space-y-1 min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h3 className="text-sm font-bold text-[#0D0D0D]">
-                      {item.title}
-                    </h3>
-                    {!item.read && (
-                      <span className="px-2 py-0.5 rounded-full bg-[#B0E454] text-[#0D0D0D] text-[10px] font-bold">
-                        Nueva
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-xs text-[#0D0D0D]/75">{item.message}</p>
-                  <span className="text-[11px] text-[#0D0D0D]/45 block">
-                    {formatDateTime(item.createdAt)}
+            return (
+              <div
+                key={item.id}
+                className={`p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-colors ${rowStyle}`}
+              >
+                <div className="flex items-start gap-3.5 min-w-0">
+                  <span
+                    className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${iconStyle}`}
+                  >
+                    <Bell className="w-4 h-4" />
                   </span>
+
+                  <div className="space-y-1 min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h3 className="text-sm font-bold text-[#0D0D0D]">
+                        {item.title}
+                      </h3>
+                      {isUnread && (
+                        <span className="px-2 py-0.5 rounded-full bg-[#B0E454] text-[#0D0D0D] text-[10px] font-bold">
+                          Nueva
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-[#0D0D0D]/75">{item.message}</p>
+                    <span className="text-[11px] text-[#0D0D0D]/45 block">
+                      {formatDateTime(item.createdAt)}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-end gap-2 shrink-0">
+                  {isUnread && (
+                    <button
+                      type="button"
+                      onClick={() => handleMarkOne(item.id)}
+                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full border border-[#224F10]/20 hover:bg-[#EAFFD0] text-[#224F10] text-[11px] font-semibold transition-colors cursor-pointer"
+                    >
+                      <Check className="w-3.5 h-3.5" />
+                      Marcar leída
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => handleDelete(item.id)}
+                    title="Eliminar notificación"
+                    className="w-8 h-8 rounded-full border border-red-200 hover:bg-red-50 text-red-700 flex items-center justify-center transition-colors cursor-pointer"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
                 </div>
               </div>
-
-              <div className="flex items-center justify-end gap-2 shrink-0">
-                {!item.read && (
-                  <button
-                    onClick={() => handleMarkOne(item.id)}
-                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full border border-[#224F10]/20 hover:bg-[#EAFFD0] text-[#224F10] text-[11px] font-semibold transition-colors cursor-pointer"
-                  >
-                    <Check className="w-3.5 h-3.5" />
-                    Marcar leída
-                  </button>
-                )}
-                <button
-                  onClick={() => handleDelete(item.id)}
-                  title="Eliminar notificación"
-                  className="w-8 h-8 rounded-full border border-red-200 hover:bg-red-50 text-red-700 flex items-center justify-center transition-colors cursor-pointer"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
   );
 }
-

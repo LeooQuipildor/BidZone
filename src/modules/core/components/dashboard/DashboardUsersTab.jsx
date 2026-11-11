@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useAuthStore } from '../../../auth/states/authStore';
+import { sameId, matchesSearch } from '../../utils/formatters';
 import { getInitials } from './dashboardHelpers';
+import { DashboardFeedback, DashboardStatCard } from './DashboardShared';
 import {
   UserPlus,
   X,
@@ -11,10 +13,45 @@ import {
   MapPin,
   Star,
   Shield,
-  CheckCircle2,
-  AlertCircle,
   Save,
 } from 'lucide-react';
+
+const AVATAR_COLORS = [
+  'bg-[#EAFFD0] text-[#224F10]',
+  'bg-[#B0E454] text-[#0D0D0D]',
+  'bg-[#224F10] text-[#EAFFD0]',
+  'bg-[#0D0D0D] text-[#B0E454]',
+];
+
+const EMPTY_USER_FORM = {
+  name: '',
+  email: '',
+  password: '',
+  phone: '',
+  city: '',
+  role: 'user',
+  status: 'active',
+};
+
+// Traduce el estado técnico de la cuenta a un texto claro y color de etiqueta
+function getAccountStatusInfo(status) {
+  if (status === 'active') {
+    return {
+      label: 'Activa',
+      className: 'bg-[#F7FBF3] text-[#224F10] border-[#224F10]/15',
+    };
+  }
+  if (status === 'suspended') {
+    return {
+      label: 'Suspendida',
+      className: 'bg-red-50 text-red-700 border-red-200',
+    };
+  }
+  return {
+    label: 'Cerrada',
+    className: 'bg-red-50 text-red-700 border-red-200',
+  };
+}
 
 export function DashboardUsersTab({ currentUser, users, searchQuery }) {
   const createUser = useAuthStore((s) => s.createUser);
@@ -29,66 +66,53 @@ export function DashboardUsersTab({ currentUser, users, searchQuery }) {
 
   const [formOpen, setFormOpen] = useState(false);
   const [editingUserId, setEditingUserId] = useState(null);
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    password: '',
-    phone: '',
-    city: '',
-    role: 'user',
-    status: 'active',
-  });
+  const [formData, setFormData] = useState(EMPTY_USER_FORM);
 
+  // Contadores de resumen para el panel
   const activeUsersCount = users.filter((u) => u.status === 'active').length;
   const adminUsersCount = users.filter((u) => u.role === 'admin').length;
   const sanctionedUsersCount = users.filter(
     (u) => u.status === 'suspended' || u.status === 'closed'
   ).length;
 
-  const normalizedQuery = searchQuery.trim().toLowerCase();
-
-  const filteredUsers = users.filter((u) => {
-    const matchesSearch =
-      !normalizedQuery ||
-      (u.name || '').toLowerCase().includes(normalizedQuery) ||
-      (u.email || '').toLowerCase().includes(normalizedQuery) ||
-      (u.city || '').toLowerCase().includes(normalizedQuery);
-    const matchesRole = roleFilter === 'todos' || u.role === roleFilter;
-    const matchesStatus = statusFilter === 'todos' || u.status === statusFilter;
-    return matchesSearch && matchesRole && matchesStatus;
+  const filteredUsers = users.filter((user) => {
+    const matchText = matchesSearch(
+      [user.name, user.email, user.city],
+      searchQuery
+    );
+    const matchRole = roleFilter === 'todos' || user.role === roleFilter;
+    const matchStatus =
+      statusFilter === 'todos' || user.status === statusFilter;
+    return matchText && matchRole && matchStatus;
   });
 
-  const openCreateForm = () => {
+  function updateField(field, value) {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  }
+
+  function openCreateForm() {
     setEditingUserId(null);
+    setFormData(EMPTY_USER_FORM);
+    setFormOpen(true);
+    setFeedback(null);
+  }
+
+  function openEditForm(user) {
+    setEditingUserId(user.id);
     setFormData({
-      name: '',
-      email: '',
+      name: user.name || '',
+      email: user.email || '',
       password: '',
-      phone: '',
-      city: '',
-      role: 'user',
-      status: 'active',
+      phone: user.phone || '',
+      city: user.city || '',
+      role: user.role || 'user',
+      status: user.status || 'active',
     });
     setFormOpen(true);
     setFeedback(null);
-  };
+  }
 
-  const openEditForm = (u) => {
-    setEditingUserId(u.id);
-    setFormData({
-      name: u.name || '',
-      email: u.email || '',
-      password: '',
-      phone: u.phone || '',
-      city: u.city || '',
-      role: u.role || 'user',
-      status: u.status || 'active',
-    });
-    setFormOpen(true);
-    setFeedback(null);
-  };
-
-  const handleSubmit = async (e) => {
+  async function handleSubmit(e) {
     e.preventDefault();
     setFeedback(null);
 
@@ -136,21 +160,23 @@ export function DashboardUsersTab({ currentUser, users, searchQuery }) {
     } catch (err) {
       setFeedback({ type: 'error', text: err.message });
     }
-  };
+  }
 
-  const handleDelete = async (user) => {
-    if (Number(user.id) === Number(currentUser?.id)) {
+  async function handleDelete(user) {
+    if (sameId(user.id, currentUser?.id)) {
       setFeedback({
         type: 'error',
         text: 'No puedes eliminar tu propia sesión activa.',
       });
       return;
     }
+
     const label = user.email ? `"${user.name}" (${user.email})` : `"${user.name}"`;
     const confirmed = window.confirm(
       `¿Estás seguro de eliminar al usuario ${label}?`
     );
     if (!confirmed) return;
+
     try {
       await deleteUser(user.id);
       setFeedback({
@@ -160,18 +186,11 @@ export function DashboardUsersTab({ currentUser, users, searchQuery }) {
     } catch (err) {
       setFeedback({ type: 'error', text: err.message });
     }
-  };
-
-  const avatarColors = [
-    'bg-[#EAFFD0] text-[#224F10]',
-    'bg-[#B0E454] text-[#0D0D0D]',
-    'bg-[#224F10] text-[#EAFFD0]',
-    'bg-[#0D0D0D] text-[#B0E454]',
-  ];
+  }
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Encabezado */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pt-1">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#0D0D0D]">
@@ -185,6 +204,7 @@ export function DashboardUsersTab({ currentUser, users, searchQuery }) {
 
         {isAdmin && (
           <button
+            type="button"
             onClick={openCreateForm}
             className="inline-flex items-center gap-2 rounded-full bg-[#224F10] hover:bg-[#0D0D0D] text-[#EAFFD0] px-4 py-2 text-xs font-semibold transition-colors cursor-pointer shadow-xs self-start md:self-auto"
           >
@@ -194,89 +214,37 @@ export function DashboardUsersTab({ currentUser, users, searchQuery }) {
         )}
       </div>
 
-      {/* 4 Donezo KPI Cards */}
+      {/* Tarjetas de métricas */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-        <div className="rounded-2xl bg-gradient-to-br from-[#224F10] to-[#122B08] text-[#EAFFD0] p-5 flex flex-col justify-between shadow-sm">
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-xs font-medium text-[#EAFFD0]/90">
-              Total Comunidad
-            </span>
-            <span className="w-7 h-7 rounded-full bg-[#EAFFD0]/15 text-[#B0E454] flex items-center justify-center">
-              <UsersIcon className="w-3.5 h-3.5" />
-            </span>
-          </div>
-          <p className="text-4xl font-bold tracking-tight my-2">
-            {users.length}
-          </p>
-          <span className="text-[11px] text-[#EAFFD0]/75">
-            Socios verificados
-          </span>
-        </div>
-
-        <div className="rounded-2xl bg-white border border-[#224F10]/10 p-5 flex flex-col justify-between shadow-2xs">
-          <span className="text-xs font-semibold text-[#0D0D0D]/75">
-            Cuentas Activas
-          </span>
-          <p className="text-4xl font-bold tracking-tight text-[#0D0D0D] my-2">
-            {activeUsersCount}
-          </p>
-          <span className="text-[11px] text-[#224F10] font-semibold">
-            Habilitadas para pujar
-          </span>
-        </div>
-
-        <div className="rounded-2xl bg-white border border-[#224F10]/10 p-5 flex flex-col justify-between shadow-2xs">
-          <span className="text-xs font-semibold text-[#0D0D0D]/75">
-            Moderadores
-          </span>
-          <p className="text-4xl font-bold tracking-tight text-[#0D0D0D] my-2">
-            {adminUsersCount}
-          </p>
-          <span className="text-[11px] text-[#0D0D0D]/55">
-            Rol Administrador
-          </span>
-        </div>
-
-        <div className="rounded-2xl bg-white border border-[#224F10]/10 p-5 flex flex-col justify-between shadow-2xs">
-          <span className="text-xs font-semibold text-[#0D0D0D]/75">
-            Sancionados
-          </span>
-          <p className="text-4xl font-bold tracking-tight text-[#0D0D0D] my-2">
-            {sanctionedUsersCount}
-          </p>
-          <span className="text-[11px] text-red-700 font-semibold">
-            Suspensión o cierre RN06
-          </span>
-        </div>
+        <DashboardStatCard
+          highlight
+          title="Total Comunidad"
+          icon={<UsersIcon className="w-3.5 h-3.5" />}
+          value={users.length}
+          subtitle="Socios verificados"
+        />
+        <DashboardStatCard
+          title="Cuentas Activas"
+          value={activeUsersCount}
+          subtitle="Habilitadas para pujar"
+          subtitleClassName="text-[#224F10] font-semibold"
+        />
+        <DashboardStatCard
+          title="Moderadores"
+          value={adminUsersCount}
+          subtitle="Rol Administrador"
+        />
+        <DashboardStatCard
+          title="Sancionados"
+          value={sanctionedUsersCount}
+          subtitle="Suspensión o cierre RN06"
+          subtitleClassName="text-red-700 font-semibold"
+        />
       </div>
 
-      {/* Inline Feedback */}
-      {feedback && (
-        <div
-          className={`flex items-center justify-between gap-3 rounded-2xl px-4 py-3 text-xs font-medium border ${
-            feedback.type === 'error'
-              ? 'bg-red-50 border-red-200 text-red-800'
-              : 'bg-[#EAFFD0] border-[#224F10]/20 text-[#224F10]'
-          }`}
-        >
-          <div className="flex items-center gap-2">
-            {feedback.type === 'error' ? (
-              <AlertCircle className="w-4 h-4 shrink-0" />
-            ) : (
-              <CheckCircle2 className="w-4 h-4 shrink-0" />
-            )}
-            <span>{feedback.text}</span>
-          </div>
-          <button
-            onClick={() => setFeedback(null)}
-            className="p-1 hover:opacity-70 cursor-pointer"
-          >
-            <X className="w-3.5 h-3.5" />
-          </button>
-        </div>
-      )}
+      <DashboardFeedback feedback={feedback} onClose={() => setFeedback(null)} />
 
-      {/* Inline Create / Edit User Panel */}
+      {/* Formulario integrado para crear o editar un usuario */}
       {formOpen && (
         <div className="rounded-2xl bg-white border border-[#224F10]/20 p-5 sm:p-6 shadow-sm space-y-4">
           <div className="flex items-center justify-between gap-2 border-b border-[#224F10]/10 pb-3">
@@ -286,6 +254,7 @@ export function DashboardUsersTab({ currentUser, users, searchQuery }) {
                 : 'Alta de Nuevo Usuario'}
             </h2>
             <button
+              type="button"
               onClick={() => {
                 setFormOpen(false);
                 setEditingUserId(null);
@@ -305,9 +274,7 @@ export function DashboardUsersTab({ currentUser, users, searchQuery }) {
                 <input
                   type="text"
                   value={formData.name}
-                  onChange={(e) =>
-                    setFormData((p) => ({ ...p, name: e.target.value }))
-                  }
+                  onChange={(e) => updateField('name', e.target.value)}
                   className="w-full rounded-xl bg-[#F7FBF3] border border-[#224F10]/15 px-3.5 py-2 text-xs text-[#0D0D0D] focus:outline-none"
                 />
               </div>
@@ -319,9 +286,7 @@ export function DashboardUsersTab({ currentUser, users, searchQuery }) {
                 <input
                   type="email"
                   value={formData.email}
-                  onChange={(e) =>
-                    setFormData((p) => ({ ...p, email: e.target.value }))
-                  }
+                  onChange={(e) => updateField('email', e.target.value)}
                   className="w-full rounded-xl bg-[#F7FBF3] border border-[#224F10]/15 px-3.5 py-2 text-xs text-[#0D0D0D] focus:outline-none"
                 />
               </div>
@@ -336,9 +301,7 @@ export function DashboardUsersTab({ currentUser, users, searchQuery }) {
                   <input
                     type="password"
                     value={formData.password}
-                    onChange={(e) =>
-                      setFormData((p) => ({ ...p, password: e.target.value }))
-                    }
+                    onChange={(e) => updateField('password', e.target.value)}
                     className="w-full rounded-xl bg-[#F7FBF3] border border-[#224F10]/15 px-3.5 py-2 text-xs text-[#0D0D0D] focus:outline-none"
                   />
                 </div>
@@ -351,9 +314,7 @@ export function DashboardUsersTab({ currentUser, users, searchQuery }) {
                 <input
                   type="text"
                   value={formData.phone}
-                  onChange={(e) =>
-                    setFormData((p) => ({ ...p, phone: e.target.value }))
-                  }
+                  onChange={(e) => updateField('phone', e.target.value)}
                   className="w-full rounded-xl bg-[#F7FBF3] border border-[#224F10]/15 px-3.5 py-2 text-xs text-[#0D0D0D] focus:outline-none"
                 />
               </div>
@@ -365,9 +326,7 @@ export function DashboardUsersTab({ currentUser, users, searchQuery }) {
                 <input
                   type="text"
                   value={formData.city}
-                  onChange={(e) =>
-                    setFormData((p) => ({ ...p, city: e.target.value }))
-                  }
+                  onChange={(e) => updateField('city', e.target.value)}
                   className="w-full rounded-xl bg-[#F7FBF3] border border-[#224F10]/15 px-3.5 py-2 text-xs text-[#0D0D0D] focus:outline-none"
                 />
               </div>
@@ -381,9 +340,7 @@ export function DashboardUsersTab({ currentUser, users, searchQuery }) {
                   </label>
                   <select
                     value={formData.role}
-                    onChange={(e) =>
-                      setFormData((p) => ({ ...p, role: e.target.value }))
-                    }
+                    onChange={(e) => updateField('role', e.target.value)}
                     className="w-full rounded-xl bg-[#F7FBF3] border border-[#224F10]/15 px-3 py-2 text-xs text-[#0D0D0D] focus:outline-none"
                   >
                     <option value="user">Usuario estándar</option>
@@ -397,9 +354,7 @@ export function DashboardUsersTab({ currentUser, users, searchQuery }) {
                   </label>
                   <select
                     value={formData.status}
-                    onChange={(e) =>
-                      setFormData((p) => ({ ...p, status: e.target.value }))
-                    }
+                    onChange={(e) => updateField('status', e.target.value)}
                     className="w-full rounded-xl bg-[#F7FBF3] border border-[#224F10]/15 px-3 py-2 text-xs text-[#0D0D0D] focus:outline-none"
                   >
                     <option value="active">Activa (Habilitada)</option>
@@ -430,7 +385,7 @@ export function DashboardUsersTab({ currentUser, users, searchQuery }) {
         </div>
       )}
 
-      {/* Filter Bar */}
+      {/* Barra de filtros */}
       <div className="rounded-2xl bg-white border border-[#224F10]/10 p-4 grid grid-cols-1 sm:grid-cols-2 gap-3 shadow-2xs">
         <div className="flex items-center gap-2">
           <span className="text-[11px] font-semibold text-[#0D0D0D]/55 shrink-0">
@@ -464,66 +419,59 @@ export function DashboardUsersTab({ currentUser, users, searchQuery }) {
         </div>
       </div>
 
-      {/* Users Cards Grid */}
+      {/* Grilla de usuarios */}
       {filteredUsers.length === 0 ? (
         <div className="rounded-2xl bg-white border border-[#224F10]/10 p-10 text-center text-xs text-[#0D0D0D]/60">
           No hay usuarios que coincidan con el filtro aplicado.
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {filteredUsers.map((u, idx) => {
-            const canEdit = isAdmin || Number(currentUser?.id) === Number(u.id);
-            const isSanctioned =
-              u.status === 'suspended' || u.status === 'closed';
+          {filteredUsers.map((user, idx) => {
+            const canEdit = isAdmin || sameId(currentUser?.id, user.id);
+            const avatarColor = AVATAR_COLORS[idx % AVATAR_COLORS.length];
+            const roleBadgeStyle =
+              user.role === 'admin'
+                ? 'bg-[#B0E454] text-[#0D0D0D]'
+                : 'bg-[#EAFFD0] text-[#224F10]';
+            const statusInfo = getAccountStatusInfo(user.status);
+            const phoneDisplay =
+              user.phone ||
+              (user.contactLocked ? 'Privado (RN05)' : 'Sin teléfono');
 
             return (
               <div
-                key={u.id}
+                key={user.id}
                 className="rounded-2xl bg-white border border-[#224F10]/10 p-5 flex flex-col justify-between gap-4 shadow-2xs"
               >
                 <div className="space-y-3">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-2.5 min-w-0">
                       <span
-                        className={`w-10 h-10 rounded-full font-bold text-xs flex items-center justify-center shrink-0 ${
-                          avatarColors[idx % avatarColors.length]
-                        }`}
+                        className={`w-10 h-10 rounded-full font-bold text-xs flex items-center justify-center shrink-0 ${avatarColor}`}
                       >
-                        {getInitials(u.name)}
+                        {getInitials(user.name)}
                       </span>
                       <div className="min-w-0">
                         <h3 className="text-sm font-bold text-[#0D0D0D] truncate">
-                          {u.name}
+                          {user.name}
                         </h3>
                         <p className="text-[11px] text-[#0D0D0D]/55 truncate">
-                          {u.email || 'Privado hasta el cierre (RN05)'}
+                          {user.email || 'Privado hasta el cierre (RN05)'}
                         </p>
                       </div>
                     </div>
 
                     <div className="flex flex-col items-end gap-1 shrink-0">
                       <span
-                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                          u.role === 'admin'
-                            ? 'bg-[#B0E454] text-[#0D0D0D]'
-                            : 'bg-[#EAFFD0] text-[#224F10]'
-                        }`}
+                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${roleBadgeStyle}`}
                       >
                         <Shield className="w-2.5 h-2.5" />
-                        {u.role.toUpperCase()}
+                        {user.role.toUpperCase()}
                       </span>
                       <span
-                        className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border ${
-                          isSanctioned
-                            ? 'bg-red-50 text-red-700 border-red-200'
-                            : 'bg-[#F7FBF3] text-[#224F10] border-[#224F10]/15'
-                        }`}
+                        className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border ${statusInfo.className}`}
                       >
-                        {u.status === 'active'
-                          ? 'Activa'
-                          : u.status === 'suspended'
-                            ? 'Suspendida'
-                            : 'Cerrada'}
+                        {statusInfo.label}
                       </span>
                     </div>
                   </div>
@@ -531,18 +479,17 @@ export function DashboardUsersTab({ currentUser, users, searchQuery }) {
                   <div className="bg-[#F7FBF3] rounded-xl border border-[#224F10]/10 p-3.5 space-y-1.5 text-xs text-[#0D0D0D]/75">
                     <p className="flex items-center gap-2">
                       <Phone className="w-3.5 h-3.5 text-[#224F10] shrink-0" />
-                      <span className="truncate">
-                        {u.phone ||
-                          (u.contactLocked ? 'Privado (RN05)' : 'Sin teléfono')}
-                      </span>
+                      <span className="truncate">{phoneDisplay}</span>
                     </p>
                     <p className="flex items-center gap-2">
                       <MapPin className="w-3.5 h-3.5 text-[#224F10] shrink-0" />
-                      <span className="truncate">{u.city || 'Sin ciudad'}</span>
+                      <span className="truncate">
+                        {user.city || 'Sin ciudad'}
+                      </span>
                     </p>
                     <p className="flex items-center gap-2 font-semibold text-[#0D0D0D]">
                       <Star className="w-3.5 h-3.5 text-[#224F10] fill-[#B0E454] shrink-0" />
-                      <span>Reputación: {u.reputation || '5.0'} / 5.0</span>
+                      <span>Reputación: {user.reputation || '5.0'} / 5.0</span>
                     </p>
                   </div>
                 </div>
@@ -550,16 +497,18 @@ export function DashboardUsersTab({ currentUser, users, searchQuery }) {
                 <div className="flex items-center justify-end gap-1.5 pt-2 border-t border-[#224F10]/8">
                   {canEdit && (
                     <button
-                      onClick={() => openEditForm(u)}
+                      type="button"
+                      onClick={() => openEditForm(user)}
                       className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-[#224F10]/20 hover:bg-[#EAFFD0] text-[#0D0D0D] text-[11px] font-semibold transition-colors cursor-pointer"
                     >
                       <Edit3 className="w-3 h-3" />
                       Editar
                     </button>
                   )}
-                  {isAdmin && Number(currentUser?.id) !== Number(u.id) && (
+                  {isAdmin && !sameId(currentUser?.id, user.id) && (
                     <button
-                      onClick={() => handleDelete(u)}
+                      type="button"
+                      onClick={() => handleDelete(user)}
                       className="w-7 h-7 rounded-full border border-red-200 hover:bg-red-50 text-red-700 flex items-center justify-center transition-colors cursor-pointer"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -574,4 +523,3 @@ export function DashboardUsersTab({ currentUser, users, searchQuery }) {
     </div>
   );
 }
-
