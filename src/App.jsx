@@ -1,28 +1,28 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { Layout } from './modules/core/components/Layout';
-import { Home } from './modules/core/components/Home';
-import { DashboardView } from './modules/core/components/DashboardView';
-import { ProtectedRoute } from './modules/core/components/ProtectedRoute';
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { Layout } from './modulos/nucleo/componentes/Layout';
+import { Inicio } from './modulos/nucleo/componentes/Inicio';
+import { VistaPanelControl } from './modulos/nucleo/componentes/VistaPanelControl';
+import { RutaProtegida } from './modulos/nucleo/componentes/RutaProtegida';
 
-import { LoginView } from './modules/auth/components/LoginView';
-import { RegisterView } from './modules/auth/components/RegisterView';
-import { UserCreateView } from './modules/auth/components/UserCreateView';
-import { UserEditView } from './modules/auth/components/UserEditView';
+import { VistaIniciarSesion } from './modulos/autenticacion/componentes/VistaIniciarSesion';
+import { VistaRegistro } from './modulos/autenticacion/componentes/VistaRegistro';
+import { VistaCrearUsuario } from './modulos/autenticacion/componentes/VistaCrearUsuario';
+import { VistaEditarUsuario } from './modulos/autenticacion/componentes/VistaEditarUsuario';
 
-import { AuctionsListView } from './modules/auctions/components/AuctionsListView';
-import { AuctionCreateView } from './modules/auctions/components/AuctionCreateView';
-import { AuctionEditView } from './modules/auctions/components/AuctionEditView';
-import { AuctionDetailView } from './modules/auctions/components/AuctionDetailView';
+import { VistaListaSubastas } from './modulos/subastas/componentes/VistaListaSubastas';
+import { VistaCrearSubasta } from './modulos/subastas/componentes/VistaCrearSubasta';
+import { VistaEditarSubasta } from './modulos/subastas/componentes/VistaEditarSubasta';
+import { VistaDetalleSubasta } from './modulos/subastas/componentes/VistaDetalleSubasta';
 
-import { BidCreateView } from './modules/bids/components/BidCreateView';
-import { BidEditView } from './modules/bids/components/BidEditView';
+import { VistaCrearPuja } from './modulos/pujas/componentes/VistaCrearPuja';
+import { VistaEditarPuja } from './modulos/pujas/componentes/VistaEditarPuja';
 
-import { ReportCreateView } from './modules/reports/components/ReportCreateView';
-import { ReportEditView } from './modules/reports/components/ReportEditView';
+import { VistaCrearReporte } from './modulos/reportes/componentes/VistaCrearReporte';
+import { VistaEditarReporte } from './modulos/reportes/componentes/VistaEditarReporte';
 
-import { ReviewCreateView } from './modules/reviews/components/ReviewCreateView';
-import { ReviewEditView } from './modules/reviews/components/ReviewEditView';
+import { VistaCrearResena } from './modulos/resenas/componentes/VistaCrearResena';
+import { VistaEditarResena } from './modulos/resenas/componentes/VistaEditarResena';
 
 function App() {
   return (
@@ -30,92 +30,152 @@ function App() {
       <Layout>
         <Routes>
           {/* Páginas públicas (no requieren iniciar sesión) */}
-          <Route path="/" element={<Home />} />
-          <Route path="/login" element={<LoginView />} />
-          <Route path="/register" element={<RegisterView />} />
-          <Route path="/auctions" element={<AuctionsListView />} />
-          <Route path="/auctions/:id" element={<AuctionDetailView />} />
+          <Route path="/" element={<Inicio />} />
+          <Route path="/login" element={<VistaIniciarSesion />} />
+          <Route path="/register" element={<VistaRegistro />} />
+          <Route path="/auctions" element={<VistaListaSubastas />} />
+          <Route path="/auctions/:id" element={<VistaDetalleSubasta />} />
 
           {/* Panel principal dinámico */}
           <Route
             path="/dashboard"
-            element={<ProtectedRoute><DashboardView /></ProtectedRoute>}
+            element={
+              <RutaProtegida>
+                <VistaPanelControl />
+              </RutaProtegida>
+            }
           />
 
           {/* Subastas: crear y editar */}
           <Route
             path="/auctions/new"
-            element={<ProtectedRoute><AuctionCreateView /></ProtectedRoute>}
+            element={
+              <RutaProtegida>
+                <VistaCrearSubasta />
+              </RutaProtegida>
+            }
           />
           <Route
             path="/auctions/:id/edit"
-            element={<ProtectedRoute><AuctionEditView /></ProtectedRoute>}
+            element={
+              <RutaProtegida>
+                <VistaEditarSubasta />
+              </RutaProtegida>
+            }
           />
 
           {/* Pujas: pestaña del panel + formularios directos */}
           <Route
             path="/bids"
-            element={<ProtectedRoute><DashboardView initialSection="bids" /></ProtectedRoute>}
+            element={
+              <RutaProtegida>
+                <VistaPanelControl seccionInicial="pujas" />
+              </RutaProtegida>
+            }
           />
           <Route
             path="/bids/new"
-            element={<ProtectedRoute><BidCreateView /></ProtectedRoute>}
+            element={
+              <RutaProtegida>
+                <VistaCrearPuja />
+              </RutaProtegida>
+            }
           />
           <Route
             path="/bids/:id/edit"
-            element={<ProtectedRoute><BidEditView /></ProtectedRoute>}
+            element={
+              <RutaProtegida>
+                <VistaEditarPuja />
+              </RutaProtegida>
+            }
           />
 
           {/* Reportes e infracciones (RN06) */}
           <Route
             path="/reports"
-            element={<ProtectedRoute><DashboardView initialSection="reports" /></ProtectedRoute>}
+            element={
+              <RutaProtegida>
+                <VistaPanelControl seccionInicial="reportes" />
+              </RutaProtegida>
+            }
           />
           <Route
             path="/reports/new"
-            element={<ProtectedRoute><ReportCreateView /></ProtectedRoute>}
+            element={
+              <RutaProtegida>
+                <VistaCrearReporte />
+              </RutaProtegida>
+            }
           />
           <Route
             path="/reports/:id/edit"
-            element={<ProtectedRoute><ReportEditView /></ProtectedRoute>}
+            element={
+              <RutaProtegida>
+                <VistaEditarReporte />
+              </RutaProtegida>
+            }
           />
 
           {/* Calificaciones y reputación (RN07) */}
           <Route
             path="/reviews"
-            element={<ProtectedRoute><DashboardView initialSection="reviews" /></ProtectedRoute>}
+            element={
+              <RutaProtegida>
+                <VistaPanelControl seccionInicial="resenas" />
+              </RutaProtegida>
+            }
           />
           <Route
             path="/reviews/new"
-            element={<ProtectedRoute><ReviewCreateView /></ProtectedRoute>}
+            element={
+              <RutaProtegida>
+                <VistaCrearResena />
+              </RutaProtegida>
+            }
           />
           <Route
             path="/reviews/:id/edit"
-            element={<ProtectedRoute><ReviewEditView /></ProtectedRoute>}
+            element={
+              <RutaProtegida>
+                <VistaEditarResena />
+              </RutaProtegida>
+            }
           />
 
           {/* Usuarios y roles */}
           <Route
             path="/users"
-            element={<ProtectedRoute><DashboardView initialSection="users" /></ProtectedRoute>}
+            element={
+              <RutaProtegida>
+                <VistaPanelControl seccionInicial="usuarios" />
+              </RutaProtegida>
+            }
           />
           <Route
             path="/users/new"
             element={
-              <ProtectedRoute allowedRoles={['admin']}>
-                <UserCreateView />
-              </ProtectedRoute>
+              <RutaProtegida rolesPermitidos={['admin']}>
+                <VistaCrearUsuario />
+              </RutaProtegida>
             }
           />
           <Route
             path="/users/:id/edit"
-            element={<ProtectedRoute><UserEditView /></ProtectedRoute>}
+            element={
+              <RutaProtegida>
+                <VistaEditarUsuario />
+              </RutaProtegida>
+            }
           />
 
           {/* Centro de notificaciones */}
           <Route
             path="/notifications"
-            element={<ProtectedRoute><DashboardView initialSection="notifications" /></ProtectedRoute>}
+            element={
+              <RutaProtegida>
+                <VistaPanelControl seccionInicial="notificaciones" />
+              </RutaProtegida>
+            }
           />
 
           {/* Si la ruta no existe, redirigimos al inicio */}
