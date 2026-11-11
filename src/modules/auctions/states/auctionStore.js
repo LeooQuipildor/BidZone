@@ -1,13 +1,9 @@
 import { create } from 'zustand';
 import { httpRequest, registerSessionReset } from '../../core/lib/apiClient';
-import {
-  removeById,
-  replaceById,
-  sameId,
-  toIsoFromLocalInput,
-  upsertById,
-} from '../../core/utils/formatters';
+import { removeById, replaceById, sameId, toIsoFromLocalInput, upsertById } from '../../core/utils/formatters';
 import { useNotificationStore } from '../../notifications/states/notificationStore';
+
+const UPDATABLE_TEXT_FIELDS = ['title', 'description', 'category', 'imageUrl', 'status'];
 
 // Store global de subastas (conecta con /api/auctions)
 export const useAuctionStore = create((set, get) => ({
@@ -16,17 +12,10 @@ export const useAuctionStore = create((set, get) => ({
   loading: false,
   detailLoading: false,
   error: null,
-  filters: {
-    search: '',
-    category: 'Todas',
-    status: 'todas',
-    sortBy: 'endingSoon',
-  },
+  filters: { search: '', category: 'Todas', status: 'todas', sortBy: 'endingSoon' },
 
   setFilters: (newFilters) => {
-    set((state) => ({
-      filters: { ...state.filters, ...newFilters },
-    }));
+    set((state) => ({ filters: { ...state.filters, ...newFilters } }));
   },
 
   fetchAuctions: async () => {
@@ -52,11 +41,7 @@ export const useAuctionStore = create((set, get) => ({
       }));
       return data;
     } catch (err) {
-      set({
-        currentAuctionDetail: null,
-        detailLoading: false,
-        error: err.message,
-      });
+      set({ currentAuctionDetail: null, detailLoading: false, error: err.message });
       return null;
     }
   },
@@ -64,7 +49,6 @@ export const useAuctionStore = create((set, get) => ({
   createAuction: async (payload) => {
     set({ error: null });
     try {
-      const endTimeIso = toIsoFromLocalInput(payload.endTime) || payload.endTime;
       const body = {
         title: payload.title,
         description: payload.description || '',
@@ -72,13 +56,9 @@ export const useAuctionStore = create((set, get) => ({
         imageUrl: payload.imageUrl ? payload.imageUrl.trim() : '',
         basePrice: Number(payload.basePrice),
         minIncrement: Number(payload.minIncrement),
-        endTime: endTimeIso,
+        endTime: toIsoFromLocalInput(payload.endTime) || payload.endTime,
       };
-
-      const created = await httpRequest('/auctions', {
-        method: 'POST',
-        body: JSON.stringify(body),
-      });
+      const created = await httpRequest('/auctions', { method: 'POST', body: JSON.stringify(body) });
       set((state) => ({ auctions: [created, ...state.auctions] }));
       return created;
     } catch (err) {
@@ -90,38 +70,21 @@ export const useAuctionStore = create((set, get) => ({
   updateAuction: async (id, updates) => {
     set({ error: null });
     try {
-      // Solo enviamos al servidor los campos que realmente se quieren modificar
       const body = {};
-      if (updates.title !== undefined) body.title = updates.title;
-      if (updates.description !== undefined) body.description = updates.description;
-      if (updates.category !== undefined) body.category = updates.category;
-      if (updates.imageUrl !== undefined) body.imageUrl = updates.imageUrl;
-      if (updates.status !== undefined) body.status = updates.status;
-
-      if (updates.basePrice !== undefined && updates.basePrice !== '') {
-        body.basePrice = Number(updates.basePrice);
+      for (const field of UPDATABLE_TEXT_FIELDS) {
+        if (updates[field] !== undefined) body[field] = updates[field];
       }
-      if (updates.minIncrement !== undefined && updates.minIncrement !== '') {
-        body.minIncrement = Number(updates.minIncrement);
-      }
+      if (updates.basePrice !== undefined && updates.basePrice !== '') body.basePrice = Number(updates.basePrice);
+      if (updates.minIncrement !== undefined && updates.minIncrement !== '') body.minIncrement = Number(updates.minIncrement);
       if (updates.endTime !== undefined && updates.endTime !== '') {
         body.endTime = toIsoFromLocalInput(updates.endTime) || updates.endTime;
       }
 
-      const updated = await httpRequest(`/auctions/${id}`, {
-        method: 'PUT',
-        body: JSON.stringify(body),
-      });
+      const updated = await httpRequest(`/auctions/${id}`, { method: 'PUT', body: JSON.stringify(body) });
+      set((state) => ({ auctions: replaceById(state.auctions, id, updated) }));
 
-      set((state) => ({
-        auctions: replaceById(state.auctions, id, updated),
-      }));
-
-      // Si el usuario está viendo el detalle de esta subasta, lo recargamos
       const detail = get().currentAuctionDetail;
-      if (detail && sameId(detail.id, id)) {
-        await get().fetchAuctionById(id);
-      }
+      if (detail && sameId(detail.id, id)) await get().fetchAuctionById(id);
       return updated;
     } catch (err) {
       set({ error: err.message });
@@ -132,20 +95,13 @@ export const useAuctionStore = create((set, get) => ({
   closeAuctionNow: async (id) => {
     set({ error: null });
     try {
-      const closed = await httpRequest(`/auctions/${id}/close`, {
-        method: 'POST',
-      });
-
-      set((state) => ({
-        auctions: replaceById(state.auctions, id, closed),
-      }));
+      const closed = await httpRequest(`/auctions/${id}/close`, { method: 'POST' });
+      set((state) => ({ auctions: replaceById(state.auctions, id, closed) }));
 
       const detail = get().currentAuctionDetail;
-      if (detail && sameId(detail.id, id)) {
-        await get().fetchAuctionById(id);
-      }
+      if (detail && sameId(detail.id, id)) await get().fetchAuctionById(id);
 
-      // Al cerrar la subasta el backend crea notificaciones (RN05), así que las actualizamos
+      // Al cerrar la subasta el backend crea notificaciones (RN05)
       if (localStorage.getItem('bidzone_token')) {
         await useNotificationStore.getState().fetchNotifications();
       }
@@ -161,9 +117,7 @@ export const useAuctionStore = create((set, get) => ({
     try {
       await httpRequest(`/auctions/${id}`, { method: 'DELETE' });
       set((state) => {
-        const isViewingDeleted =
-          state.currentAuctionDetail && sameId(state.currentAuctionDetail.id, id);
-
+        const isViewingDeleted = state.currentAuctionDetail && sameId(state.currentAuctionDetail.id, id);
         return {
           auctions: removeById(state.auctions, id),
           currentAuctionDetail: isViewingDeleted ? null : state.currentAuctionDetail,

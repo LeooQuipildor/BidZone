@@ -1,6 +1,7 @@
 import {
   AUCTION_CATEGORY_OPTIONS,
   AUCTION_FILTER_CATEGORIES,
+  matchesSearch,
   padTwoDigits,
   sameId,
 } from '../../utils/formatters';
@@ -79,4 +80,20 @@ export function getReviewDefaults(auction, currentUserId, otherUsers) {
     targetUserId: String(auction.sellerId || primerUsuario),
     roleContext: 'comprador_a_vendedor',
   };
+}
+
+// Filtra y ordena la lista de subastas para el catálogo y la pestaña del panel
+export function filterAndSortAuctions(auctions, searchQuery, category, statusFilter, sortBy) {
+  const filtered = auctions.filter((auction) => {
+    const matchSearch = matchesSearch([auction.title, auction.description, auction.category], searchQuery);
+    const matchCategory = category === 'Todas' || auction.category === category;
+    const matchStatus = statusFilter === 'todas' || auction.status === statusFilter;
+    return matchSearch && matchCategory && matchStatus;
+  });
+
+  return filtered.sort((a, b) => {
+    if (sortBy === 'priceAsc') return Number(a.currentPrice) - Number(b.currentPrice);
+    if (sortBy === 'priceDesc') return Number(b.currentPrice) - Number(a.currentPrice);
+    return new Date(a.endTime).getTime() - new Date(b.endTime).getTime();
+  });
 }

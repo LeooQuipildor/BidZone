@@ -104,3 +104,22 @@ export function DashboardStatCard({
     </div>
   );
 }
+
+// Contenedor desplegable compartido para mostrar el formulario crear/editar en las pestañas del panel
+export function DashboardFormPanel({ title, onClose, children }) {
+  return (
+    <div className="rounded-2xl bg-white border border-[#224F10]/20 p-5 sm:p-6 shadow-sm space-y-4">
+      <div className="flex items-center justify-between gap-2 border-b border-[#224F10]/10 pb-3">
+        <h2 className="text-base font-bold text-[#0D0D0D]">{title}</h2>
+        <button
+          type="button"
+          onClick={onClose}
+          className="w-8 h-8 rounded-full bg-[#F7FBF3] hover:bg-[#EAFFD0] text-[#0D0D0D] flex items-center justify-center cursor-pointer"
+        >
+          <X className="w-4 h-4" />
+        </button>
+      </div>
+      {children}
+    </div>
+  );
+}

@@ -3,9 +3,10 @@ import { useAuthStore } from '../../../auth/states/authStore';
 import { sameId } from '../../utils/formatters';
 import { getInitials } from './dashboardHelpers';
 import { DashboardFeedback } from './DashboardShared';
+import { Input, Button } from '../../design-system/ui';
 import { Save, Star, MapPin, Phone, Mail, ShieldCheck } from 'lucide-react';
 
-// Formulario separado con `key` para que se reinicie limpio cuando cambia `currentUser`
+// Formulario separado con `key` para reiniciarse limpio cuando cambian los datos del usuario
 function ProfileFormCard({ currentUser, updateUser, onFeedback }) {
   const [formData, setFormData] = useState(() => ({
     name: currentUser?.name || '',
@@ -14,8 +15,9 @@ function ProfileFormCard({ currentUser, updateUser, onFeedback }) {
     city: currentUser?.city || '',
   }));
 
-  function updateField(field, value) {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+  function handleChange(e) {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
   }
 
   async function handleSubmit(e) {
@@ -23,10 +25,7 @@ function ProfileFormCard({ currentUser, updateUser, onFeedback }) {
     onFeedback(null);
 
     if (!formData.name.trim() || !formData.email.trim()) {
-      onFeedback({
-        type: 'error',
-        text: 'El nombre y el correo electrónico son obligatorios.',
-      });
+      onFeedback({ type: 'error', text: 'El nombre y el correo electrónico son obligatorios.' });
       return;
     }
 
@@ -49,65 +48,18 @@ function ProfileFormCard({ currentUser, updateUser, onFeedback }) {
 
       <form onSubmit={handleSubmit} className="space-y-4 pt-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="space-y-1">
-            <label className="text-[11px] font-semibold text-[#0D0D0D]/75">
-              Nombre Completo *
-            </label>
-            <input
-              type="text"
-              value={formData.name}
-              onChange={(e) => updateField('name', e.target.value)}
-              className="w-full rounded-xl bg-[#F7FBF3] border border-[#224F10]/15 px-3.5 py-2.5 text-xs text-[#0D0D0D] focus:outline-none focus:ring-2 focus:ring-[#224F10]/25"
-            />
-          </div>
-
-          <div className="space-y-1">
-            <label className="text-[11px] font-semibold text-[#0D0D0D]/75">
-              Correo Electrónico *
-            </label>
-            <input
-              type="email"
-              value={formData.email}
-              onChange={(e) => updateField('email', e.target.value)}
-              className="w-full rounded-xl bg-[#F7FBF3] border border-[#224F10]/15 px-3.5 py-2.5 text-xs text-[#0D0D0D] focus:outline-none focus:ring-2 focus:ring-[#224F10]/25"
-            />
-          </div>
+          <Input id="name" name="name" label="Nombre Completo *" value={formData.name} onChange={handleChange} />
+          <Input id="email" name="email" type="email" label="Correo Electrónico *" value={formData.email} onChange={handleChange} />
         </div>
-
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="space-y-1">
-            <label className="text-[11px] font-semibold text-[#0D0D0D]/75">
-              Teléfono / WhatsApp RN05 *
-            </label>
-            <input
-              type="text"
-              value={formData.phone}
-              onChange={(e) => updateField('phone', e.target.value)}
-              className="w-full rounded-xl bg-[#F7FBF3] border border-[#224F10]/15 px-3.5 py-2.5 text-xs text-[#0D0D0D] focus:outline-none focus:ring-2 focus:ring-[#224F10]/25"
-            />
-          </div>
-
-          <div className="space-y-1">
-            <label className="text-[11px] font-semibold text-[#0D0D0D]/75">
-              Ciudad / Localidad
-            </label>
-            <input
-              type="text"
-              value={formData.city}
-              onChange={(e) => updateField('city', e.target.value)}
-              className="w-full rounded-xl bg-[#F7FBF3] border border-[#224F10]/15 px-3.5 py-2.5 text-xs text-[#0D0D0D] focus:outline-none focus:ring-2 focus:ring-[#224F10]/25"
-            />
-          </div>
+          <Input id="phone" name="phone" label="Teléfono / WhatsApp RN05 *" value={formData.phone} onChange={handleChange} />
+          <Input id="city" name="city" label="Ciudad / Localidad" value={formData.city} onChange={handleChange} />
         </div>
-
         <div className="flex justify-end pt-3">
-          <button
-            type="submit"
-            className="inline-flex items-center gap-2 rounded-full bg-[#224F10] hover:bg-[#0D0D0D] text-[#EAFFD0] px-5 py-2.5 text-xs font-semibold transition-colors cursor-pointer shadow-xs"
-          >
+          <Button type="submit">
             <Save className="w-3.5 h-3.5" />
-            <span>Guardar Cambios</span>
-          </button>
+            Guardar Cambios
+          </Button>
         </div>
       </form>
     </div>
@@ -118,35 +70,23 @@ export function DashboardProfileTab({ currentUser, auctions, bids }) {
   const updateUser = useAuthStore((s) => s.updateUser);
   const [feedback, setFeedback] = useState(null);
 
-  const myAuctionsCount = auctions.filter((a) =>
-    sameId(a.sellerId, currentUser?.id)
-  ).length;
-  const myBidsCount = bids.filter((b) =>
-    sameId(b.bidderId, currentUser?.id)
-  ).length;
-
-  const roleLabel =
-    currentUser?.role === 'admin' ? 'Administrador' : 'Socio';
-
-  const profileCardKey = `${currentUser?.id || 'anon'}-${currentUser?.name || ''}-${currentUser?.email || ''}-${currentUser?.phone || ''}-${currentUser?.city || ''}`;
+  const myAuctionsCount = auctions.filter((a) => sameId(a.sellerId, currentUser?.id)).length;
+  const myBidsCount = bids.filter((b) => sameId(b.bidderId, currentUser?.id)).length;
+  const roleLabel = currentUser?.role === 'admin' ? 'Administrador' : 'Socio';
+  const profileKey = `${currentUser?.id || 'anon'}-${currentUser?.name || ''}-${currentUser?.email || ''}-${currentUser?.phone || ''}-${currentUser?.city || ''}`;
 
   return (
     <div className="space-y-6">
-      {/* Encabezado */}
       <div className="pt-1">
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#0D0D0D]">
-          Mi Perfil
-        </h1>
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#0D0D0D]">Mi Perfil</h1>
         <p className="text-xs sm:text-sm text-[#0D0D0D]/60 mt-1">
-          Mantén actualizados tu teléfono y ciudad para la liberación automática
-          de datos al cierre de subastas (RN05).
+          Mantén actualizados tu teléfono y ciudad para la liberación automática de datos al cierre (RN05).
         </p>
       </div>
 
       <DashboardFeedback feedback={feedback} onClose={() => setFeedback(null)} />
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-        {/* Tarjeta izquierda con resumen de identidad */}
         <div className="lg:col-span-4 rounded-2xl bg-gradient-to-br from-[#224F10] to-[#122B08] text-[#EAFFD0] p-6 flex flex-col justify-between gap-6 shadow-sm">
           <div className="space-y-4">
             <div className="flex items-center gap-3.5">
@@ -154,9 +94,7 @@ export function DashboardProfileTab({ currentUser, auctions, bids }) {
                 {getInitials(currentUser?.name)}
               </div>
               <div className="min-w-0">
-                <h2 className="text-lg font-bold text-white truncate">
-                  {currentUser?.name}
-                </h2>
+                <h2 className="text-lg font-bold text-white truncate">{currentUser?.name}</h2>
                 <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#B0E454]/20 text-[#B0E454] text-[10px] font-bold uppercase mt-1">
                   <ShieldCheck className="w-3 h-3" />
                   {roleLabel}
@@ -165,22 +103,10 @@ export function DashboardProfileTab({ currentUser, auctions, bids }) {
             </div>
 
             <div className="space-y-2 text-xs text-[#EAFFD0]/85 pt-2 border-t border-[#EAFFD0]/15">
-              <p className="flex items-center gap-2 truncate">
-                <Mail className="w-3.5 h-3.5 text-[#B0E454] shrink-0" />
-                {currentUser?.email}
-              </p>
-              <p className="flex items-center gap-2">
-                <Phone className="w-3.5 h-3.5 text-[#B0E454] shrink-0" />
-                {currentUser?.phone || 'Sin teléfono cargado'}
-              </p>
-              <p className="flex items-center gap-2">
-                <MapPin className="w-3.5 h-3.5 text-[#B0E454] shrink-0" />
-                {currentUser?.city || 'Argentina'}
-              </p>
-              <p className="flex items-center gap-2 font-semibold text-white">
-                <Star className="w-3.5 h-3.5 text-[#B0E454] fill-[#B0E454] shrink-0" />
-                Reputación: {currentUser?.reputation || '5.0'} / 5.0
-              </p>
+              <p className="flex items-center gap-2 truncate"><Mail className="w-3.5 h-3.5 text-[#B0E454] shrink-0" />{currentUser?.email}</p>
+              <p className="flex items-center gap-2"><Phone className="w-3.5 h-3.5 text-[#B0E454] shrink-0" />{currentUser?.phone || 'Sin teléfono cargado'}</p>
+              <p className="flex items-center gap-2"><MapPin className="w-3.5 h-3.5 text-[#B0E454] shrink-0" />{currentUser?.city || 'Argentina'}</p>
+              <p className="flex items-center gap-2 font-semibold text-white"><Star className="w-3.5 h-3.5 text-[#B0E454] fill-[#B0E454] shrink-0" />Reputación: {currentUser?.reputation || '5.0'} / 5.0</p>
             </div>
           </div>
 
@@ -196,13 +122,7 @@ export function DashboardProfileTab({ currentUser, auctions, bids }) {
           </div>
         </div>
 
-        {/* Formulario derecho */}
-        <ProfileFormCard
-          key={profileCardKey}
-          currentUser={currentUser}
-          updateUser={updateUser}
-          onFeedback={setFeedback}
-        />
+        <ProfileFormCard key={profileKey} currentUser={currentUser} updateUser={updateUser} onFeedback={setFeedback} />
       </div>
     </div>
   );

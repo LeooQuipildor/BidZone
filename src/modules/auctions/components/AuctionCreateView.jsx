@@ -1,78 +1,19 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuctionStore } from '../states/auctionStore';
 import { useAuthStore } from '../../auth/states/authStore';
-import {
-  Card,
-  Input,
-  Select,
-  Textarea,
-  Button,
-  PageHeader,
-  Alert,
-} from '../../core/design-system/ui';
-import {
-  AUCTION_CATEGORY_OPTIONS,
-  toIsoFromLocalInput,
-  toLocalDatetimeInputValue,
-} from '../../core/utils/formatters';
-import { PlusCircle, ArrowLeft } from 'lucide-react';
+import { AuctionForm } from './AuctionForm';
+import { Button, Card, PageHeader } from '../../core/design-system/ui';
+import { ArrowLeft } from 'lucide-react';
 
 export function AuctionCreateView() {
   const navigate = useNavigate();
   const createAuction = useAuctionStore((s) => s.createAuction);
   const currentUser = useAuthStore((s) => s.currentUser);
 
-  const [formData, setFormData] = useState(() => ({
-    title: '',
-    description: '',
-    category: 'Tecnología',
-    imageUrl: '',
-    basePrice: '',
-    minIncrement: '',
-    endTime: toLocalDatetimeInputValue(),
-  }));
-  const [errorMsg, setErrorMsg] = useState('');
-
-  function handleChange(e) {
-    const fieldName = e.target.name;
-    const fieldValue = e.target.value;
-    setFormData((prev) => ({ ...prev, [fieldName]: fieldValue }));
-  }
-
-  async function handleSubmit(e) {
-    e.preventDefault();
-    setErrorMsg('');
-
-    if (!formData.title.trim() || !formData.description.trim()) {
-      setErrorMsg('Por favor completa el título y la descripción del artículo.');
-      return;
-    }
-
-    const endTimestamp = new Date(formData.endTime).getTime();
-    if (Number.isNaN(endTimestamp) || endTimestamp <= Date.now()) {
-      setErrorMsg(
-        'La fecha y hora de cierre debe ser posterior al momento actual.'
-      );
-      return;
-    }
-
-    try {
-      const payload = {
-        title: formData.title.trim(),
-        description: formData.description.trim(),
-        category: formData.category,
-        imageUrl: formData.imageUrl,
-        basePrice: formData.basePrice,
-        minIncrement: formData.minIncrement,
-        endTime: toIsoFromLocalInput(formData.endTime),
-        sellerId: currentUser.id,
-      };
-      const created = await createAuction(payload);
-      navigate(`/auctions/${created.id}`);
-    } catch (err) {
-      setErrorMsg(err.message);
-    }
+  async function handleCreate(payload) {
+    const created = await createAuction({ ...payload, sellerId: currentUser.id });
+    navigate(`/auctions/${created.id}`);
   }
 
   return (
@@ -89,95 +30,11 @@ export function AuctionCreateView() {
       />
 
       <Card className="p-6">
-        {errorMsg && (
-          <div className="mb-4">
-            <Alert type="error" onClose={() => setErrorMsg('')}>
-              {errorMsg}
-            </Alert>
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <Input
-            id="title"
-            name="title"
-            label="Título del Artículo *"
-            placeholder="Ej: iPhone 15 Pro Max 256GB Titanio Natural"
-            value={formData.title}
-            onChange={handleChange}
-          />
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Select
-              id="category"
-              name="category"
-              label="Categoría *"
-              value={formData.category}
-              onChange={handleChange}
-              options={AUCTION_CATEGORY_OPTIONS}
-            />
-            <Input
-              id="endTime"
-              name="endTime"
-              type="datetime-local"
-              label="Fecha y Hora de Cierre *"
-              value={formData.endTime}
-              onChange={handleChange}
-            />
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Input
-              id="basePrice"
-              name="basePrice"
-              type="number"
-              min="1"
-              label="Precio Base Inicial (ARS) *"
-              placeholder="Ej: 500000"
-              value={formData.basePrice}
-              onChange={handleChange}
-            />
-            <Input
-              id="minIncrement"
-              name="minIncrement"
-              type="number"
-              min="1"
-              label="Incremento Mínimo por Puja (RN01) *"
-              placeholder="Ej: 20000"
-              value={formData.minIncrement}
-              onChange={handleChange}
-            />
-          </div>
-
-          <Input
-            id="imageUrl"
-            name="imageUrl"
-            label="URL de Imagen del Producto"
-            placeholder="https://images.unsplash.com/..."
-            helperText="Opcional. Si se deja vacío se asignará una imagen ilustrativa."
-            value={formData.imageUrl}
-            onChange={handleChange}
-          />
-
-          <Textarea
-            id="description"
-            name="description"
-            label="Descripción y Condiciones de Entrega *"
-            placeholder="Detalla el estado del artículo, accesorios incluidos y cómo prefieres coordinar el pago/entrega con el ganador..."
-            value={formData.description}
-            onChange={handleChange}
-          />
-
-          <div className="flex justify-end gap-3 pt-4">
-            <Button variant="ghost" onClick={() => navigate('/auctions')}>
-              Cancelar
-            </Button>
-            <Button type="submit">
-              <PlusCircle className="w-4 h-4" />
-              Publicar Subasta
-            </Button>
-          </div>
-        </form>
+        <AuctionForm
+          onSubmitForm={handleCreate}
+          onCancel={() => navigate('/auctions')}
+          submitLabel="Publicar Subasta"
+        />
       </Card>
     </div>
   );

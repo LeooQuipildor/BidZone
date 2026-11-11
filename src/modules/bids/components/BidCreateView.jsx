@@ -1,27 +1,11 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useBidStore } from '../states/bidStore';
 import { useAuctionStore } from '../../auctions/states/auctionStore';
 import { useAuthStore } from '../../auth/states/authStore';
-import { BidConfirmModal } from './BidConfirmModal';
-import {
-  Card,
-  Input,
-  Select,
-  Button,
-  PageHeader,
-  Alert,
-  Spinner,
-} from '../../core/design-system/ui';
-import {
-  findById,
-  formatCurrency,
-  getMaxBidAmount,
-  getSuggestedBidAmount,
-  pickValidId,
-  validateBidInput,
-} from '../../core/utils/formatters';
-import { Gavel, ArrowLeft } from 'lucide-react';
+import { BidForm } from './BidForm';
+import { Button, Card, PageHeader, Spinner } from '../../core/design-system/ui';
+import { ArrowLeft } from 'lucide-react';
 
 export function BidCreateView() {
   const navigate = useNavigate();
@@ -34,78 +18,6 @@ export function BidCreateView() {
   useEffect(() => {
     fetchAuctions();
   }, [fetchAuctions]);
-
-  const activeAuctions = useMemo(
-    () => auctions.filter((a) => a.status === 'activa'),
-    [auctions]
-  );
-
-  const [selectedAuctionId, setSelectedAuctionId] = useState('');
-  const [amountInput, setAmountInput] = useState(null);
-  const [note, setNote] = useState('');
-  const [commitment, setCommitment] = useState(true);
-  const [errorMsg, setErrorMsg] = useState('');
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Elegimos la subasta seleccionada (o la primera activa disponible)
-  const auctionId = pickValidId(activeAuctions, selectedAuctionId);
-  const selectedAuction = findById(activeAuctions, auctionId);
-
-  const suggestedAmount = getSuggestedBidAmount(selectedAuction);
-  const maxAllowedAmount = getMaxBidAmount(selectedAuction);
-  const amount = amountInput ?? suggestedAmount;
-
-  function handleAuctionChange(e) {
-    setSelectedAuctionId(e.target.value);
-    // Reseteamos el monto manual para que tome el mínimo sugerido de la nueva subasta
-    setAmountInput(null);
-  }
-
-  function handleOpenConfirmation(e) {
-    e.preventDefault();
-    setErrorMsg('');
-
-    if (!currentUser) {
-      navigate('/login');
-      return;
-    }
-
-    const validationError = validateBidInput({
-      auction: selectedAuction,
-      amount,
-      commitmentAccepted: commitment,
-    });
-
-    if (validationError) {
-      setErrorMsg(validationError);
-      return;
-    }
-
-    setShowConfirmModal(true);
-  }
-
-  async function handleConfirmBid() {
-    setIsSubmitting(true);
-    setErrorMsg('');
-
-    try {
-      await createBid({
-        auctionId,
-        bidderId: currentUser.id,
-        amount,
-        note,
-        commitmentAccepted: commitment,
-      });
-      setShowConfirmModal(false);
-      navigate('/bids');
-    } catch (err) {
-      setShowConfirmModal(false);
-      setErrorMsg(err.message);
-    } finally {
-      setIsSubmitting(false);
-    }
-  }
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
@@ -123,129 +35,16 @@ export function BidCreateView() {
       <Card className="p-6 sm:p-8 rounded-3xl">
         {auctionsLoading && auctions.length === 0 ? (
           <Spinner label="Cargando subastas activas..." />
-        ) : activeAuctions.length === 0 ? (
-          <Alert type="info" title="Sin subastas activas">
-            Actualmente no hay subastas activas disponibles para ofertar. Puedes
-            publicar una o esperar nuevos lotes.
-          </Alert>
         ) : (
-          <>
-            {errorMsg && (
-              <div className="mb-4">
-                <Alert type="error" onClose={() => setErrorMsg('')}>
-                  {errorMsg}
-                </Alert>
-              </div>
-            )}
-
-            <form onSubmit={handleOpenConfirmation} className="space-y-4">
-              <Select
-                id="auctionId"
-                label="Seleccionar Subasta Activa *"
-                value={auctionId}
-                onChange={handleAuctionChange}
-                options={activeAuctions.map((a) => ({
-                  value: String(a.id),
-                  label: `${a.title} (Actual: ${formatCurrency(a.currentPrice)})`,
-                }))}
-              />
-
-              {selectedAuction && (
-                <div className="p-4 rounded-2xl bg-white/80 border border-[#224F10]/20 text-xs space-y-1">
-                  <p>
-                    Precio inicial fijado por vendedor:{' '}
-                    <strong className="text-[#0D0D0D]">
-                      {formatCurrency(
-                        selectedAuction.basePrice || selectedAuction.currentPrice
-                      )}
-                    </strong>
-                  </p>
-                  <p>
-                    Precio actual:{' '}
-                    <strong className="text-[#224F10]">
-                      {formatCurrency(selectedAuction.currentPrice)}
-                    </strong>
-                  </p>
-                  <p>
-                    Incremento mínimo (RN01):{' '}
-                    <strong className="text-[#0D0D0D]">
-                      {formatCurrency(selectedAuction.minIncrement)}
-                    </strong>
-                  </p>
-                  <p>
-                    Oferta mínima requerida:{' '}
-                    <strong className="text-[#224F10]">
-                      {formatCurrency(suggestedAmount)}
-                    </strong>
-                  </p>
-                  <p>
-                    Oferta máxima permitida (10x precio inicial):{' '}
-                    <strong className="text-[#224F10]">
-                      {formatCurrency(maxAllowedAmount)}
-                    </strong>
-                  </p>
-                </div>
-              )}
-
-              <Input
-                id="amount"
-                type="number"
-                label="Monto a Ofertar (ARS) *"
-                max={maxAllowedAmount}
-                helperText={
-                  maxAllowedAmount
-                    ? `Máximo permitido: ${formatCurrency(maxAllowedAmount)} (10 veces el precio inicial).`
-                    : undefined
-                }
-                value={amount}
-                onChange={(e) => setAmountInput(e.target.value)}
-              />
-
-              <Input
-                id="note"
-                label="Nota / Condición de Coordinación"
-                placeholder="Ej: Pago por transferencia inmediata al liberarse el contacto."
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-              />
-
-              <label className="flex items-start gap-2.5 text-xs text-[#0D0D0D]/80 cursor-pointer bg-[#B0E454]/25 p-3.5 rounded-2xl border border-[#224F10]/20">
-                <input
-                  type="checkbox"
-                  checked={commitment}
-                  onChange={(e) => setCommitment(e.target.checked)}
-                  className="mt-0.5 accent-[#224F10]"
-                />
-                <span>
-                  Acepto la irrevocabilidad de la oferta (RN04) y me comprometo
-                  a concretar el pago directamente con el vendedor si resulto
-                  ganador.
-                </span>
-              </label>
-
-              <div className="flex justify-end gap-3 pt-4">
-                <Button variant="ghost" onClick={() => navigate('/bids')}>
-                  Cancelar
-                </Button>
-                <Button type="submit">
-                  <Gavel className="w-4 h-4" />
-                  Enviar Puja
-                </Button>
-              </div>
-            </form>
-          </>
+          <BidForm
+            auctions={auctions}
+            currentUserId={currentUser?.id}
+            onCreateBid={createBid}
+            onSaved={() => navigate('/bids')}
+            onCancel={() => navigate('/bids')}
+          />
         )}
       </Card>
-
-      <BidConfirmModal
-        isOpen={showConfirmModal}
-        onClose={() => setShowConfirmModal(false)}
-        onConfirm={handleConfirmBid}
-        isSubmitting={isSubmitting}
-        auction={selectedAuction}
-        bidAmount={amount}
-        bidNote={note}
-      />
     </div>
   );
 }

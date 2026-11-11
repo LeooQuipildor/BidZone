@@ -39,117 +39,65 @@ function App() {
           {/* Panel principal dinámico */}
           <Route
             path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <DashboardView />
-              </ProtectedRoute>
-            }
+            element={<ProtectedRoute><DashboardView /></ProtectedRoute>}
           />
 
           {/* Subastas: crear y editar */}
           <Route
             path="/auctions/new"
-            element={
-              <ProtectedRoute>
-                <AuctionCreateView />
-              </ProtectedRoute>
-            }
+            element={<ProtectedRoute><AuctionCreateView /></ProtectedRoute>}
           />
           <Route
             path="/auctions/:id/edit"
-            element={
-              <ProtectedRoute>
-                <AuctionEditView />
-              </ProtectedRoute>
-            }
+            element={<ProtectedRoute><AuctionEditView /></ProtectedRoute>}
           />
 
           {/* Pujas: pestaña del panel + formularios directos */}
           <Route
             path="/bids"
-            element={
-              <ProtectedRoute>
-                <DashboardView initialSection="bids" />
-              </ProtectedRoute>
-            }
+            element={<ProtectedRoute><DashboardView initialSection="bids" /></ProtectedRoute>}
           />
           <Route
             path="/bids/new"
-            element={
-              <ProtectedRoute>
-                <BidCreateView />
-              </ProtectedRoute>
-            }
+            element={<ProtectedRoute><BidCreateView /></ProtectedRoute>}
           />
           <Route
             path="/bids/:id/edit"
-            element={
-              <ProtectedRoute>
-                <BidEditView />
-              </ProtectedRoute>
-            }
+            element={<ProtectedRoute><BidEditView /></ProtectedRoute>}
           />
 
           {/* Reportes e infracciones (RN06) */}
           <Route
             path="/reports"
-            element={
-              <ProtectedRoute>
-                <DashboardView initialSection="reports" />
-              </ProtectedRoute>
-            }
+            element={<ProtectedRoute><DashboardView initialSection="reports" /></ProtectedRoute>}
           />
           <Route
             path="/reports/new"
-            element={
-              <ProtectedRoute>
-                <ReportCreateView />
-              </ProtectedRoute>
-            }
+            element={<ProtectedRoute><ReportCreateView /></ProtectedRoute>}
           />
           <Route
             path="/reports/:id/edit"
-            element={
-              <ProtectedRoute>
-                <ReportEditView />
-              </ProtectedRoute>
-            }
+            element={<ProtectedRoute><ReportEditView /></ProtectedRoute>}
           />
 
           {/* Calificaciones y reputación (RN07) */}
           <Route
             path="/reviews"
-            element={
-              <ProtectedRoute>
-                <DashboardView initialSection="reviews" />
-              </ProtectedRoute>
-            }
+            element={<ProtectedRoute><DashboardView initialSection="reviews" /></ProtectedRoute>}
           />
           <Route
             path="/reviews/new"
-            element={
-              <ProtectedRoute>
-                <ReviewCreateView />
-              </ProtectedRoute>
-            }
+            element={<ProtectedRoute><ReviewCreateView /></ProtectedRoute>}
           />
           <Route
             path="/reviews/:id/edit"
-            element={
-              <ProtectedRoute>
-                <ReviewEditView />
-              </ProtectedRoute>
-            }
+            element={<ProtectedRoute><ReviewEditView /></ProtectedRoute>}
           />
 
           {/* Usuarios y roles */}
           <Route
             path="/users"
-            element={
-              <ProtectedRoute>
-                <DashboardView initialSection="users" />
-              </ProtectedRoute>
-            }
+            element={<ProtectedRoute><DashboardView initialSection="users" /></ProtectedRoute>}
           />
           <Route
             path="/users/new"
@@ -161,21 +109,13 @@ function App() {
           />
           <Route
             path="/users/:id/edit"
-            element={
-              <ProtectedRoute>
-                <UserEditView />
-              </ProtectedRoute>
-            }
+            element={<ProtectedRoute><UserEditView /></ProtectedRoute>}
           />
 
           {/* Centro de notificaciones */}
           <Route
             path="/notifications"
-            element={
-              <ProtectedRoute>
-                <DashboardView initialSection="notifications" />
-              </ProtectedRoute>
-            }
+            element={<ProtectedRoute><DashboardView initialSection="notifications" /></ProtectedRoute>}
           />
 
           {/* Si la ruta no existe, redirigimos al inicio */}
