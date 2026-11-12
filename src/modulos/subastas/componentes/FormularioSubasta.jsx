@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
-import { Gavel, Save } from 'lucide-react';
+import { Save } from 'lucide-react';
 import {
   IMAGEN_SUBASTA_POR_DEFECTO,
   fechaParaInputLocal,
   inputLocalAFechaIso,
 } from '../../nucleo/utilidades/formatos';
-import { Button } from '../../nucleo/diseno/ui';
 import { Alert } from '../../nucleo/diseno/uiFeedback';
 import { AccionesFormulario } from '../../nucleo/diseno/componentesBloques';
 import { CamposSubasta } from './CamposSubasta';
@@ -16,7 +15,6 @@ export function FormularioSubasta({
   tienePujas = false,
   esAdmin = false,
   alEnviarFormulario,
-  alCerrarAhora = null,
   alCancelar,
   textoBotonGuardar,
 }) {
@@ -86,14 +84,6 @@ export function FormularioSubasta({
     }
   }
 
-  const botonCierreAnticipado =
-    estaEditando && subasta.status === 'activa' && alCerrarAhora ? (
-      <Button variant="secondary" onClick={alCerrarAhora}>
-        <Gavel className="w-4 h-4" />
-        Finalizar y Adjudicar Ahora
-      </Button>
-    ) : null;
-
   return (
     <form onSubmit={manejarEnvio} className="space-y-4">
       {bloquearCamposFinancieros && (
@@ -110,15 +100,12 @@ export function FormularioSubasta({
         datosFormulario={datosFormulario}
         estaEditando={estaEditando}
         subasta={subasta}
-        tienePujas={tienePujas}
-        esAdmin={esAdmin}
         bloquearCamposFinancieros={bloquearCamposFinancieros}
         alCambiar={manejarCambio}
       />
 
       <AccionesFormulario
         alCancelar={alCancelar}
-        izquierda={botonCierreAnticipado}
         textoGuardar={textoBotonGuardar || (estaEditando ? 'Guardar Cambios' : 'Publicar Subasta')}
         iconoGuardar={<Save className="w-4 h-4" />}
       />

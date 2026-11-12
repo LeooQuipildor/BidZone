@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, CheckCircle2 } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, Trash2 } from 'lucide-react';
 import { usarTiendaSubastas } from '../estado/tiendaSubastas';
 import { usarTiendaPujas } from '../../pujas/estado/tiendaPujas';
 import { usarTiendaAutenticacion } from '../../autenticacion/estado/tiendaAutenticacion';
 import { FichaProductoSubasta } from './FichaProductoSubasta';
 import { PanelContactoSubasta } from './PanelContactoSubasta';
 import { PanelPujasSubasta } from './PanelPujasSubasta';
+import { PanelSolicitudCorreccion } from './PanelSolicitudCorreccion';
 import { Button } from '../../nucleo/diseno/ui';
 import { Alert, Loading, ErrorCard } from '../../nucleo/diseno/uiFeedback';
 import { buscarPorId, mismoId } from '../../nucleo/utilidades/ayudas';
@@ -20,7 +21,7 @@ export function VistaDetalleSubasta() {
   const cargandoDetalle = usarTiendaSubastas((estado) => estado.cargandoDetalle);
   const errorTienda = usarTiendaSubastas((estado) => estado.error);
   const obtenerSubastaPorId = usarTiendaSubastas((estado) => estado.obtenerSubastaPorId);
-  const cerrarSubastaAhora = usarTiendaSubastas((estado) => estado.cerrarSubastaAhora);
+  const eliminarSubasta = usarTiendaSubastas((estado) => estado.eliminarSubasta);
 
   const pujas = usarTiendaPujas((estado) => estado.pujas);
   const crearPuja = usarTiendaPujas((estado) => estado.crearPuja);
@@ -30,6 +31,7 @@ export function VistaDetalleSubasta() {
   const [ahoraMs, setAhoraMs] = useState(() => Date.now());
   const [mensajeError, setMensajeError] = useState('');
   const [mensajeExito, setMensajeExito] = useState('');
+  const [solicitandoEdicion, setSolicitandoEdicion] = useState(false);
 
   useEffect(() => {
     obtenerSubastaPorId(id);
@@ -91,19 +93,14 @@ export function VistaDetalleSubasta() {
           (esVendedor || esAdmin || mismoId(usuarioActual.id, ganador.id))
       );
 
-  async function manejarCierreInmediato() {
-    if (
-      !window.confirm(
-        '¿Deseas finalizar la subasta ahora? Se adjudicará al postor líder y se liberarán los contactos.'
-      )
-    ) {
+  async function manejarEliminacionAdmin() {
+    if (!window.confirm(`¿Confirmas cancelar y eliminar la subasta "${subasta.title}"?`)) {
       return;
     }
     setMensajeError('');
-    setMensajeExito('');
     try {
-      await cerrarSubastaAhora(subasta.id);
-      setMensajeExito('Subasta finalizada. Se han liberado los datos de contacto entre el vendedor y el ganador.');
+      await eliminarSubasta(subasta.id);
+      navegar('/auctions');
     } catch (error) {
       setMensajeError(error.message);
     }
@@ -119,20 +116,35 @@ export function VistaDetalleSubasta() {
 
         {(esVendedor || esAdmin) && (
           <div className="flex items-center gap-2">
-            {subasta.status === 'activa' && (
-              <Button variant="secondary" size="sm" onClick={manejarCierreInmediato}>
-                <CheckCircle2 className="w-4 h-4" />
-                Finalizar y Adjudicar Ahora
-              </Button>
-            )}
-            {esVendedor && (
+            {esVendedor ? (
               <Link to={`/auctions/${subasta.id}/edit`}>
                 <Button variant="outline" size="sm">Editar Subasta</Button>
               </Link>
+            ) : (
+              <>
+                <Button variant="outline" size="sm" onClick={() => setSolicitandoEdicion(true)}>
+                  <AlertTriangle className="w-4 h-4" />
+                  Solicitar revisión
+                </Button>
+                <Button variant="danger" size="sm" onClick={manejarEliminacionAdmin}>
+                  <Trash2 className="w-4 h-4" />
+                  Cancelar subasta
+                </Button>
+              </>
             )}
           </div>
         )}
       </div>
+
+      <PanelSolicitudCorreccion
+        enModal
+        subasta={solicitandoEdicion ? subasta : null}
+        alExito={(texto) => {
+          setMensajeExito(texto);
+          setSolicitandoEdicion(false);
+        }}
+        alCancelar={() => setSolicitandoEdicion(false)}
+      />
 
       {mensajeError && (
         <Alert type="error" onClose={() => setMensajeError('')}>{mensajeError}</Alert>

@@ -7,7 +7,6 @@ import {
   reemplazarPorId,
 } from '../../nucleo/utilidades/ayudas';
 import { inputLocalAFechaIso } from '../../nucleo/utilidades/formatos';
-import { usarTiendaNotificaciones } from '../../notificaciones/estado/tiendaNotificaciones';
 
 // Construye el objeto de actualización de subasta con los nombres que espera el backend
 function construirCuerpoActualizacion(cambios) {
@@ -36,7 +35,7 @@ export const usarTiendaSubastas = create((set, get) => ({
   cargando: false,
   cargandoDetalle: false,
   error: null,
-  filtros: { busqueda: '', categoria: 'Todas', estado: 'todas', ordenarPor: 'proximasACerrar' },
+  filtros: { busqueda: '', categoria: 'Todas', estado: 'activa', ordenarPor: 'proximasACerrar' },
 
   actualizarFiltros: (nuevosFiltros) => {
     set((estado) => ({ filtros: { ...estado.filtros, ...nuevosFiltros } }));
@@ -107,26 +106,6 @@ export const usarTiendaSubastas = create((set, get) => ({
       const detalle = get().detalleSubastaActual;
       if (detalle && mismoId(detalle.id, id)) await get().obtenerSubastaPorId(id);
       return actualizada;
-    } catch (error) {
-      set({ error: error.message });
-      throw error;
-    }
-  },
-
-  cerrarSubastaAhora: async (id) => {
-    set({ error: null });
-    try {
-      const cerrada = await peticionHttp(`/auctions/${id}/close`, { method: 'POST' });
-      set((estado) => ({ subastas: reemplazarPorId(estado.subastas, id, cerrada) }));
-
-      const detalle = get().detalleSubastaActual;
-      if (detalle && mismoId(detalle.id, id)) await get().obtenerSubastaPorId(id);
-
-      // Al cerrar la subasta, el servidor genera notificaciones de adjudicación (RN05)
-      if (localStorage.getItem('bidzone_token')) {
-        await usarTiendaNotificaciones.getState().obtenerNotificaciones();
-      }
-      return cerrada;
     } catch (error) {
       set({ error: error.message });
       throw error;

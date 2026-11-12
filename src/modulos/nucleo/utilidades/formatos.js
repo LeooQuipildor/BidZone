@@ -23,12 +23,12 @@ export const CATEGORIAS_FILTRO_SUBASTA = [
   'Vehículos',
 ];
 
-// Opciones para filtrar por estado en el catálogo público y en el panel
+// Opciones para filtrar por estado o cierre en el catálogo público
 export const OPCIONES_ESTADO_SALA = [
-  { valor: 'todas', etiqueta: 'Todas las subastas' },
   { valor: 'activa', etiqueta: 'En vivo (Activas)' },
+  { valor: 'terminaHoy', etiqueta: 'Termina Hoy' },
+  { valor: 'terminaManana', etiqueta: 'Termina Mañana' },
   { valor: 'finalizada', etiqueta: 'Finalizadas' },
-  { valor: 'cancelada', etiqueta: 'Canceladas' },
 ];
 
 // Criterios de ordenamiento compartidos para listas de subastas

@@ -4,6 +4,7 @@ import { Layout } from './modulos/nucleo/componentes/Layout';
 import { Inicio } from './modulos/nucleo/componentes/Inicio';
 import { VistaReglamentos } from './modulos/nucleo/componentes/VistaReglamentos';
 import { VistaPreguntasFrecuentes } from './modulos/nucleo/componentes/VistaPreguntasFrecuentes';
+import { VistaError404 } from './modulos/nucleo/componentes/VistaError404';
 import { VistaPanelControl } from './modulos/nucleo/componentes/VistaPanelControl';
 import { RutaProtegida } from './modulos/nucleo/componentes/RutaProtegida';
 
@@ -184,8 +185,9 @@ function App() {
             }
           />
 
-          {/* Si la ruta no existe, redirigimos al inicio */}
-          <Route path="*" element={<Navigate to="/" replace />} />
+          {/* Ruta explícita y captura de enlaces inexistentes o no desarrollados */}
+          <Route path="/404" element={<VistaError404 />} />
+          <Route path="*" element={<VistaError404 />} />
         </Routes>
       </Layout>
     </BrowserRouter>

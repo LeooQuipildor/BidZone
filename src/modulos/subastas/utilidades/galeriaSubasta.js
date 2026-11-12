@@ -37,9 +37,9 @@ const FOTOS_POR_CATEGORIA = {
   Deportes: FOTOS_POR_SUBASTA[104],
   Fotografía: FOTOS_POR_SUBASTA[105],
   Vehículos: [
-    'https://images.unsplash.com/photo-1656252117732-2efa62265105?auto=format&fit=crop&w=900&q=80',
-    'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=900&q=80',
-    'https://images.unsplash.com/photo-1548204085-a1d64c921d5e?auto=format&fit=crop&w=900&q=80',
+    'https://images.unsplash.com/photo-1662199513774-6c6c1e7e2c3e?auto=format&fit=crop&w=900&q=80',
+    'https://images.unsplash.com/photo-1603799078290-ccc7f07412ca?auto=format&fit=crop&w=900&q=80',
+    'https://images.unsplash.com/photo-1675635465900-1d04390ad872?auto=format&fit=crop&w=900&q=80',
   ],
 };
 

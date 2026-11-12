@@ -4,6 +4,8 @@ import { PlusCircle } from 'lucide-react';
 import { usarTiendaSubastas } from '../estado/tiendaSubastas';
 import { usarTiendaAutenticacion } from '../../autenticacion/estado/tiendaAutenticacion';
 import { TarjetaSubasta } from './TarjetaSubasta';
+import { PaginacionCatalogo } from './PaginacionCatalogo';
+import { PanelSolicitudCorreccion } from './PanelSolicitudCorreccion';
 import {
   CATEGORIAS_FILTRO_SUBASTA,
   OPCIONES_ESTADO_SALA,
@@ -19,6 +21,8 @@ import {
   TarjetaCtaCatalogo,
 } from '../../nucleo/diseno/componentesBloques';
 
+const SUBASTAS_POR_PAGINA = 20;
+
 export function VistaListaSubastas() {
   const navegar = useNavigate();
   const subastas = usarTiendaSubastas((estado) => estado.subastas);
@@ -29,6 +33,12 @@ export function VistaListaSubastas() {
   const eliminarSubasta = usarTiendaSubastas((estado) => estado.eliminarSubasta);
   const usuarioActual = usarTiendaAutenticacion((estado) => estado.usuarioActual);
   const [aviso, setAviso] = useState(null);
+  const [subastaSolicitada, setSubastaSolicitada] = useState(null);
+  const estadoSala = OPCIONES_ESTADO_SALA.some((op) => op.valor === filtros.estado)
+    ? filtros.estado
+    : 'activa';
+  const claveFiltros = `${filtros.busqueda}|${filtros.categoria}|${estadoSala}|${filtros.ordenarPor}`;
+  const [estadoPagina, setEstadoPagina] = useState({ clave: claveFiltros, numero: 1 });
 
   useEffect(() => {
     obtenerSubastas();
@@ -38,9 +48,19 @@ export function VistaListaSubastas() {
     subastas,
     filtros.busqueda,
     filtros.categoria,
-    filtros.estado,
+    estadoSala,
     filtros.ordenarPor
   );
+  const totalPaginas = Math.max(1, Math.ceil(subastasFiltradas.length / SUBASTAS_POR_PAGINA));
+  const paginaActiva = estadoPagina.clave === claveFiltros ? estadoPagina.numero : 1;
+  const paginaSegura = Math.min(paginaActiva, totalPaginas);
+  const indiceInicio = (paginaSegura - 1) * SUBASTAS_POR_PAGINA;
+  const subastasPaginadas = subastasFiltradas.slice(indiceInicio, indiceInicio + SUBASTAS_POR_PAGINA);
+
+  function manejarCambioPagina(nuevaPagina) {
+    setEstadoPagina({ clave: claveFiltros, numero: nuevaPagina });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
 
   async function manejarEliminacion(subasta) {
     if (!window.confirm(`¿Confirmas la eliminación de la subasta "${subasta.title}"?`)) {
@@ -97,7 +117,7 @@ export function VistaListaSubastas() {
             <Select
               id="filtro-estado"
               label="Estado de sala"
-              value={filtros.estado}
+              value={estadoSala}
               onChange={(evento) => actualizarFiltros({ estado: evento.target.value })}
               options={OPCIONES_ESTADO_SALA}
             />
@@ -119,28 +139,52 @@ export function VistaListaSubastas() {
           </p>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {subastasFiltradas.map((subasta) => {
-            const esAdmin = usuarioActual?.role === 'admin';
-            const esVendedor = mismoId(usuarioActual?.id, subasta.sellerId);
-            return (
-              <TarjetaSubasta
-                key={subasta.id}
-                subasta={subasta}
-                puedeAdministrar={Boolean(usuarioActual && (esAdmin || esVendedor))}
-                alEliminar={manejarEliminacion}
-              />
-            );
-          })}
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {subastasPaginadas.map((subasta) => {
+              const esAdmin = usuarioActual?.role === 'admin';
+              const esVendedor = mismoId(usuarioActual?.id, subasta.sellerId);
+              return (
+                <TarjetaSubasta
+                  key={subasta.id}
+                  subasta={subasta}
+                  esPropietario={Boolean(usuarioActual && esVendedor)}
+                  esAdmin={Boolean(usuarioActual && esAdmin)}
+                  alSolicitarEdicion={setSubastaSolicitada}
+                  alEliminar={manejarEliminacion}
+                />
+              );
+            })}
 
-          <TarjetaCtaCatalogo
-            titulo="¿Tienes un artículo para subastar?"
-            descripcion="Publica tu lote con precio base e incremento mínimo. Al cerrar la subasta coordinas directamente con el ganador."
-            textoBoton="Crear nueva subasta"
-            alHacerClic={() => navegar('/auctions/new')}
+            {paginaSegura === totalPaginas && (
+              <TarjetaCtaCatalogo
+                titulo="¿Tienes un artículo para subastar?"
+                descripcion="Publica tu lote con precio base e incremento mínimo. Al cerrar la subasta coordinas directamente con el ganador."
+                textoBoton="Crear nueva subasta"
+                alHacerClic={() => navegar('/auctions/new')}
+              />
+            )}
+          </div>
+
+          <PaginacionCatalogo
+            paginaActual={paginaSegura}
+            totalPaginas={totalPaginas}
+            totalElementos={subastasFiltradas.length}
+            elementosPorPagina={SUBASTAS_POR_PAGINA}
+            alCambiarPagina={manejarCambioPagina}
           />
         </div>
       )}
+
+      <PanelSolicitudCorreccion
+        enModal
+        subasta={subastaSolicitada}
+        alExito={(texto) => {
+          setAviso({ type: 'success', text: texto });
+          setSubastaSolicitada(null);
+        }}
+        alCancelar={() => setSubastaSolicitada(null)}
+      />
     </div>
   );
 }

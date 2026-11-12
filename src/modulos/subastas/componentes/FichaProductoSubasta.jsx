@@ -5,7 +5,6 @@ import { obtenerFotosSubasta } from '../utilidades/galeriaSubasta';
 
 function obtenerEtiquetaEstado(estado) {
   if (estado === 'activa') return { variant: 'success', texto: 'Subasta en Vivo' };
-  if (estado === 'cancelada') return { variant: 'default', texto: 'Cancelada' };
   return { variant: 'default', texto: 'Subasta Finalizada' };
 }
 

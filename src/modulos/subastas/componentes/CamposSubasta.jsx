@@ -3,27 +3,14 @@ import { OPCIONES_CATEGORIAS_SUBASTA } from '../../nucleo/utilidades/formatos';
 import { Input, Select, Textarea } from '../../nucleo/diseno/ui';
 
 const ETIQUETAS_ESTADO_BLOQUEADO = {
-  activa: 'Activa (En vivo — usa "Finalizar y Adjudicar")',
+  activa: 'Activa (En vivo)',
   finalizada: 'Finalizada',
   cancelada: 'Cancelada',
 };
 
-// Devuelve los estados permitidos según si la subasta ya tiene pujas o si edita un administrador
-function obtenerOpcionesEstadoSubasta(subasta, tienePujas, esAdmin) {
+// Mantiene el estado informativo del lote (el cierre automático aplica por fecha de fin RN03)
+function obtenerOpcionesEstadoSubasta(subasta) {
   if (!subasta) return [];
-  if (esAdmin) {
-    return [
-      { valor: 'activa', etiqueta: 'Activa (En vivo)' },
-      { valor: 'finalizada', etiqueta: 'Finalizada' },
-      { valor: 'cancelada', etiqueta: 'Cancelada' },
-    ];
-  }
-  if (subasta.status === 'activa' && !tienePujas) {
-    return [
-      { valor: 'activa', etiqueta: 'Activa (En vivo)' },
-      { valor: 'cancelada', etiqueta: 'Cancelar subasta' },
-    ];
-  }
   return [{ valor: subasta.status, etiqueta: ETIQUETAS_ESTADO_BLOQUEADO[subasta.status] || subasta.status }];
 }
 
@@ -32,12 +19,10 @@ export function CamposSubasta({
   datosFormulario,
   estaEditando,
   subasta,
-  tienePujas,
-  esAdmin,
   bloquearCamposFinancieros,
   alCambiar,
 }) {
-  const opcionesEstado = obtenerOpcionesEstadoSubasta(subasta, tienePujas, esAdmin);
+  const opcionesEstado = obtenerOpcionesEstadoSubasta(subasta);
 
   return (
     <>

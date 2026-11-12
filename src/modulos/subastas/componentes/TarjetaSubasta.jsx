@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowUpRight, Clock, Edit3, Trash2 } from 'lucide-react';
+import { AlertTriangle, ArrowUpRight, Clock, Edit3, Trash2 } from 'lucide-react';
 import { usarTiendaPujas } from '../../pujas/estado/tiendaPujas';
 import {
   IMAGEN_SUBASTA_POR_DEFECTO,
@@ -13,7 +13,9 @@ import { Button } from '../../nucleo/diseno/ui';
 // Tarjeta visual de una subasta usada en el Inicio y en el Catálogo público
 export function TarjetaSubasta({
   subasta,
-  puedeAdministrar = false,
+  esPropietario = false,
+  esAdmin = false,
+  alSolicitarEdicion,
   alEliminar,
   claseExtra = '',
 }) {
@@ -120,22 +122,34 @@ export function TarjetaSubasta({
         </button>
       </div>
 
-      {/* Botones de editar y eliminar visibles solo para dueño o admin */}
-      {puedeAdministrar && (
+      {/* Acciones: el propietario edita/elimina; el admin solicita edición o elimina */}
+      {(esPropietario || esAdmin) && (
         <div
           onClick={(evento) => evento.stopPropagation()}
           className="flex items-center justify-end gap-2 pt-2.5 mt-2.5 mx-1 border-t border-neutral-100"
         >
-          <Link to={`/auctions/${subasta.id}/edit`}>
-            <Button variant="outline" size="sm" withArrow={false}>
-              <Edit3 className="w-3 h-3" />
-              Editar
-            </Button>
-          </Link>
+          {esPropietario ? (
+            <Link to={`/auctions/${subasta.id}/edit`}>
+              <Button variant="outline" size="sm" withArrow={false}>
+                <Edit3 className="w-3 h-3" />
+                Editar
+              </Button>
+            </Link>
+          ) : (
+            <button
+              type="button"
+              onClick={() => alSolicitarEdicion?.(subasta)}
+              className="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-800 px-3 py-1.5 text-xs font-semibold transition-colors cursor-pointer"
+            >
+              <AlertTriangle className="w-3 h-3" />
+              Solicitar revisión
+            </button>
+          )}
           <Button
             variant="danger"
             size="sm"
             withArrow={false}
+            title={esPropietario ? 'Eliminar subasta' : 'Cancelar y eliminar subasta'}
             onClick={() => alEliminar?.(subasta)}
           >
             <Trash2 className="w-3 h-3" />

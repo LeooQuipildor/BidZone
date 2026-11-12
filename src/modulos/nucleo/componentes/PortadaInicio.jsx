@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowRight, Clock, Layers, ShieldCheck, Tag } from "lucide-react";
+import { OPCIONES_ESTADO_SALA } from "../utilidades/formatos";
 
 // Cajita reutilizable para cada filtro rápido de la portada
 function CajaFiltroPortada({ icono, titulo, children }) {
@@ -113,9 +114,11 @@ export function PortadaInicio({ categorias, alBuscar }) {
               onChange={(evento) => setEstadoElegido(evento.target.value)}
               className="w-full bg-transparent text-xs font-bold text-[#0D0D0D] focus:outline-none cursor-pointer"
             >
-              <option value="activa">En vivo (Activas)</option>
-              <option value="finalizada">Adjudicadas</option>
-              <option value="todas">Todas las salas</option>
+              {OPCIONES_ESTADO_SALA.map((opcion) => (
+                <option key={opcion.valor} value={opcion.valor}>
+                  {opcion.etiqueta}
+                </option>
+              ))}
             </select>
           </CajaFiltroPortada>
 

@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
 import { BellRing, Send } from 'lucide-react';
+import { usarTiendaAutenticacion } from '../../autenticacion/estado/tiendaAutenticacion';
+import { usarTiendaNotificaciones } from '../../notificaciones/estado/tiendaNotificaciones';
+import { buscarPorId } from '../../nucleo/utilidades/ayudas';
 import { Input, Select, Textarea } from '../../nucleo/diseno/ui';
-import { Alert } from '../../nucleo/diseno/uiFeedback';
+import { Alert, Modal } from '../../nucleo/diseno/uiFeedback';
 import { AccionesFormulario } from '../../nucleo/diseno/componentesBloques';
 
 const MOTIVOS_CORRECCION = [
@@ -27,15 +30,14 @@ const MOTIVOS_CORRECCION = [
   },
 ];
 
-// Panel administrativo para pedir al vendedor que corrija una subasta sin editarla por él
-export function PanelSolicitudCorreccion({
-  subasta,
-  nombreVendedor,
-  alEnviarAviso,
-  alCancelar,
-}) {
+function FormularioSolicitudCorreccion({ subasta, alExito, alCancelar }) {
+  const usuarios = usarTiendaAutenticacion((estado) => estado.usuarios);
+  const enviarNotificacion = usarTiendaNotificaciones((estado) => estado.enviarNotificacion);
+  const vendedor = buscarPorId(usuarios, subasta.sellerId);
+  const nombreVendedor = vendedor?.name || subasta.sellerName || 'Vendedor';
+
   const [motivoClave, setMotivoClave] = useState(MOTIVOS_CORRECCION[0].valor);
-  const [tituloAviso, setTituloAviso] = useState(`Corrección requerida en "${subasta.title}"`);
+  const [tituloAviso, setTituloAviso] = useState(`Revisión requerida en "${subasta.title}"`);
   const [mensaje, setMensaje] = useState(MOTIVOS_CORRECCION[0].sugerencia);
   const [mensajeError, setMensajeError] = useState('');
   const [enviando, setEnviando] = useState(false);
@@ -44,9 +46,7 @@ export function PanelSolicitudCorreccion({
     const nuevaClave = evento.target.value;
     setMotivoClave(nuevaClave);
     const encontrado = MOTIVOS_CORRECCION.find((item) => item.valor === nuevaClave);
-    if (encontrado && encontrado.sugerencia) {
-      setMensaje(encontrado.sugerencia);
-    }
+    if (encontrado && encontrado.sugerencia) setMensaje(encontrado.sugerencia);
   }
 
   async function manejarEnvio(evento) {
@@ -54,19 +54,20 @@ export function PanelSolicitudCorreccion({
     setMensajeError('');
 
     if (!tituloAviso.trim() || !mensaje.trim()) {
-      setMensajeError('Debes completar el asunto y el detalle de corrección para el vendedor.');
+      setMensajeError('Debes completar el asunto y el detalle de revisión para el vendedor.');
       return;
     }
 
     setEnviando(true);
     try {
-      await alEnviarAviso({
+      await enviarNotificacion({
         idUsuario: subasta.sellerId,
         idSubasta: subasta.id,
         titulo: tituloAviso.trim(),
         mensaje: mensaje.trim(),
         tipo: 'system',
       });
+      alExito?.(`Solicitud de revisión enviada a ${nombreVendedor}.`);
     } catch (error) {
       setMensajeError(error.message);
     } finally {
@@ -111,8 +112,8 @@ export function PanelSolicitudCorreccion({
 
       <Textarea
         id="mensajeCorreccion"
-        label="Detalle de la corrección solicitada *"
-        placeholder="Explica qué debe corregir el vendedor en su publicación..."
+        label="Detalle de la revisión solicitada *"
+        placeholder="Explica qué debe revisar o corregir el vendedor en su publicación..."
         value={mensaje}
         onChange={(evento) => setMensaje(evento.target.value)}
       />
@@ -127,3 +128,26 @@ export function PanelSolicitudCorreccion({
   );
 }
 
+// Panel único reutilizado en Panel Admin, Explorar y Detalle para solicitar revisión al vendedor
+export function PanelSolicitudCorreccion({ subasta, enModal = false, alExito, alCancelar }) {
+  if (!subasta) return null;
+
+  const formulario = (
+    <FormularioSolicitudCorreccion
+      key={subasta.id}
+      subasta={subasta}
+      alExito={alExito}
+      alCancelar={alCancelar}
+    />
+  );
+
+  if (enModal) {
+    return (
+      <Modal isOpen onClose={alCancelar} title={`Solicitar revisión · Lote #${subasta.id}`}>
+        {formulario}
+      </Modal>
+    );
+  }
+
+  return formulario;
+}

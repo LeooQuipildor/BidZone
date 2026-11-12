@@ -6,14 +6,7 @@ import {
 } from '../../utilidades/formatos';
 import { formatearCuentaRegresiva } from './ayudasPanel';
 
-function obtenerEstadoTarjeta(subasta, estaEnVivo, cuentaRegresiva) {
-  if (subasta.status === 'cancelada') {
-    return {
-      textoReloj: 'Cancelada',
-      textoInsignia: 'Cancelada',
-      claseInsignia: 'bg-red-50 text-red-700 border-red-200',
-    };
-  }
+function obtenerEstadoTarjeta(estaEnVivo, cuentaRegresiva) {
   if (estaEnVivo) {
     return {
       textoReloj: cuentaRegresiva,
@@ -43,7 +36,7 @@ export function TarjetaSubastaPanel({
 }) {
   const cuentaRegresiva = formatearCuentaRegresiva(subasta.endTime, ahoraMs);
   const estaEnVivo = subasta.status === 'activa' && cuentaRegresiva !== '00:00:00';
-  const infoEstado = obtenerEstadoTarjeta(subasta, estaEnVivo, cuentaRegresiva);
+  const infoEstado = obtenerEstadoTarjeta(estaEnVivo, cuentaRegresiva);
   const puedeEliminar = esPropia || esAdmin;
 
   return (
@@ -129,7 +122,7 @@ export function TarjetaSubastaPanel({
             <button
               type="button"
               onClick={() => alEliminar(subasta)}
-              title="Eliminar subasta"
+              title={esPropia ? 'Eliminar subasta' : 'Cancelar y eliminar subasta'}
               className="w-8 h-8 rounded-full border border-red-200 hover:bg-red-50 text-red-700 flex items-center justify-center transition-colors cursor-pointer"
             >
               <Trash2 className="w-3.5 h-3.5" />

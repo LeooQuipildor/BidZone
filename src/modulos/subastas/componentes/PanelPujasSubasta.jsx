@@ -133,7 +133,7 @@ export function PanelPujasSubasta({
         {subasta.status === 'activa' ? (
           esVendedor ? (
             <Alert type="info" title="Eres el dueño de este artículo (RN02)">
-              Como vendedor no puedes realizar auto-pujas sobre tu propia publicación. Puedes finalizar y adjudicar la subasta desde el botón superior.
+              Como vendedor no puedes realizar auto-pujas sobre tu propia publicación. Al cumplirse la fecha de cierre se adjudicará automáticamente al mejor postor.
             </Alert>
           ) : (
             <form onSubmit={abrirConfirmacion} className="space-y-4">
