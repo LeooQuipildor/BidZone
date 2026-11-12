@@ -1,22 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
-import {
-  AlertOctagon,
-  Bell,
-  Gavel,
-  LayoutDashboard,
-  Star,
-  TrendingUp,
-  User as IconoUsuario,
-  Users,
-} from 'lucide-react';
 import { usarTiendaAutenticacion } from '../../autenticacion/estado/tiendaAutenticacion';
 import { usarTiendaSubastas } from '../../subastas/estado/tiendaSubastas';
 import { usarTiendaPujas } from '../../pujas/estado/tiendaPujas';
 import { usarTiendaReportes } from '../../reportes/estado/tiendaReportes';
 import { usarTiendaResenas } from '../../resenas/estado/tiendaResenas';
 import { usarTiendaNotificaciones } from '../../notificaciones/estado/tiendaNotificaciones';
-import { mismoId, useRelojSegundo } from '../utilidades/ayudas';
+import { useRelojSegundo } from '../utilidades/ayudas';
+import { formatearRolUsuario } from '../utilidades/formatos';
+import { construirMenuPanel } from './panel/ayudasPanel';
 import { Sidebar } from './panel/Sidebar';
 import { Header } from './panel/Header';
 import { TabResumenPanel } from './panel/TabResumenPanel';
@@ -61,8 +53,8 @@ export function VistaPanelControl({ seccionInicial = 'resumen' }) {
   const obtenerNotificaciones = usarTiendaNotificaciones((estado) => estado.obtenerNotificaciones);
 
   const [textoBusqueda, setTextoBusqueda] = useState('');
+  const [paginaSubastas, setPaginaSubastas] = useState(1);
   const [datosInicialesSeccion, setDatosInicialesSeccion] = useState(null);
-  const [contadorSeccion, setContadorSeccion] = useState(0);
 
   // Al entrar al panel cargamos los datos de cada módulo
   useEffect(() => {
@@ -80,70 +72,88 @@ export function VistaPanelControl({ seccionInicial = 'resumen' }) {
   const abrirNuevoDesdeUrl = parametrosUrl.get('nuevo') === '1' || parametrosUrl.get('new') === '1';
   const seccionSolicitada = tabDesdeUrl || seccionInicial || 'resumen';
   const seccionActiva = !esAdmin && seccionSolicitada === 'usuarios' ? 'resumen' : seccionSolicitada;
-  const datosInicialesEfectivos =
-    datosInicialesSeccion || (abrirNuevoDesdeUrl ? { abrirFormulario: true } : null);
+
+  function manejarCambioBusqueda(nuevoTexto) {
+    setTextoBusqueda(nuevoTexto);
+    setPaginaSubastas(1);
+  }
 
   function elegirSeccion(siguienteSeccion, datosPrevios = null) {
     setTextoBusqueda('');
+    setPaginaSubastas(1);
     setDatosInicialesSeccion(datosPrevios);
-    setContadorSeccion((previo) => previo + 1);
 
-    if (ubicacion.pathname !== '/dashboard') {
-      navegar(siguienteSeccion === 'resumen' ? '/dashboard' : `/dashboard?tab=${siguienteSeccion}`, { replace: true });
+    if (ubicacion.pathname !== '/panel') {
+      const destino = siguienteSeccion === 'resumen' ? '/panel' : `/panel?tab=${siguienteSeccion}`;
+      navegar(destino, { replace: true });
       return;
     }
+
     setParametrosUrl(siguienteSeccion === 'resumen' ? {} : { tab: siguienteSeccion }, { replace: true });
   }
 
-  const misSubastas = subastas.filter((item) => mismoId(item.sellerId, usuarioActual?.id));
-  const misPujas = pujas.filter((item) => mismoId(item.bidderId, usuarioActual?.id));
-  const misResenas = resenas.filter(
-    (item) => mismoId(item.reviewerId, usuarioActual?.id) || mismoId(item.targetUserId, usuarioActual?.id)
-  );
-  const reportesAbiertos = reportes.filter((item) => item.status === 'en_revision').length;
-  const notificacionesSinLeer = notificaciones.filter(
-    (item) => mismoId(item.userId, usuarioActual?.id) && !item.read
-  );
-
-  const etiquetaSubastas = esAdmin ? 'Subastas' : 'Mis Subastas';
-  const etiquetaReportes = esAdmin ? 'Tickets RN06' : 'Mis Reportes';
-
-  const seccionesMenu = [
-    { id: 'resumen', etiqueta: 'Resumen', icono: LayoutDashboard },
-    { id: 'subastas', etiqueta: etiquetaSubastas, icono: Gavel, cantidad: esAdmin ? subastas.length : misSubastas.length },
-    { id: 'pujas', etiqueta: 'Mis Pujas', icono: TrendingUp, cantidad: misPujas.length },
-    { id: 'reportes', etiqueta: etiquetaReportes, icono: AlertOctagon, insignia: reportesAbiertos || null },
-    { id: 'resenas', etiqueta: 'Mis Reseñas', icono: Star, cantidad: misResenas.length },
-  ];
-
-  if (esAdmin) {
-    seccionesMenu.push({ id: 'usuarios', etiqueta: 'Usuarios', icono: Users, cantidad: usuarios.length });
+  function limpiarAperturaFormulario() {
+    if (abrirNuevoDesdeUrl) {
+      setParametrosUrl({ tab: 'subastas' }, { replace: true });
+    }
+    if (datosInicialesSeccion?.abrirFormulario) {
+      setDatosInicialesSeccion(null);
+    }
   }
 
-  const seccionesCuenta = [
-    { id: 'notificaciones', etiqueta: 'Mis Notificaciones', icono: Bell, insignia: notificacionesSinLeer.length || null },
-    { id: 'perfil', etiqueta: 'Mi Perfil', icono: IconoUsuario },
-  ];
+  const { seccionesMenu, seccionesCuenta } = construirMenuPanel({
+    esAdmin,
+    usuarioActual,
+    usuarios,
+    subastas,
+    pujas,
+    reportes,
+    resenas,
+    notificaciones,
+  });
 
-  const base = { usuarioActual, usuarios, subastas, textoBusqueda };
-  const claveTab = `${seccionActiva}-${contadorSeccion}-${abrirNuevoDesdeUrl ? 'nuevo' : 'lista'}`;
+  const abrirFormularioSubasta = abrirNuevoDesdeUrl || Boolean(datosInicialesSeccion?.abrirFormulario);
 
   const contenidoPorSeccion = {
-    resumen: <TabResumenPanel {...base} pujas={pujas} reportes={reportes} resenas={resenas} ahoraMs={ahoraMs} alElegirSeccion={elegirSeccion} />,
-    subastas: <TabSubastasPanel key={claveTab} {...base} pujas={pujas} ahoraMs={ahoraMs} datosIniciales={datosInicialesEfectivos} />,
-    pujas: <TabPujasPanel key={claveTab} {...base} pujas={pujas} />,
-    reportes: <TabReportesPanel key={claveTab} {...base} reportes={reportes} datosIniciales={datosInicialesEfectivos} />,
-    resenas: <TabResenasPanel key={claveTab} {...base} resenas={resenas} datosIniciales={datosInicialesEfectivos} />,
-    usuarios: esAdmin ? <TabUsuariosPanel key={claveTab} {...base} /> : null,
-    notificaciones: <TabNotificacionesPanel key={claveTab} usuarioActual={usuarioActual} notificaciones={notificaciones} textoBusqueda={textoBusqueda} />,
-    perfil: <TabPerfilPanel key={claveTab} usuarioActual={usuarioActual} subastas={subastas} pujas={pujas} />,
+    resumen: (
+      <TabResumenPanel
+        usuarioActual={usuarioActual} usuarios={usuarios} subastas={subastas}
+        pujas={pujas} reportes={reportes} resenas={resenas}
+        textoBusqueda={textoBusqueda} ahoraMs={ahoraMs} alElegirSeccion={elegirSeccion}
+      />
+    ),
+    subastas: (
+      <TabSubastasPanel
+        usuarioActual={usuarioActual} usuarios={usuarios} subastas={subastas}
+        pujas={pujas} textoBusqueda={textoBusqueda} ahoraMs={ahoraMs}
+        paginaActual={paginaSubastas} alCambiarPagina={setPaginaSubastas}
+        abrirDesdeAccesoExterno={abrirFormularioSubasta}
+        alLimpiarNuevo={limpiarAperturaFormulario}
+      />
+    ),
+    pujas: <TabPujasPanel usuarioActual={usuarioActual} subastas={subastas} pujas={pujas} textoBusqueda={textoBusqueda} />,
+    reportes: (
+      <TabReportesPanel
+        usuarioActual={usuarioActual} usuarios={usuarios} subastas={subastas}
+        reportes={reportes} textoBusqueda={textoBusqueda} datosIniciales={datosInicialesSeccion}
+      />
+    ),
+    resenas: (
+      <TabResenasPanel
+        usuarioActual={usuarioActual} usuarios={usuarios} subastas={subastas}
+        resenas={resenas} textoBusqueda={textoBusqueda} datosIniciales={datosInicialesSeccion}
+      />
+    ),
+    usuarios: esAdmin ? <TabUsuariosPanel usuarioActual={usuarioActual} usuarios={usuarios} textoBusqueda={textoBusqueda} /> : null,
+    notificaciones: <TabNotificacionesPanel usuarioActual={usuarioActual} notificaciones={notificaciones} textoBusqueda={textoBusqueda} />,
+    perfil: <TabPerfilPanel usuarioActual={usuarioActual} subastas={subastas} pujas={pujas} />,
   };
 
   return (
     <div className="rounded-[28px] bg-[#F7FBF3] border border-[#224F10]/12 shadow-sm overflow-hidden flex flex-col lg:flex-row">
       <Sidebar
         seccionActiva={seccionActiva}
-        etiquetaRol={esAdmin ? 'Admin' : 'Socio'}
+        etiquetaRol={formatearRolUsuario(usuarioActual?.role, true)}
         seccionesMenu={seccionesMenu}
         seccionesCuenta={seccionesCuenta}
         alElegirSeccion={elegirSeccion}
@@ -153,7 +163,7 @@ export function VistaPanelControl({ seccionInicial = 'resumen' }) {
         <Header
           seccionActiva={seccionActiva}
           textoBusqueda={textoBusqueda}
-          alCambiarBusqueda={setTextoBusqueda}
+          alCambiarBusqueda={manejarCambioBusqueda}
           usuarioActual={usuarioActual}
         />
 

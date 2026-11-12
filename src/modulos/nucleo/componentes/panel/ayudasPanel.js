@@ -1,10 +1,15 @@
 import {
-  CATEGORIAS_FILTRO_SUBASTA,
-  OPCIONES_ESTADO_SALA,
-} from '../../utilidades/formatos';
-import { coincideConBusqueda, mismoId } from '../../utilidades/ayudas';
-
-export const CATEGORIAS_PANEL = CATEGORIAS_FILTRO_SUBASTA;
+  AlertOctagon,
+  Bell,
+  Gavel,
+  LayoutDashboard,
+  Star,
+  TrendingUp,
+  User as IconoUsuario,
+  Users,
+} from 'lucide-react';
+import { OPCIONES_ESTADO_SALA, OPCIONES_ORDEN_SUBASTA } from '../../utilidades/formatos';
+import { mismoId } from '../../utilidades/ayudas';
 
 export const VISTAS_SUBASTA_ADMIN = [
   { valor: 'todas', etiqueta: 'Todas (Moderación)' },
@@ -12,104 +17,75 @@ export const VISTAS_SUBASTA_ADMIN = [
 ];
 
 export const OPCIONES_ESTADO_PANEL = [
-  { valor: 'todas', etiqueta: 'Todas las subastas' },
-  ...OPCIONES_ESTADO_SALA,
+  { valor: 'todas', etiqueta: 'Estado: Todas las subastas' },
+  ...OPCIONES_ESTADO_SALA.map((op) => ({ valor: op.valor, etiqueta: `Estado: ${op.etiqueta}` })),
 ];
 
-// Toma las primeras 2 iniciales de un nombre para el avatar circular (ejemplo: "Juan Pérez" -> "JP")
-export function obtenerIniciales(nombre, respaldo = 'BZ') {
-  const texto = String(nombre || respaldo).trim();
-  if (!texto) return respaldo;
+export const OPCIONES_ORDEN_PANEL = OPCIONES_ORDEN_SUBASTA.map((op) => ({
+  valor: op.valor,
+  etiqueta: `Orden: ${op.etiqueta}`,
+}));
 
-  const palabras = texto.split(' ');
-  let iniciales = '';
-  for (const palabra of palabras) {
-    if (palabra) iniciales += palabra[0];
-    if (iniciales.length === 2) break;
-  }
-  return (iniciales || respaldo).toUpperCase();
-}
+// Construye los grupos de botones de la barra lateral del panel según rol y contadores reales
+export function construirMenuPanel({
+  esAdmin,
+  usuarioActual,
+  usuarios,
+  subastas,
+  pujas,
+  reportes,
+  resenas,
+  notificaciones,
+}) {
+  const misSubastas = subastas.filter((item) => mismoId(item.sellerId, usuarioActual?.id));
+  const misPujas = pujas.filter((item) => mismoId(item.bidderId, usuarioActual?.id));
+  const misResenas = resenas.filter(
+    (item) =>
+      mismoId(item.reviewerId, usuarioActual?.id) || mismoId(item.targetUserId, usuarioActual?.id)
+  );
+  const reportesAbiertos = reportes.filter((item) => item.status === 'en_revision').length;
+  const notificacionesSinLeer = notificaciones.filter(
+    (item) => mismoId(item.userId, usuarioActual?.id) && !item.read
+  ).length;
 
-// Devuelve las subastas finalizadas con ganador en las que participó el usuario y aún no calificó (RN07)
-export function obtenerSubastasPendientesResena(subastas, resenas, idUsuarioActual) {
-  return subastas.filter((subasta) => {
-    if (subasta.status !== 'finalizada' || !subasta.winnerId) return false;
-    const participa =
-      mismoId(subasta.winnerId, idUsuarioActual) || mismoId(subasta.sellerId, idUsuarioActual);
-    const yaCalificada = resenas.some(
-      (resena) =>
-        mismoId(resena.auctionId, subasta.id) && mismoId(resena.reviewerId, idUsuarioActual)
-    );
-    return participa && !yaCalificada;
-  });
-}
+  const seccionesMenu = [
+    { id: 'resumen', etiqueta: 'Resumen', icono: LayoutDashboard },
+    {
+      id: 'subastas',
+      etiqueta: esAdmin ? 'Subastas' : 'Mis Subastas',
+      icono: Gavel,
+      cantidad: esAdmin ? subastas.length : misSubastas.length,
+    },
+    { id: 'pujas', etiqueta: 'Mis Pujas', icono: TrendingUp, cantidad: misPujas.length },
+    {
+      id: 'reportes',
+      etiqueta: esAdmin ? 'Tickets RN06' : 'Mis Reportes',
+      icono: AlertOctagon,
+      insignia: reportesAbiertos || null,
+    },
+    { id: 'resenas', etiqueta: 'Mis Reseñas', icono: Star, cantidad: misResenas.length },
+  ];
 
-// Calcula a qué usuario calificar y en qué rol según quién abre la reseña (RN07)
-export function obtenerValoresPorDefectoResena(subasta, idUsuarioActual, otrosUsuarios) {
-  const primerUsuario = otrosUsuarios[0] ? String(otrosUsuarios[0].id) : '';
-  if (!subasta) {
-    return { idUsuarioCalificado: primerUsuario, contextoRol: 'comprador_a_vendedor' };
-  }
-  if (mismoId(subasta.winnerId, idUsuarioActual)) {
-    return { idUsuarioCalificado: String(subasta.sellerId), contextoRol: 'comprador_a_vendedor' };
-  }
-  if (mismoId(subasta.sellerId, idUsuarioActual)) {
-    return { idUsuarioCalificado: String(subasta.winnerId), contextoRol: 'vendedor_a_comprador' };
-  }
-  return {
-    idUsuarioCalificado: String(subasta.sellerId || primerUsuario),
-    contextoRol: 'comprador_a_vendedor',
-  };
-}
-
-function coincideEstadoSubasta(subasta, estadoFiltro, ahoraMs) {
-  if (estadoFiltro === 'todas') return subasta.status !== 'cancelada';
-  if (estadoFiltro === 'finalizada') return subasta.status === 'finalizada';
-
-  const fechaFinMs = new Date(subasta.endTime).getTime();
-  const estaActiva = subasta.status === 'activa' && !Number.isNaN(fechaFinMs) && fechaFinMs > ahoraMs;
-  if (!estaActiva) return false;
-  if (estadoFiltro === 'activa') return true;
-
-  const ahora = new Date(ahoraMs);
-  const finHoyMs = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate() + 1).getTime();
-  if (estadoFiltro === 'terminaHoy') return fechaFinMs < finHoyMs;
-
-  if (estadoFiltro === 'terminaManana') {
-    const finMananaMs = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate() + 2).getTime();
-    return fechaFinMs >= finHoyMs && fechaFinMs < finMananaMs;
+  if (esAdmin) {
+    seccionesMenu.push({
+      id: 'usuarios',
+      etiqueta: 'Usuarios',
+      icono: Users,
+      cantidad: usuarios.length,
+    });
   }
 
-  return subasta.status === estadoFiltro;
-}
+  const seccionesCuenta = [
+    {
+      id: 'notificaciones',
+      etiqueta: 'Mis Notificaciones',
+      icono: Bell,
+      insignia: notificacionesSinLeer || null,
+    },
+    { id: 'perfil', etiqueta: 'Mi Perfil', icono: IconoUsuario },
+  ];
 
-// Filtra por texto, categoría, estado o ventana de cierre, y ordena la lista de subastas
-export function filtrarYOrdenarSubastas(subastas, textoBusqueda, categoria, estadoFiltro, ordenarPor) {
-  const ahoraMs = Date.now();
-  const filtradas = subastas.filter((subasta) => {
-    const coincideTexto = coincideConBusqueda([subasta.title, subasta.description, subasta.category], textoBusqueda);
-    const coincideCategoria = categoria === 'Todas' || subasta.category === categoria;
-    const coincideEstado = coincideEstadoSubasta(subasta, estadoFiltro, ahoraMs);
-    return coincideTexto && coincideCategoria && coincideEstado;
-  });
-
-  return filtradas.sort((subastaA, subastaB) => {
-    if (ordenarPor === 'menorPrecio') return Number(subastaA.currentPrice) - Number(subastaB.currentPrice);
-    if (ordenarPor === 'mayorPrecio') return Number(subastaB.currentPrice) - Number(subastaA.currentPrice);
-    return new Date(subastaA.endTime).getTime() - new Date(subastaB.endTime).getTime();
-  });
-}
-
-// Corta cualquier listado al tamaño de página indicado manteniendo la página dentro de rango
-export function paginarLista(elementos, paginaSolicitada, porPagina) {
-  const totalPaginas = Math.max(1, Math.ceil(elementos.length / porPagina));
-  const paginaActual = Math.min(Math.max(1, paginaSolicitada), totalPaginas);
-  const inicio = (paginaActual - 1) * porPagina;
-  return {
-    elementosPagina: elementos.slice(inicio, inicio + porPagina),
-    paginaActual,
-    totalPaginas,
-  };
+  return { seccionesMenu, seccionesCuenta };
 }
 
 // Calcula título, subtítulo y estado vacío de la pestaña de subastas según rol y vista activa
@@ -130,4 +106,3 @@ export function obtenerTextosTabSubastas(esAdmin, vistaAdmin, totalPlataforma, t
         : 'No hay subastas que coincidan con los filtros actuales.',
   };
 }
-

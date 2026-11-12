@@ -21,7 +21,7 @@ export function VistaEditarUsuario() {
 
   const usuarioObjetivo = buscarPorId(usuarios, id);
   const esAdmin = usuarioActual?.role === 'admin';
-  const rutaRetorno = esAdmin ? '/users' : '/dashboard?tab=perfil';
+  const rutaRetorno = esAdmin ? '/usuarios' : '/panel?tab=perfil';
 
   let errorTitulo = '';
   let errorMensaje = '';

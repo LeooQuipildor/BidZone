@@ -41,7 +41,7 @@ function FilaNotificacion({ item, alMarcarLeida, alEliminar }) {
             <span>{formatearFechaHora(item.createdAt)}</span>
             {item.auctionId && (
               <Link
-                to={`/auctions/${item.auctionId}`}
+                to={`/subastas/${item.auctionId}`}
                 className="inline-flex items-center gap-1 font-semibold text-[#224F10] hover:underline"
               >
                 <span>Ver subasta #{item.auctionId}</span>

@@ -1,16 +1,17 @@
 import React from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
+import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { ShieldAlert } from 'lucide-react';
 import { usarTiendaAutenticacion } from '../../autenticacion/estado/tiendaAutenticacion';
 import { Button, Card } from '../diseno/ui';
 
 // Protege rutas privadas: si no hay sesión, redirige al login; si exige un rol específico, lo valida
 export function RutaProtegida({ children, rolesPermitidos = [] }) {
+  const navegar = useNavigate();
   const usuarioActual = usarTiendaAutenticacion((estado) => estado.usuarioActual);
   const ubicacion = useLocation();
 
   if (!usuarioActual) {
-    return <Navigate to="/login" state={{ from: ubicacion }} replace />;
+    return <Navigate to="/iniciar-sesion" state={{ from: ubicacion }} replace />;
   }
 
   const requiereRolEspecifico = rolesPermitidos.length > 0;
@@ -34,7 +35,7 @@ export function RutaProtegida({ children, rolesPermitidos = [] }) {
             </strong>
             .
           </p>
-          <Button onClick={() => window.history.back()} variant="secondary">
+          <Button onClick={() => navegar(-1)} variant="secondary">
             Volver atrás
           </Button>
         </Card>

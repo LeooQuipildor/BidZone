@@ -44,7 +44,7 @@ export function VistaEditarSubasta() {
       'Únicamente el vendedor propietario puede modificar esta publicación. Desde el panel puedes solicitarle correcciones si tiene problemas.';
   }
 
-  const rutaRetorno = subasta ? `/auctions/${subasta.id}` : '/auctions';
+  const rutaRetorno = subasta ? `/subastas/${subasta.id}` : '/subastas';
   const tienePujas = Boolean(
     subasta &&
       (Number(subasta.bidCount || 0) > 0 ||
@@ -54,7 +54,7 @@ export function VistaEditarSubasta() {
 
   async function manejarActualizacion(datos) {
     await actualizarSubasta(subasta.id, datos);
-    navegar(`/auctions/${subasta.id}`);
+    navegar(`/subastas/${subasta.id}`);
   }
 
   return (
@@ -70,7 +70,7 @@ export function VistaEditarSubasta() {
     >
       {subasta && (
         <FormularioSubasta
-          key={`${subasta.id}-${subasta.updatedAt || subasta.endTime}`}
+          key={subasta.id}
           subasta={subasta}
           tienePujas={tienePujas}
           esAdmin={esAdmin}

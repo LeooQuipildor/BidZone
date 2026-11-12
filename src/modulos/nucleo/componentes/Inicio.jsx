@@ -47,7 +47,7 @@ export function Inicio() {
 
   function buscarDesdePortada(filtrosPortada) {
     actualizarFiltros(filtrosPortada);
-    navegar('/auctions');
+    navegar('/subastas');
   }
 
   return (
@@ -73,7 +73,7 @@ export function Inicio() {
                 BidZone elimina comisiones ocultas, billeteras complejas y retenciones bancarias. Al finalizar una subasta con ganador, se liberan automáticamente los datos de contacto de ambas partes.
               </p>
               <Link
-                to="/rules"
+                to="/reglamentos"
                 className="inline-flex items-center gap-2 text-xs font-semibold text-[#0D0D0D] hover:text-[#224F10]"
               >
                 <span>Conoce nuestro reglamento y sanciones</span>

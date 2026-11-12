@@ -7,6 +7,7 @@ export function PaginacionCatalogo({
   totalPaginas,
   totalElementos,
   elementosPorPagina,
+  etiquetaElemento = 'subastas',
   alCambiarPagina,
 }) {
   if (totalElementos === 0) return null;
@@ -19,7 +20,7 @@ export function PaginacionCatalogo({
     <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-[#224F10]/12">
       <p className="text-xs text-[#0D0D0D]/65 font-medium">
         Mostrando <span className="font-semibold text-[#0D0D0D]">{desde}–{hasta}</span> de{' '}
-        <span className="font-semibold text-[#0D0D0D]">{totalElementos}</span> subastas
+        <span className="font-semibold text-[#0D0D0D]">{totalElementos}</span> {etiquetaElemento}
       </p>
 
       {totalPaginas > 1 && (

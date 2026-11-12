@@ -57,7 +57,7 @@ export function VistaPreguntasFrecuentes() {
         titulo="Preguntas Frecuentes"
         subtitulo="Respuestas claras sobre cómo pujar, coordinar la entrega al ganar y usar BidZone con seguridad."
         accion={
-          <Button onClick={() => navegar('/auctions')}>Ver catálogo</Button>
+          <Button onClick={() => navegar('/subastas')}>Ver catálogo</Button>
         }
       />
 

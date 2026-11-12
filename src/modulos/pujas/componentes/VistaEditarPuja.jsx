@@ -44,7 +44,7 @@ export function VistaEditarPuja() {
       titulo={puja ? `Editar Nota de Puja #${puja.id}` : 'Editar Nota de Puja'}
       subtitulo={`Subasta asociada: ${tituloSubasta}`}
       textoVolver="Volver a Pujas"
-      alVolver={() => navegar('/bids')}
+      alVolver={() => navegar('/pujas')}
       cargando={cargandoPujas && !puja}
       textoCarga="Cargando puja..."
       errorTitulo={errorTitulo}
@@ -56,8 +56,8 @@ export function VistaEditarPuja() {
           puja={puja}
           subastas={subastas}
           alActualizarPuja={actualizarPuja}
-          alGuardar={() => navegar('/bids')}
-          alCancelar={() => navegar('/bids')}
+          alGuardar={() => navegar('/pujas')}
+          alCancelar={() => navegar('/pujas')}
         />
       )}
     </PaginaFormulario>

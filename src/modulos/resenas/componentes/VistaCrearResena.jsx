@@ -4,14 +4,14 @@ import { usarTiendaResenas } from '../estado/tiendaResenas';
 import { usarTiendaSubastas } from '../../subastas/estado/tiendaSubastas';
 import { usarTiendaAutenticacion } from '../../autenticacion/estado/tiendaAutenticacion';
 import { mismoId } from '../../nucleo/utilidades/ayudas';
-import { obtenerSubastasPendientesResena } from '../../nucleo/componentes/panel/ayudasPanel';
+import { obtenerSubastasPendientesResena } from '../utilidades/ayudasResena';
 import { FormularioResena } from './FormularioResena';
 import { PaginaFormulario } from '../../nucleo/diseno/componentesBloques';
 
 export function VistaCrearResena() {
   const navegar = useNavigate();
   const [parametrosUrl] = useSearchParams();
-  const idSubastaInicial = parametrosUrl.get('auctionId') || '';
+  const idSubastaInicial = parametrosUrl.get('subasta') || parametrosUrl.get('auctionId') || '';
 
   const resenas = usarTiendaResenas((estado) => estado.resenas);
   const obtenerResenas = usarTiendaResenas((estado) => estado.obtenerResenas);
@@ -36,7 +36,7 @@ export function VistaCrearResena() {
     <PaginaFormulario
       titulo="Emitir Calificación (RN07)"
       subtitulo="Califica de 1 a 5 estrellas a tu contraparte luego de finalizar la subasta y coordinar la entrega."
-      alVolver={() => navegar('/reviews')}
+      alVolver={() => navegar('/resenas')}
       cargando={cargandoSubastas && subastas.length === 0}
       textoCarga="Cargando operaciones calificables..."
     >
@@ -47,8 +47,8 @@ export function VistaCrearResena() {
         idUsuarioActual={usuarioActual?.id}
         idSubastaInicial={idSubastaInicial}
         alCrearResena={crearResena}
-        alGuardar={() => navegar('/reviews')}
-        alCancelar={() => navegar('/reviews')}
+        alGuardar={() => navegar('/resenas')}
+        alCancelar={() => navegar('/resenas')}
       />
     </PaginaFormulario>
   );

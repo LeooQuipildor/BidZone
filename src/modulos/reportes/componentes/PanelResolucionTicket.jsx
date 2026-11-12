@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { CheckCircle2, ShieldAlert } from 'lucide-react';
+import { formatearEstadoCuenta } from '../../nucleo/utilidades/formatos';
 import { Input } from '../../nucleo/diseno/ui';
 import { Alert } from '../../nucleo/diseno/uiFeedback';
 import { AccionesFormulario } from '../../nucleo/diseno/componentesBloques';
@@ -38,12 +39,6 @@ const OPCIONES_DECISION = [
     sugerencia: 'Cuenta rehabilitada tras regularización del expediente.',
   },
 ];
-
-const ETIQUETAS_CUENTA = {
-  active: 'Activa',
-  suspended: 'Suspendida',
-  closed: 'Cerrada',
-};
 
 // Panel claro tipo sistema de tickets para resolver un reporte sin editar la denuncia original
 export function PanelResolucionTicket({
@@ -99,7 +94,7 @@ export function PanelResolucionTicket({
     }
   }
 
-  const etiquetaEstadoCuenta = ETIQUETAS_CUENTA[estadoDenunciado] || estadoDenunciado || 'Activa';
+  const etiquetaEstadoCuenta = formatearEstadoCuenta(estadoDenunciado);
 
   return (
     <form onSubmit={manejarEnvio} className="space-y-4 bg-[#F7FBF3] border border-[#224F10]/15 rounded-2xl p-4 sm:p-5">

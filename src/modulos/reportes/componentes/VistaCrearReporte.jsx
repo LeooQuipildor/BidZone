@@ -10,8 +10,9 @@ import { PaginaFormulario } from '../../nucleo/diseno/componentesBloques';
 export function VistaCrearReporte() {
   const navegar = useNavigate();
   const [parametrosUrl] = useSearchParams();
-  const idSubastaInicial = parametrosUrl.get('auctionId') || '';
-  const idUsuarioReportadoInicial = parametrosUrl.get('reportedUserId') || '';
+  const idSubastaInicial = parametrosUrl.get('subasta') || parametrosUrl.get('auctionId') || '';
+  const idUsuarioReportadoInicial =
+    parametrosUrl.get('reportado') || parametrosUrl.get('reportedUserId') || '';
 
   const crearReporte = usarTiendaReportes((estado) => estado.crearReporte);
   const subastas = usarTiendaSubastas((estado) => estado.subastas);
@@ -31,7 +32,7 @@ export function VistaCrearReporte() {
     <PaginaFormulario
       titulo="Informar Incumplimiento de Operación"
       subtitulo="Si liberados los datos de contacto la contraparte no abona el artículo o no lo entrega, radica la denuncia para evaluar sanción."
-      alVolver={() => navegar('/reports')}
+      alVolver={() => navegar('/reportes')}
     >
       <FormularioReporte
         subastas={subastas}
@@ -39,8 +40,8 @@ export function VistaCrearReporte() {
         idSubastaInicial={idSubastaInicial}
         idUsuarioReportadoInicial={idUsuarioReportadoInicial}
         alCrearReporte={crearReporte}
-        alGuardar={() => navegar('/reports')}
-        alCancelar={() => navegar('/reports')}
+        alGuardar={() => navegar('/reportes')}
+        alCancelar={() => navegar('/reportes')}
       />
     </PaginaFormulario>
   );

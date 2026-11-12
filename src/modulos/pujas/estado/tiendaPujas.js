@@ -68,13 +68,9 @@ export const usarTiendaPujas = create((set) => ({
   actualizarPuja: async (id, cambios) => {
     set({ error: null });
     try {
-      const cuerpo = {};
-      if (cambios.monto !== undefined && cambios.monto !== '') {
-        cuerpo.amount = Number(cambios.monto);
-      }
-      if (cambios.nota !== undefined) {
-        cuerpo.note = String(cambios.nota).trim();
-      }
+      const cuerpo = {
+        note: String(cambios.nota || '').trim(),
+      };
 
       const actualizada = await peticionHttp(`/bids/${id}`, {
         method: 'PUT',

@@ -62,7 +62,7 @@ export function PortadaInicio({ categorias, alBuscar }) {
           <div className="flex flex-wrap items-center gap-3 pt-2">
             <button
               type="button"
-              onClick={() => navegar("/auctions")}
+              onClick={() => navegar('/subastas')}
               className="inline-flex items-center gap-2.5 rounded-full bg-[#EAFFD0] hover:bg-[#B0E454] text-[#0D0D0D] pl-5 pr-1.5 py-1.5 text-xs font-semibold transition-all cursor-pointer shadow-md"
             >
               <span>Explorar subastas</span>
@@ -73,7 +73,7 @@ export function PortadaInicio({ categorias, alBuscar }) {
 
             <button
               type="button"
-              onClick={() => navegar("/auctions/new")}
+              onClick={() => navegar('/subastas/nueva')}
               className="inline-flex items-center gap-2.5 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-md border border-white/30 text-white pl-5 pr-1.5 py-1.5 text-xs font-semibold transition-all cursor-pointer shadow-md"
             >
               <span>Publicar una subasta</span>

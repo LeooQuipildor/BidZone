@@ -118,15 +118,11 @@ export function Select({
         className={`w-full rounded-2xl bg-white/90 border ${claseBorde} px-4 py-2.5 text-sm font-medium text-[#0D0D0D] focus:border-[#224F10] focus:ring-2 focus:ring-[#B0E454]/50 focus:outline-none transition-all`}
         {...props}
       >
-        {options.map((opcion) => {
-          const valor = opcion.value ?? opcion.valor;
-          const etiqueta = opcion.label ?? opcion.etiqueta;
-          return (
-            <option key={valor} value={valor} className="bg-[#EAFFD0] text-[#0D0D0D]">
-              {etiqueta}
-            </option>
-          );
-        })}
+        {options.map((opcion) => (
+          <option key={opcion.valor} value={opcion.valor} className="bg-[#EAFFD0] text-[#0D0D0D]">
+            {opcion.etiqueta}
+          </option>
+        ))}
       </select>
       {error && <span className="text-xs text-red-700 font-semibold">{error}</span>}
     </div>

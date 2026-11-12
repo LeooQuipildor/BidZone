@@ -6,25 +6,25 @@ const TARJETAS_MOSAICO = [
   {
     titulo: 'Pujas en Vivo',
     subtitulo: 'Registro auditable en tiempo real',
-    ruta: '/bids',
+    ruta: '/pujas',
     imagen: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=700&q=80',
   },
   {
     titulo: 'Denuncias (RN06)',
     subtitulo: 'Infracciones y cierre de cuentas',
-    ruta: '/reports',
+    ruta: '/reportes',
     imagen: 'https://images.unsplash.com/photo-1450101499163-c8848c66ca85?auto=format&fit=crop&w=700&q=80',
   },
   {
     titulo: 'Reseñas 1 a 5 ★',
     subtitulo: 'Calificación mutua verificada',
-    ruta: '/reviews',
+    ruta: '/resenas',
     imagen: 'https://images.unsplash.com/photo-1521791136064-7986c2920216?auto=format&fit=crop&w=700&q=80',
   },
   {
     titulo: 'Mi Perfil y Contacto',
     subtitulo: 'Datos personales para entrega directa',
-    ruta: '/dashboard?tab=perfil',
+    ruta: '/panel?tab=perfil',
     imagen: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=700&q=80',
   },
 ];
@@ -75,7 +75,7 @@ export function SeccionModulosInicio() {
             <div className="flex flex-wrap items-center gap-3 pt-1">
               <button
                 type="button"
-                onClick={() => navegar('/dashboard')}
+                onClick={() => navegar('/panel')}
                 className="inline-flex items-center gap-2 rounded-full bg-[#EAFFD0] hover:bg-[#B0E454] text-[#0D0D0D] pl-4 pr-1.5 py-1.5 text-xs font-semibold transition-colors cursor-pointer"
               >
                 <span>Mi Panel de Control</span>
@@ -85,7 +85,7 @@ export function SeccionModulosInicio() {
               </button>
               <button
                 type="button"
-                onClick={() => navegar('/bids')}
+                onClick={() => navegar('/pujas')}
                 className="inline-flex items-center gap-2 rounded-full bg-[#EAFFD0]/15 hover:bg-[#EAFFD0]/25 backdrop-blur-md border border-[#EAFFD0]/30 text-[#EAFFD0] pl-4 pr-1.5 py-1.5 text-xs font-semibold transition-colors cursor-pointer"
               >
                 <span>Historial de Pujas</span>

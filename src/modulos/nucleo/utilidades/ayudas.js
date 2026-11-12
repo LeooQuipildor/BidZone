@@ -107,3 +107,16 @@ export function validarDatosPuja({
   return '';
 }
 
+// Corta cualquier listado al tamaño de página indicado manteniendo la página dentro de rango
+export function paginarLista(elementos, paginaSolicitada, porPagina) {
+  const totalPaginas = Math.max(1, Math.ceil(elementos.length / porPagina));
+  const paginaActual = Math.min(Math.max(1, paginaSolicitada), totalPaginas);
+  const inicio = (paginaActual - 1) * porPagina;
+
+  return {
+    elementosPagina: elementos.slice(inicio, inicio + porPagina),
+    paginaActual,
+    totalPaginas,
+  };
+}
+

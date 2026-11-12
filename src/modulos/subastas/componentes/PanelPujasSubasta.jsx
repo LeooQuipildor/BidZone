@@ -27,7 +27,7 @@ export function PanelPujasSubasta({
   alError,
 }) {
   const navegar = useNavigate();
-  const [montoPersonalizado, setMontoPersonalizado] = useState(null);
+  const [montoIngresado, setMontoIngresado] = useState(() => obtenerMontoPujaSugerido(subasta));
   const [notaPuja, setNotaPuja] = useState('');
   const [compromisoAceptado, setCompromisoAceptado] = useState(true);
   const [mostrarConfirmacion, setMostrarConfirmacion] = useState(false);
@@ -39,7 +39,6 @@ export function PanelPujasSubasta({
     : { textoFormateado: '—' };
   const montoSugerido = obtenerMontoPujaSugerido(subasta);
   const montoMaximoPermitido = obtenerMontoPujaMaximo(subasta);
-  const montoActualInput = montoPersonalizado !== null ? montoPersonalizado : montoSugerido;
 
   const mejorPuja = pujasSubasta[0] || null;
   const esPostorLider = Boolean(
@@ -55,13 +54,13 @@ export function PanelPujasSubasta({
     alExito('');
 
     if (!usuarioActual) {
-      navegar('/login');
+      navegar('/iniciar-sesion');
       return;
     }
 
     const errorValidacion = validarDatosPuja({
       subasta,
-      monto: montoActualInput,
+      monto: montoIngresado,
       compromisoAceptado,
     });
     if (errorValidacion) {
@@ -75,7 +74,7 @@ export function PanelPujasSubasta({
     setEnviando(true);
     alError('');
     alExito('');
-    const montoConfirmado = montoActualInput;
+    const montoConfirmado = montoIngresado;
 
     try {
       await alCrearPuja({
@@ -85,11 +84,12 @@ export function PanelPujasSubasta({
         compromisoAceptado,
       });
       setMostrarConfirmacion(false);
+      const siguienteSugerido = Number(montoConfirmado) + Number(subasta.minIncrement);
+      setMontoIngresado(String(siguienteSugerido));
+      setNotaPuja('');
       alExito(
         `¡Tu oferta de ${formatearMoneda(montoConfirmado)} fue registrada exitosamente! Ahora eres el postor líder.`
       );
-      setMontoPersonalizado(null);
-      setNotaPuja('');
     } catch (error) {
       setMostrarConfirmacion(false);
       alError(error.message);
@@ -148,8 +148,8 @@ export function PanelPujasSubasta({
               label={`Tu Oferta en ARS (Mínimo ${formatearMoneda(montoSugerido)})`}
               helperText={`Máximo permitido: ${formatearMoneda(montoMaximoPermitido)} (10 veces el precio inicial)`}
               max={montoMaximoPermitido}
-              value={montoActualInput}
-              onChange={(evento) => setMontoPersonalizado(evento.target.value)}
+              value={montoIngresado}
+              onChange={(evento) => setMontoIngresado(evento.target.value)}
             />
             <Input
               id="notaPuja"
@@ -181,7 +181,7 @@ export function PanelPujasSubasta({
         alConfirmar={confirmarEnvioPuja}
         enviando={enviando}
         subasta={subasta}
-        montoPuja={montoActualInput}
+        montoPuja={montoIngresado}
         notaPuja={notaPuja}
       />
     </div>

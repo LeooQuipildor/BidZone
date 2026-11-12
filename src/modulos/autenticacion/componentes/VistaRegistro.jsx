@@ -151,7 +151,7 @@ export function VistaRegistro() {
 
         <p className="text-center text-xs text-[#0D0D0D]/70 mt-6">
           ¿Ya tienes una cuenta?{' '}
-          <Link to="/login" className="text-[#224F10] font-bold hover:underline">
+          <Link to="/iniciar-sesion" className="text-[#224F10] font-bold hover:underline">
             Inicia sesión aquí
           </Link>
         </p>

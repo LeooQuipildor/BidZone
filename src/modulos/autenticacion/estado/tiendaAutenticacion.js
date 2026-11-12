@@ -41,9 +41,6 @@ function construirCuerpoUsuario(datos) {
   if (datos.contrasena) cuerpo.password = datos.contrasena;
   if (datos.rol !== undefined) cuerpo.role = datos.rol;
   if (datos.estado !== undefined) cuerpo.status = datos.estado;
-  if (datos.reputacion !== undefined && datos.reputacion !== '') {
-    cuerpo.reputation = Number(datos.reputacion);
-  }
   return cuerpo;
 }
 

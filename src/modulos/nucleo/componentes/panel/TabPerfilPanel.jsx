@@ -3,7 +3,7 @@ import { Mail, MapPin, Phone, ShieldCheck, Star } from 'lucide-react';
 import { usarTiendaAutenticacion } from '../../../autenticacion/estado/tiendaAutenticacion';
 import { FormularioUsuario } from '../../../autenticacion/componentes/FormularioUsuario';
 import { mismoId } from '../../utilidades/ayudas';
-import { obtenerIniciales } from './ayudasPanel';
+import { formatearRolUsuario, obtenerIniciales } from '../../utilidades/formatos';
 import { AvisoPanel, CabeceraSeccionPanel } from './PanelCompartido';
 
 export function TabPerfilPanel({ usuarioActual, subastas, pujas }) {
@@ -16,8 +16,7 @@ export function TabPerfilPanel({ usuarioActual, subastas, pujas }) {
   const misPujas = pujas.filter((item) =>
     mismoId(item.bidderId, usuarioActual?.id)
   ).length;
-  const etiquetaRol = usuarioActual?.role === 'admin' ? 'Administrador' : 'Socio';
-  const claveFormulario = `${usuarioActual?.id || 'anon'}-${usuarioActual?.name || ''}-${usuarioActual?.email || ''}-${usuarioActual?.phone || ''}-${usuarioActual?.city || ''}`;
+  const etiquetaRol = formatearRolUsuario(usuarioActual?.role);
 
   return (
     <div className="space-y-6">
@@ -84,7 +83,7 @@ export function TabPerfilPanel({ usuarioActual, subastas, pujas }) {
           </h2>
 
           <FormularioUsuario
-            key={claveFormulario}
+            key={usuarioActual?.id || 'anon'}
             usuario={usuarioActual}
             esAdmin={false}
             alActualizarUsuario={actualizarUsuario}

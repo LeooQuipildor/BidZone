@@ -90,9 +90,33 @@ export function GridEstadisticasPanel({ tarjetas }) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
       {tarjetas.map((tarjeta) => (
-        <TarjetaEstadisticaPanel key={tarjeta.titulo} {...tarjeta} />
+        <TarjetaEstadisticaPanel
+          key={tarjeta.titulo}
+          titulo={tarjeta.titulo}
+          valor={tarjeta.valor}
+          subtitulo={tarjeta.subtitulo}
+          destacada={tarjeta.destacada}
+          accionSuperior={tarjeta.accionSuperior}
+        />
       ))}
     </div>
+  );
+}
+
+// Selector compacto reutilizable para filtros dentro de las pestañas del panel
+export function SelectPanel({ valor, alCambiar, opciones = [] }) {
+  return (
+    <select
+      value={valor}
+      onChange={(evento) => alCambiar(evento.target.value)}
+      className="w-full rounded-xl bg-[#F7FBF3] border border-[#224F10]/12 px-3 py-1.5 text-xs font-medium text-[#0D0D0D] focus:outline-none"
+    >
+      {opciones.map((opcion) => (
+        <option key={opcion.valor} value={opcion.valor}>
+          {opcion.etiqueta}
+        </option>
+      ))}
+    </select>
   );
 }
 

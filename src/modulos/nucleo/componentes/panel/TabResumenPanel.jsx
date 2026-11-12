@@ -8,7 +8,9 @@ import { TarjetaProximoCierre, TarjetaSubastasRecientes } from './TarjetasResume
 import { CierresAdjudicadosPanel } from './CierresAdjudicadosPanel';
 
 function BotonFlecha({ alHacerClic, titulo, destacada = false }) {
-  const claseColor = destacada ? 'bg-[#EAFFD0] hover:bg-[#B0E454]' : 'border border-[#224F10]/20 hover:bg-[#EAFFD0]';
+  const claseColor = destacada
+    ? 'bg-[#EAFFD0] hover:bg-[#B0E454]'
+    : 'border border-[#224F10]/20 hover:bg-[#EAFFD0]';
   return (
     <button
       type="button"
@@ -25,22 +27,75 @@ function BotonFlecha({ alHacerClic, titulo, destacada = false }) {
 function obtenerTarjetasResumen({ esAdmin, usuarioActual, totales, alElegirSeccion }) {
   if (esAdmin) {
     return [
-      { destacada: true, titulo: 'Total Subastas', valor: totales.totalSubastas, subtitulo: `${totales.activas} en vivo en plataforma`, accionSuperior: <BotonFlecha destacada titulo="Ir a Subastas" alHacerClic={() => alElegirSeccion('subastas')} /> },
-      { titulo: 'Mis Pujas', valor: totales.misPujas, subtitulo: `${totales.totalPujas} pujas en plataforma`, accionSuperior: <BotonFlecha titulo="Ver mis pujas" alHacerClic={() => alElegirSeccion('pujas')} /> },
-      { titulo: 'Tickets Abiertos', valor: totales.reportesAbiertos, subtitulo: `${totales.totalReportes} casos RN06 registrados`, accionSuperior: <BotonFlecha titulo="Ir a Tickets RN06" alHacerClic={() => alElegirSeccion('reportes')} /> },
-      { titulo: 'Usuarios', valor: totales.totalUsuarios, subtitulo: 'Cuentas registradas', accionSuperior: <BotonFlecha titulo="Ir a Usuarios" alHacerClic={() => alElegirSeccion('usuarios')} /> },
+      {
+        destacada: true,
+        titulo: 'Total Subastas',
+        valor: totales.totalSubastas,
+        subtitulo: `${totales.activas} en vivo en plataforma`,
+        accionSuperior: <BotonFlecha destacada titulo="Ir a Subastas" alHacerClic={() => alElegirSeccion('subastas')} />,
+      },
+      {
+        titulo: 'Mis Pujas',
+        valor: totales.misPujas,
+        subtitulo: `${totales.totalPujas} pujas en plataforma`,
+        accionSuperior: <BotonFlecha titulo="Ver mis pujas" alHacerClic={() => alElegirSeccion('pujas')} />,
+      },
+      {
+        titulo: 'Tickets Abiertos',
+        valor: totales.reportesAbiertos,
+        subtitulo: `${totales.totalReportes} casos RN06 registrados`,
+        accionSuperior: <BotonFlecha titulo="Ir a Tickets RN06" alHacerClic={() => alElegirSeccion('reportes')} />,
+      },
+      {
+        titulo: 'Usuarios',
+        valor: totales.totalUsuarios,
+        subtitulo: 'Cuentas registradas',
+        accionSuperior: <BotonFlecha titulo="Ir a Usuarios" alHacerClic={() => alElegirSeccion('usuarios')} />,
+      },
     ];
   }
+
   return [
-    { destacada: true, titulo: 'Mis Subastas', valor: totales.misSubastas, subtitulo: `${totales.misActivas} activas ahora`, accionSuperior: <BotonFlecha destacada titulo="Ver mis subastas" alHacerClic={() => alElegirSeccion('subastas')} /> },
-    { titulo: 'Mis Pujas', valor: totales.misPujas, subtitulo: 'Ofertas realizadas', accionSuperior: <BotonFlecha titulo="Ver mis pujas" alHacerClic={() => alElegirSeccion('pujas')} /> },
-    { titulo: 'Cierres RN05', valor: totales.misCierres, subtitulo: 'Operaciones finalizadas', accionSuperior: <BotonFlecha titulo="Ver mis reseñas" alHacerClic={() => alElegirSeccion('resenas')} /> },
-    { titulo: 'Mi Reputación', valor: `${usuarioActual?.reputation || '5.0'} ★`, subtitulo: `${totales.reportesAbiertos} reportes en revisión`, accionSuperior: <BotonFlecha titulo="Ver mis reportes" alHacerClic={() => alElegirSeccion('reportes')} /> },
+    {
+      destacada: true,
+      titulo: 'Mis Subastas',
+      valor: totales.misSubastas,
+      subtitulo: `${totales.misActivas} activas ahora`,
+      accionSuperior: <BotonFlecha destacada titulo="Ver mis subastas" alHacerClic={() => alElegirSeccion('subastas')} />,
+    },
+    {
+      titulo: 'Mis Pujas',
+      valor: totales.misPujas,
+      subtitulo: 'Ofertas realizadas',
+      accionSuperior: <BotonFlecha titulo="Ver mis pujas" alHacerClic={() => alElegirSeccion('pujas')} />,
+    },
+    {
+      titulo: 'Cierres RN05',
+      valor: totales.misCierres,
+      subtitulo: 'Operaciones finalizadas',
+      accionSuperior: <BotonFlecha titulo="Ver mis reseñas" alHacerClic={() => alElegirSeccion('resenas')} />,
+    },
+    {
+      titulo: 'Mi Reputación',
+      valor: `${usuarioActual?.reputation || '5.0'} ★`,
+      subtitulo: `${totales.reportesAbiertos} reportes en revisión`,
+      accionSuperior: <BotonFlecha titulo="Ver mis reportes" alHacerClic={() => alElegirSeccion('reportes')} />,
+    },
   ];
 }
 
 // Vista principal de resumen: métricas globales para Admin (sin exponer contactos ajenos) o personales para Socio
-export function TabResumenPanel({ usuarioActual, usuarios, subastas, pujas, reportes, resenas, textoBusqueda, ahoraMs, alElegirSeccion }) {
+export function TabResumenPanel({
+  usuarioActual,
+  usuarios,
+  subastas,
+  pujas,
+  reportes,
+  resenas,
+  textoBusqueda,
+  ahoraMs,
+  alElegirSeccion,
+}) {
   const navegar = useNavigate();
   const esAdmin = usuarioActual?.role === 'admin';
 
@@ -57,9 +112,9 @@ export function TabResumenPanel({ usuarioActual, usuarios, subastas, pujas, repo
   );
 
   const fuenteProximo = !esAdmin && misSubastasActivas.length > 0 ? misSubastasActivas : subastasActivas;
-  const subastaProximaACerrar = [...fuenteProximo].sort(
-    (a, b) => new Date(a.endTime).getTime() - new Date(b.endTime).getTime()
-  )[0] || null;
+  const subastaProximaACerrar =
+    [...fuenteProximo].sort((a, b) => new Date(a.endTime).getTime() - new Date(b.endTime).getTime())[0] ||
+    null;
   const cuentaRegresiva = subastaProximaACerrar
     ? calcularTiempoRestante(subastaProximaACerrar.endTime, ahoraMs).textoFormateado
     : '00:00:00';
@@ -71,7 +126,10 @@ export function TabResumenPanel({ usuarioActual, usuarios, subastas, pujas, repo
   const cierresFiltrados = misCierres.filter((cierre) => {
     const vendedor = buscarPorId(usuarios, cierre.sellerId);
     const ganador = buscarPorId(usuarios, cierre.winnerId);
-    return coincideConBusqueda([cierre.title, vendedor?.name || cierre.sellerName, ganador?.name || cierre.winnerName], textoBusqueda);
+    return coincideConBusqueda(
+      [cierre.title, vendedor?.name || cierre.sellerName, ganador?.name || cierre.winnerName],
+      textoBusqueda
+    );
   });
 
   const tarjetasResumen = obtenerTarjetasResumen({
@@ -92,8 +150,6 @@ export function TabResumenPanel({ usuarioActual, usuarios, subastas, pujas, repo
     },
   });
 
-  const mostrarSeccionCierres = !esAdmin || misCierres.length > 0;
-
   return (
     <div className="space-y-6">
       <CabeceraSeccionPanel
@@ -112,16 +168,20 @@ export function TabResumenPanel({ usuarioActual, usuarios, subastas, pujas, repo
         <TarjetaProximoCierre
           subasta={subastaProximaACerrar}
           cuentaRegresiva={cuentaRegresiva}
-          alAccionar={() => (subastaProximaACerrar ? navegar(`/auctions/${subastaProximaACerrar.id}`) : alElegirSeccion('subastas', { abrirFormulario: true }))}
+          alAccionar={() =>
+            subastaProximaACerrar
+              ? navegar(`/subastas/${subastaProximaACerrar.id}`)
+              : alElegirSeccion('subastas', { abrirFormulario: true })
+          }
         />
         <TarjetaSubastasRecientes
           titulo={esAdmin ? 'Subastas Recientes' : 'Mis Publicaciones Recientes'}
           subastas={listaRecientes}
-          alAbrirSubasta={(idSubasta) => navegar(`/auctions/${idSubasta}`)}
+          alAbrirSubasta={(idSubasta) => navegar(`/subastas/${idSubasta}`)}
         />
       </div>
 
-      {mostrarSeccionCierres && (
+      {(!esAdmin || misCierres.length > 0) && (
         <CierresAdjudicadosPanel
           cierres={cierresFiltrados}
           usuarios={usuarios}

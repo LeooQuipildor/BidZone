@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ShieldCheck, UserCheck } from 'lucide-react';
 import { usarTiendaAutenticacion } from '../estado/tiendaAutenticacion';
@@ -8,7 +8,7 @@ import { Alert } from '../../nucleo/diseno/uiFeedback';
 // Si la persona venía desde una ruta protegida, la devolvemos ahí tras ingresar
 function obtenerDestinoRedireccion(ubicacion) {
   const rutaAnterior = ubicacion.state?.from?.pathname;
-  if (rutaAnterior && rutaAnterior !== '/dashboard') {
+  if (rutaAnterior && rutaAnterior !== '/dashboard' && rutaAnterior !== '/panel') {
     return rutaAnterior;
   }
   return '/';
@@ -17,6 +17,7 @@ function obtenerDestinoRedireccion(ubicacion) {
 export function VistaIniciarSesion() {
   const navegar = useNavigate();
   const ubicacion = useLocation();
+  const campoContrasenaRef = useRef(null);
   const iniciarSesion = usarTiendaAutenticacion((estado) => estado.iniciarSesion);
   const cargando = usarTiendaAutenticacion((estado) => estado.cargando);
 
@@ -46,8 +47,7 @@ export function VistaIniciarSesion() {
   function autocompletarCorreoDemo(correoDemo) {
     setCorreo(correoDemo);
     setMensajeError('');
-    const campoClave = document.getElementById('contrasena');
-    if (campoClave) campoClave.focus();
+    if (campoContrasenaRef.current) campoContrasenaRef.current.focus();
   }
 
   return (
@@ -81,6 +81,7 @@ export function VistaIniciarSesion() {
             onChange={(evento) => setCorreo(evento.target.value)}
           />
           <Input
+            ref={campoContrasenaRef}
             id="contrasena"
             label="Contraseña"
             type="password"
@@ -126,7 +127,7 @@ export function VistaIniciarSesion() {
 
         <p className="text-center text-xs text-[#0D0D0D]/70 mt-6">
           ¿Aún no tienes cuenta?{' '}
-          <Link to="/register" className="text-[#224F10] font-bold hover:underline">
+          <Link to="/registro" className="text-[#224F10] font-bold hover:underline">
             Regístrate aquí
           </Link>
         </p>

@@ -31,7 +31,7 @@ export function TarjetaSubasta({
   const nombreVendedor = esPropietario ? 'Tú' : vendedor?.name || subasta.sellerName;
 
   function abrirDetalle() {
-    navegar(`/auctions/${subasta.id}`);
+    navegar(`/subastas/${subasta.id}`);
   }
 
   return (
@@ -118,7 +118,7 @@ export function TarjetaSubasta({
                 Editar
               </Button>
             ) : (
-              <Link to={`/auctions/${subasta.id}/edit`}>
+              <Link to={`/subastas/${subasta.id}/editar`}>
                 <Button variant="outline" size="sm" withArrow={false}>
                   <Edit3 className="w-3 h-3" />
                   Editar

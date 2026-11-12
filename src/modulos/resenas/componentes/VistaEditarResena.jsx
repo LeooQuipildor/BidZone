@@ -37,7 +37,7 @@ export function VistaEditarResena() {
       titulo={resena ? `Editar Calificación #${resena.id}` : 'Editar Calificación'}
       subtitulo="Modifica la puntuación o el comentario asociado a esta operación."
       textoVolver="Volver a Calificaciones"
-      alVolver={() => navegar('/reviews')}
+      alVolver={() => navegar('/resenas')}
       cargando={cargandoResenas && !resena}
       textoCarga="Cargando calificación..."
       errorTitulo={errorTitulo}
@@ -45,11 +45,11 @@ export function VistaEditarResena() {
     >
       {resena && (
         <FormularioResena
-          key={`${resena.id}-${resena.updatedAt || resena.rating}`}
+          key={resena.id}
           resena={resena}
           alActualizarResena={actualizarResena}
-          alGuardar={() => navegar('/reviews')}
-          alCancelar={() => navegar('/reviews')}
+          alGuardar={() => navegar('/resenas')}
+          alCancelar={() => navegar('/resenas')}
         />
       )}
     </PaginaFormulario>

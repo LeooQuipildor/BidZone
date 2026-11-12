@@ -1,6 +1,6 @@
 import React from 'react';
 import { Edit3, MapPin, Phone, Shield, Star, Trash2 } from 'lucide-react';
-import { obtenerIniciales } from './ayudasPanel';
+import { formatearEstadoCuenta, obtenerIniciales } from '../../utilidades/formatos';
 
 const COLORES_AVATAR = [
   'bg-[#EAFFD0] text-[#224F10]',
@@ -9,17 +9,9 @@ const COLORES_AVATAR = [
   'bg-[#0D0D0D] text-[#B0E454]',
 ];
 
-function obtenerEstadoCuenta(estado) {
-  if (estado === 'active') {
-    return {
-      etiqueta: 'Activa',
-      claseColor: 'bg-[#F7FBF3] text-[#224F10] border-[#224F10]/15',
-    };
-  }
-  if (estado === 'suspended') {
-    return { etiqueta: 'Suspendida', claseColor: 'bg-red-50 text-red-700 border-red-200' };
-  }
-  return { etiqueta: 'Cerrada', claseColor: 'bg-red-50 text-red-700 border-red-200' };
+function obtenerClaseEstadoCuenta(estado) {
+  if (estado === 'active') return 'bg-[#F7FBF3] text-[#224F10] border-[#224F10]/15';
+  return 'bg-red-50 text-red-700 border-red-200';
 }
 
 // Tarjeta individual de un usuario dentro del directorio del Panel
@@ -31,7 +23,8 @@ export function TarjetaUsuarioPanel({
   alEditar,
   alEliminar,
 }) {
-  const infoEstado = obtenerEstadoCuenta(usuario.status);
+  const etiquetaEstado = formatearEstadoCuenta(usuario.status);
+  const claseEstado = obtenerClaseEstadoCuenta(usuario.status);
   let telefonoVisible = 'Sin teléfono';
   if (usuario.phone) telefonoVisible = usuario.phone;
   else if (usuario.contactLocked) telefonoVisible = 'Privado (RN05)';
@@ -68,9 +61,9 @@ export function TarjetaUsuarioPanel({
               {usuario.role.toUpperCase()}
             </span>
             <span
-              className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border ${infoEstado.claseColor}`}
+              className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border ${claseEstado}`}
             >
-              {infoEstado.etiqueta}
+              {etiquetaEstado}
             </span>
           </div>
         </div>

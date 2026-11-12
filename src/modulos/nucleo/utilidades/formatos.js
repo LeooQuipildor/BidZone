@@ -111,3 +111,30 @@ export function calcularTiempoRestante(fechaFinTexto, ahoraMs = Date.now()) {
 
   return { vencida: false, dias, horas, minutos, segundos, textoFormateado };
 }
+
+// Toma las primeras 2 iniciales de un nombre para el avatar circular (ejemplo: "Juan Pérez" -> "JP")
+export function obtenerIniciales(nombre, respaldo = 'BZ') {
+  const texto = String(nombre || respaldo).trim();
+  if (!texto) return respaldo;
+
+  const palabras = texto.split(' ');
+  let iniciales = '';
+  for (const palabra of palabras) {
+    if (palabra) iniciales += palabra[0];
+    if (iniciales.length === 2) break;
+  }
+  return (iniciales || respaldo).toUpperCase();
+}
+
+// Devuelve una etiqueta amigable para el rol de usuario
+export function formatearRolUsuario(rol, versionCorta = false) {
+  if (rol === 'admin') return versionCorta ? 'Admin' : 'Administrador';
+  return 'Socio';
+}
+
+// Devuelve etiqueta legible para el estado disciplinario de una cuenta
+export function formatearEstadoCuenta(estado) {
+  if (estado === 'suspended') return 'Suspendida';
+  if (estado === 'closed') return 'Cerrada';
+  return 'Activa';
+}

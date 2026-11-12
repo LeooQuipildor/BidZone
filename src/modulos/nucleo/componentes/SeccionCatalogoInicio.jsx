@@ -56,7 +56,7 @@ export function SeccionCatalogoInicio({
           titulo={`${subastas.length} lotes activos y adjudicados`}
           descripcion="Explora todas las categorías, filtra por precio y consulta el historial completo de ofertas en vivo."
           textoBoton="Ver todos los lotes"
-          alHacerClic={() => navegar('/auctions')}
+          alHacerClic={() => navegar('/subastas')}
         />
       </div>
     </section>

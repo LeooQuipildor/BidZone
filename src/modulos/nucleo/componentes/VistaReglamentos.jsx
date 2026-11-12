@@ -82,7 +82,7 @@ export function VistaReglamentos() {
         titulo="Reglamentos y Normas de Uso"
         subtitulo="Conoce las reglas obligatorias que garantizan transparencia, compromiso de compra y trato directo seguro en cada subasta."
         accion={
-          <Button onClick={() => navegar('/auctions')}>Explorar subastas</Button>
+          <Button onClick={() => navegar('/subastas')}>Explorar subastas</Button>
         }
       />
 
@@ -115,7 +115,7 @@ export function VistaReglamentos() {
             ¿Tuviste un inconveniente tras finalizar una subasta? Puedes iniciar sesión y registrar un expediente en el centro de reportes.
           </p>
         </div>
-        <Button variant="secondary" onClick={() => navegar('/reports')}>
+        <Button variant="secondary" onClick={() => navegar('/reportes')}>
           Ir a Reportes
         </Button>
       </div>

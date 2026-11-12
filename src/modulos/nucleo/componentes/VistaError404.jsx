@@ -32,7 +32,7 @@ export function VistaError404() {
             Volver al inicio
           </Link>
           <Link
-            to="/auctions"
+            to="/subastas"
             className="inline-flex items-center gap-2 rounded-full bg-[#EAFFD0] hover:bg-[#B0E454] border border-[#224F10]/20 text-[#0D0D0D] px-5 py-2.5 text-xs font-semibold transition-colors"
           >
             <Compass className="w-4 h-4 text-[#224F10]" />

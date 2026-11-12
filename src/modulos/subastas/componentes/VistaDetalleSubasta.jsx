@@ -4,6 +4,7 @@ import { AlertTriangle, ArrowLeft, Trash2 } from 'lucide-react';
 import { usarTiendaSubastas } from '../estado/tiendaSubastas';
 import { usarTiendaPujas } from '../../pujas/estado/tiendaPujas';
 import { usarTiendaAutenticacion } from '../../autenticacion/estado/tiendaAutenticacion';
+import { prepararDatosDetalleSubasta } from '../utilidades/filtrosSubasta';
 import { FichaProductoSubasta } from './FichaProductoSubasta';
 import { PanelContactoSubasta } from './PanelContactoSubasta';
 import { PanelPujasSubasta } from './PanelPujasSubasta';
@@ -49,43 +50,19 @@ export function VistaDetalleSubasta() {
         title="Subasta no encontrada"
         message={errorTienda || 'El artículo que buscas no existe o fue eliminado.'}
         backLabel="Volver al catálogo"
-        onBack={() => navegar('/auctions')}
+        onBack={() => navegar('/subastas')}
       />
     );
   }
 
-  const pujasSinOrdenar = Array.isArray(detalleEncontrado?.bids)
-    ? detalleEncontrado.bids
-    : pujas.filter((puja) => mismoId(puja.auctionId, subasta.id));
-  const pujasSubasta = [...pujasSinOrdenar].sort(
-    (pujaA, pujaB) => Number(pujaB.amount) - Number(pujaA.amount)
-  );
-
-  const vendedor = detalleEncontrado?.seller ||
-    buscarPorId(usuarios, subasta.sellerId) || {
-      id: subasta.sellerId,
-      name: subasta.sellerName || 'Vendedor',
-      reputation: subasta.sellerReputation || 5.0,
-    };
-
-  let ganador = detalleEncontrado?.winner || null;
-  if (!ganador && subasta.winnerId) {
-    ganador = buscarPorId(usuarios, subasta.winnerId) || {
-      id: subasta.winnerId,
-      name: subasta.winnerName || 'Ganador',
-    };
-  }
-
-  const esVendedor = Boolean(usuarioActual && mismoId(usuarioActual.id, subasta.sellerId));
-  const esAdmin = usuarioActual?.role === 'admin';
-  const puedeVerContactoDesbloqueado = detalleEncontrado
-    ? Boolean(detalleEncontrado.contactUnlocked)
-    : Boolean(
-        subasta.status === 'finalizada' &&
-          ganador &&
-          usuarioActual &&
-          (esVendedor || esAdmin || mismoId(usuarioActual.id, ganador.id))
-      );
+  const { pujasSubasta, vendedor, ganador, esVendedor, esAdmin, puedeVerContactoDesbloqueado } =
+    prepararDatosDetalleSubasta({
+      subasta,
+      detalleEncontrado,
+      pujas,
+      usuarios,
+      usuarioActual,
+    });
 
   async function manejarEliminacionAdmin() {
     if (!window.confirm(`¿Confirmas cancelar y eliminar la subasta "${subasta.title}"?`)) {
@@ -94,7 +71,7 @@ export function VistaDetalleSubasta() {
     setMensajeError('');
     try {
       await eliminarSubasta(subasta.id);
-      navegar('/auctions');
+      navegar('/subastas');
     } catch (error) {
       setMensajeError(error.message);
     }
@@ -103,7 +80,7 @@ export function VistaDetalleSubasta() {
   return (
     <div className="space-y-8">
       <div className="flex flex-wrap items-center justify-between gap-3 pb-2">
-        <Button variant="outline" size="sm" onClick={() => navegar('/auctions')}>
+        <Button variant="outline" size="sm" onClick={() => navegar('/subastas')}>
           <ArrowLeft className="w-4 h-4" />
           Volver al Catálogo
         </Button>
@@ -111,7 +88,7 @@ export function VistaDetalleSubasta() {
         {(esVendedor || esAdmin) && (
           <div className="flex items-center gap-2">
             {esVendedor ? (
-              <Link to={`/auctions/${subasta.id}/edit`}>
+              <Link to={`/subastas/${subasta.id}/editar`}>
                 <Button variant="outline" size="sm">Editar Subasta</Button>
               </Link>
             ) : (

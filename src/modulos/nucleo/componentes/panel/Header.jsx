@@ -1,6 +1,6 @@
 import React from 'react';
 import { Search, X } from 'lucide-react';
-import { obtenerIniciales } from './ayudasPanel';
+import { formatearRolUsuario, obtenerIniciales } from '../../utilidades/formatos';
 
 const TEXTOS_BUSCADOR = {
   resumen: 'Buscar en mi resumen o cierres...',
@@ -15,7 +15,7 @@ const TEXTOS_BUSCADOR = {
 
 // Barra superior del Panel con buscador contextual e identidad del usuario activo
 export function Header({ seccionActiva, textoBusqueda, alCambiarBusqueda, usuarioActual }) {
-  const rolTexto = usuarioActual?.role === 'admin' ? 'Administrador' : 'Socio';
+  const rolTexto = formatearRolUsuario(usuarioActual?.role);
 
   return (
     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-1">

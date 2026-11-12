@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { PlusCircle } from 'lucide-react';
 import { usarTiendaSubastas } from '../estado/tiendaSubastas';
 import { usarTiendaAutenticacion } from '../../autenticacion/estado/tiendaAutenticacion';
+import { filtrarYOrdenarSubastas } from '../utilidades/filtrosSubasta';
 import { TarjetaSubasta } from './TarjetaSubasta';
 import { PaginacionCatalogo } from './PaginacionCatalogo';
 import { PanelSolicitudCorreccion } from './PanelSolicitudCorreccion';
@@ -11,11 +12,7 @@ import {
   OPCIONES_ESTADO_SALA,
   OPCIONES_ORDEN_SUBASTA,
 } from '../../nucleo/utilidades/formatos';
-import { mismoId, useRelojSegundo } from '../../nucleo/utilidades/ayudas';
-import {
-  filtrarYOrdenarSubastas,
-  paginarLista,
-} from '../../nucleo/componentes/panel/ayudasPanel';
+import { mismoId, paginarLista, useRelojSegundo } from '../../nucleo/utilidades/ayudas';
 import { Button, Input, Select, Card } from '../../nucleo/diseno/ui';
 import { Alert } from '../../nucleo/diseno/uiFeedback';
 import {
@@ -29,41 +26,47 @@ const SUBASTAS_POR_PAGINA = 20;
 export function VistaListaSubastas() {
   const navegar = useNavigate();
   const ahoraMs = useRelojSegundo();
+
   const subastas = usarTiendaSubastas((estado) => estado.subastas);
   const errorSubastas = usarTiendaSubastas((estado) => estado.error);
   const filtros = usarTiendaSubastas((estado) => estado.filtros);
+  const paginaCatalogo = usarTiendaSubastas((estado) => estado.paginaCatalogo);
   const actualizarFiltros = usarTiendaSubastas((estado) => estado.actualizarFiltros);
+  const cambiarPaginaCatalogo = usarTiendaSubastas((estado) => estado.cambiarPaginaCatalogo);
   const obtenerSubastas = usarTiendaSubastas((estado) => estado.obtenerSubastas);
   const eliminarSubasta = usarTiendaSubastas((estado) => estado.eliminarSubasta);
   const usuarioActual = usarTiendaAutenticacion((estado) => estado.usuarioActual);
+
   const [aviso, setAviso] = useState(null);
   const [subastaSolicitada, setSubastaSolicitada] = useState(null);
-  const estadoSala = OPCIONES_ESTADO_SALA.some((op) => op.valor === filtros.estado)
-    ? filtros.estado
-    : 'activa';
-  const claveFiltros = `${filtros.busqueda}|${filtros.categoria}|${estadoSala}|${filtros.ordenarPor}`;
-  const [estadoPagina, setEstadoPagina] = useState({ clave: claveFiltros, numero: 1 });
 
   useEffect(() => {
     obtenerSubastas();
   }, [obtenerSubastas]);
+
+  const estadoSala = OPCIONES_ESTADO_SALA.some((opcion) => opcion.valor === filtros.estado)
+    ? filtros.estado
+    : 'activa';
 
   const subastasFiltradas = filtrarYOrdenarSubastas(
     subastas,
     filtros.busqueda,
     filtros.categoria,
     estadoSala,
-    filtros.ordenarPor
+    filtros.ordenarPor,
+    ahoraMs
   );
-  const paginaSolicitada = estadoPagina.clave === claveFiltros ? estadoPagina.numero : 1;
+
   const {
     elementosPagina: subastasPaginadas,
     paginaActual: paginaSegura,
     totalPaginas,
-  } = paginarLista(subastasFiltradas, paginaSolicitada, SUBASTAS_POR_PAGINA);
+  } = paginarLista(subastasFiltradas, paginaCatalogo, SUBASTAS_POR_PAGINA);
+
+  const esAdmin = usuarioActual?.role === 'admin';
 
   function manejarCambioPagina(nuevaPagina) {
-    setEstadoPagina({ clave: claveFiltros, numero: nuevaPagina });
+    cambiarPaginaCatalogo(nuevaPagina);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
@@ -74,9 +77,9 @@ export function VistaListaSubastas() {
     setAviso(null);
     try {
       await eliminarSubasta(subasta.id);
-      setAviso({ type: 'success', text: `Subasta "${subasta.title}" eliminada exitosamente.` });
+      setAviso({ tipo: 'success', texto: `Subasta "${subasta.title}" eliminada exitosamente.` });
     } catch (error) {
-      setAviso({ type: 'error', text: error.message });
+      setAviso({ tipo: 'error', texto: error.message });
     }
   }
 
@@ -87,7 +90,7 @@ export function VistaListaSubastas() {
         subtitulo="Explora artículos en vivo, realiza ofertas vinculantes o administra tus publicaciones."
         accion={
           usuarioActual && (
-            <Button onClick={() => navegar('/auctions/new')}>
+            <Button onClick={() => navegar('/subastas/nueva')}>
               <PlusCircle className="w-4 h-4" />
               Publicar Subasta
             </Button>
@@ -96,8 +99,8 @@ export function VistaListaSubastas() {
       />
 
       {(aviso || errorSubastas) && (
-        <Alert type={aviso?.type || 'error'} onClose={() => setAviso(null)}>
-          {aviso?.text || errorSubastas}
+        <Alert type={aviso?.tipo || 'error'} onClose={() => setAviso(null)}>
+          {aviso?.texto || errorSubastas}
         </Alert>
       )}
 
@@ -147,7 +150,6 @@ export function VistaListaSubastas() {
         <div className="space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {subastasPaginadas.map((subasta) => {
-              const esAdmin = usuarioActual?.role === 'admin';
               const esVendedor = mismoId(usuarioActual?.id, subasta.sellerId);
               return (
                 <TarjetaSubasta
@@ -167,7 +169,7 @@ export function VistaListaSubastas() {
                 titulo="¿Tienes un artículo para subastar?"
                 descripcion="Publica tu lote con precio base e incremento mínimo. Al cerrar la subasta coordinas directamente con el ganador."
                 textoBoton="Crear nueva subasta"
-                alHacerClic={() => navegar('/auctions/new')}
+                alHacerClic={() => navegar('/subastas/nueva')}
               />
             )}
           </div>
@@ -186,7 +188,7 @@ export function VistaListaSubastas() {
         enModal
         subasta={subastaSolicitada}
         alExito={(texto) => {
-          setAviso({ type: 'success', text: texto });
+          setAviso({ tipo: 'success', texto });
           setSubastaSolicitada(null);
         }}
         alCancelar={() => setSubastaSolicitada(null)}

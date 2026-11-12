@@ -9,8 +9,22 @@ import {
   CabeceraSeccionPanel,
   ContenedorFormularioPanel,
   EstadoVacioPanel,
+  SelectPanel,
 } from './PanelCompartido';
 import { TarjetaUsuarioPanel } from './TarjetaUsuarioPanel';
+
+const OPCIONES_FILTRO_ROL = [
+  { valor: 'todos', etiqueta: 'Rol: Todos' },
+  { valor: 'admin', etiqueta: 'Rol: Administrador' },
+  { valor: 'user', etiqueta: 'Rol: Socio' },
+];
+
+const OPCIONES_FILTRO_ESTADO = [
+  { valor: 'todos', etiqueta: 'Estado: Todos' },
+  { valor: 'active', etiqueta: 'Estado: Activa' },
+  { valor: 'suspended', etiqueta: 'Estado: Suspendida' },
+  { valor: 'closed', etiqueta: 'Estado: Cerrada' },
+];
 
 // Pestaña exclusiva de Administrador para gestionar cuentas, roles y sanciones RN06
 export function TabUsuariosPanel({ usuarioActual, usuarios, textoBusqueda }) {
@@ -104,26 +118,16 @@ export function TabUsuariosPanel({ usuarioActual, usuarios, textoBusqueda }) {
       )}
 
       <div className="rounded-2xl bg-white border border-[#224F10]/10 p-4 grid grid-cols-1 sm:grid-cols-2 gap-3 shadow-2xs">
-        <select
-          value={filtroRol}
-          onChange={(evento) => setFiltroRol(evento.target.value)}
-          className="w-full rounded-xl bg-[#F7FBF3] border border-[#224F10]/12 px-3 py-1.5 text-xs font-medium text-[#0D0D0D] focus:outline-none"
-        >
-          <option value="todos">Rol: Todos</option>
-          <option value="admin">Rol: Administrador</option>
-          <option value="user">Rol: Socio</option>
-        </select>
-
-        <select
-          value={filtroEstado}
-          onChange={(evento) => setFiltroEstado(evento.target.value)}
-          className="w-full rounded-xl bg-[#F7FBF3] border border-[#224F10]/12 px-3 py-1.5 text-xs font-medium text-[#0D0D0D] focus:outline-none"
-        >
-          <option value="todos">Estado: Todos</option>
-          <option value="active">Estado: Activa</option>
-          <option value="suspended">Estado: Suspendida</option>
-          <option value="closed">Estado: Cerrada</option>
-        </select>
+        <SelectPanel
+          valor={filtroRol}
+          alCambiar={setFiltroRol}
+          opciones={OPCIONES_FILTRO_ROL}
+        />
+        <SelectPanel
+          valor={filtroEstado}
+          alCambiar={setFiltroEstado}
+          opciones={OPCIONES_FILTRO_ESTADO}
+        />
       </div>
 
       {usuariosFiltrados.length === 0 ? (

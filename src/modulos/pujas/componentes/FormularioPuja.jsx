@@ -27,23 +27,23 @@ export function FormularioPuja({
   const subastasActivas = subastas.filter((subasta) => subasta.status === 'activa');
 
   const [idSubastaElegida, setIdSubastaElegida] = useState(puja ? String(puja.auctionId) : '');
-  const [montoIngresado, setMontoIngresado] = useState(puja ? String(puja.amount ?? '') : null);
-  const [nota, setNota] = useState(puja?.note || '');
-  const [compromisoAceptado, setCompromisoAceptado] = useState(true);
-  const [mensajeError, setMensajeError] = useState('');
-  const [mostrarConfirmacion, setMostrarConfirmacion] = useState(false);
-  const [enviando, setEnviando] = useState(false);
-
   const idSubastaEfectiva = estaEditando
     ? String(puja.auctionId)
     : elegirIdValido(subastasActivas, idSubastaElegida);
+
   const subastaSeleccionada = buscarPorId(
     estaEditando ? subastas : subastasActivas,
     idSubastaEfectiva
   );
   const montoSugerido = obtenerMontoPujaSugerido(subastaSeleccionada);
   const maximoPermitido = obtenerMontoPujaMaximo(subastaSeleccionada);
-  const montoActualInput = montoIngresado !== null ? montoIngresado : montoSugerido;
+
+  const [monto, setMonto] = useState(() => (puja ? String(puja.amount ?? '') : montoSugerido));
+  const [nota, setNota] = useState(puja?.note || '');
+  const [compromisoAceptado, setCompromisoAceptado] = useState(true);
+  const [mensajeError, setMensajeError] = useState('');
+  const [mostrarConfirmacion, setMostrarConfirmacion] = useState(false);
+  const [enviando, setEnviando] = useState(false);
 
   if (!estaEditando && subastasActivas.length === 0) {
     return (
@@ -54,8 +54,10 @@ export function FormularioPuja({
   }
 
   function manejarCambioSubasta(evento) {
-    setIdSubastaElegida(evento.target.value);
-    if (!estaEditando) setMontoIngresado(null);
+    const nuevoId = evento.target.value;
+    setIdSubastaElegida(nuevoId);
+    const nuevaSubasta = buscarPorId(subastasActivas, nuevoId);
+    setMonto(obtenerMontoPujaSugerido(nuevaSubasta));
   }
 
   async function manejarEnvio(evento) {
@@ -65,7 +67,7 @@ export function FormularioPuja({
     if (estaEditando) {
       try {
         const actualizada = await alActualizarPuja(puja.id, { nota: nota.trim() });
-        alGuardar?.(actualizada, montoActualInput);
+        alGuardar?.(actualizada, monto);
       } catch (error) {
         setMensajeError(error.message);
       }
@@ -74,7 +76,7 @@ export function FormularioPuja({
 
     const errorValidacion = validarDatosPuja({
       subasta: subastaSeleccionada,
-      monto: montoActualInput,
+      monto,
       compromisoAceptado,
     });
     if (errorValidacion) {
@@ -90,12 +92,12 @@ export function FormularioPuja({
     try {
       const creada = await alCrearPuja({
         idSubasta: idSubastaEfectiva,
-        monto: montoActualInput,
+        monto,
         nota,
         compromisoAceptado,
       });
       setMostrarConfirmacion(false);
-      alGuardar?.(creada, montoActualInput);
+      alGuardar?.(creada, monto);
     } catch (error) {
       setMostrarConfirmacion(false);
       setMensajeError(error.message);
@@ -105,8 +107,8 @@ export function FormularioPuja({
   }
 
   const opcionesSubastas = (estaEditando ? subastas : subastasActivas).map((subasta) => ({
-    value: String(subasta.id),
-    label: `${subasta.title} (Actual: ${formatearMoneda(subasta.currentPrice)})`,
+    valor: String(subasta.id),
+    etiqueta: `${subasta.title} (Actual: ${formatearMoneda(subasta.currentPrice)})`,
   }));
 
   let textoAyudaMonto;
@@ -145,12 +147,14 @@ export function FormularioPuja({
             disabled={estaEditando}
             max={maximoPermitido}
             helperText={textoAyudaMonto}
-            value={montoActualInput}
-            onChange={(evento) => setMontoIngresado(evento.target.value)}
+            value={monto}
+            onChange={(evento) => setMonto(evento.target.value)}
           />
         </div>
 
-        {!estaEditando && <ResumenOfertaSubasta subasta={subastaSeleccionada} montoSugerido={montoSugerido} />}
+        {!estaEditando && (
+          <ResumenOfertaSubasta subasta={subastaSeleccionada} montoSugerido={montoSugerido} />
+        )}
 
         <Input
           id="nota"
@@ -177,7 +181,7 @@ export function FormularioPuja({
         alConfirmar={confirmarEnvioPuja}
         enviando={enviando}
         subasta={subastaSeleccionada}
-        montoPuja={montoActualInput}
+        montoPuja={monto}
         notaPuja={nota}
       />
     </>

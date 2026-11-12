@@ -49,7 +49,7 @@ export function VistaEditarReporte() {
       titulo={reporte ? `Ticket #${reporte.id}` : 'Ticket de Reporte'}
       subtitulo={`Usuario denunciado: ${nombreReportado} (${estadoReportado})`}
       textoVolver="Volver a Reportes"
-      alVolver={() => navegar('/reports')}
+      alVolver={() => navegar('/reportes')}
       cargando={cargandoReportes && !reporte}
       textoCarga="Cargando expediente..."
       errorTitulo={errorTitulo}
@@ -62,23 +62,23 @@ export function VistaEditarReporte() {
             <p className="text-[#0D0D0D]/75">{reporte.description}</p>
           </div>
           <PanelResolucionTicket
-            key={`${reporte.id}-${reporte.updatedAt || reporte.status}`}
+            key={reporte.id}
             reporte={reporte}
             nombreDenunciado={nombreReportado}
             estadoDenunciado={usuarioReportado?.status}
             alActualizarReporte={actualizarReporte}
-            alGuardar={() => navegar('/reports')}
-            alCancelar={() => navegar('/reports')}
+            alGuardar={() => navegar('/reportes')}
+            alCancelar={() => navegar('/reportes')}
           />
         </div>
       )}
       {reporte && !esAdmin && (
         <FormularioReporte
-          key={`${reporte.id}-${reporte.updatedAt || reporte.status}`}
+          key={reporte.id}
           reporte={reporte}
           alActualizarReporte={actualizarReporte}
-          alGuardar={() => navegar('/reports')}
-          alCancelar={() => navegar('/reports')}
+          alGuardar={() => navegar('/reportes')}
+          alCancelar={() => navegar('/reportes')}
         />
       )}
     </PaginaFormulario>

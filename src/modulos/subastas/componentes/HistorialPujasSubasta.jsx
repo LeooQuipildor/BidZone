@@ -12,7 +12,7 @@ export function HistorialPujasSubasta({ pujas, usuarios }) {
         <h3 className="font-serif-display text-2xl text-[#0D0D0D]">
           Historial auditable ({pujas.length})
         </h3>
-        <Link to="/bids" className="text-xs font-semibold text-[#224F10] hover:underline">
+        <Link to="/pujas" className="text-xs font-semibold text-[#224F10] hover:underline">
           Mis pujas →
         </Link>
       </div>

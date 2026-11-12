@@ -36,9 +36,17 @@ export const usarTiendaSubastas = create((set, get) => ({
   cargandoDetalle: false,
   error: null,
   filtros: { busqueda: '', categoria: 'Todas', estado: 'activa', ordenarPor: 'proximasACerrar' },
+  paginaCatalogo: 1,
 
   actualizarFiltros: (nuevosFiltros) => {
-    set((estado) => ({ filtros: { ...estado.filtros, ...nuevosFiltros } }));
+    set((estado) => ({
+      filtros: { ...estado.filtros, ...nuevosFiltros },
+      paginaCatalogo: 1,
+    }));
+  },
+
+  cambiarPaginaCatalogo: (nuevaPagina) => {
+    set({ paginaCatalogo: nuevaPagina });
   },
 
   obtenerSubastas: async () => {

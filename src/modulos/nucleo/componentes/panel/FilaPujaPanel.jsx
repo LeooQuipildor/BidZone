@@ -1,8 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Edit3, ExternalLink, Gavel } from 'lucide-react';
-import { formatearFechaHora, formatearMoneda } from '../../utilidades/formatos';
-import { obtenerIniciales } from './ayudasPanel';
+import { formatearFechaHora, formatearMoneda, obtenerIniciales } from '../../utilidades/formatos';
 
 // Fila individual de una puja propia en "Mis Pujas" (RN04: el monto es irrevocable; solo se edita la nota)
 export function FilaPujaPanel({
@@ -33,7 +32,7 @@ export function FilaPujaPanel({
               {esOfertaLider ? 'Oferta Líder' : `Puja #${puja.id}`}
             </span>
             <Link
-              to={`/auctions/${puja.auctionId}`}
+              to={`/subastas/${puja.auctionId}`}
               className="text-sm font-bold text-[#0D0D0D] hover:text-[#224F10] inline-flex items-center gap-1 truncate"
             >
               <Gavel className="w-3.5 h-3.5 text-[#224F10] shrink-0" />

@@ -56,14 +56,14 @@ export function PanelContactoSubasta({
           </div>
 
           <div className="flex flex-wrap gap-3 pt-2">
-            <Link to={`/reviews/new?auctionId=${subasta.id}`}>
+            <Link to={`/resenas/nueva?subasta=${subasta.id}`}>
               <Button size="sm">
                 <Star className="w-4 h-4" />
                 Calificar Operación (1 a 5 ★)
               </Button>
             </Link>
             <Link
-              to={`/reports/new?auctionId=${subasta.id}${idContraparte ? `&reportedUserId=${idContraparte}` : ''}`}
+              to={`/reportes/nuevo?subasta=${subasta.id}${idContraparte ? `&reportado=${idContraparte}` : ''}`}
             >
               <Button variant="secondary" size="sm">
                 <AlertOctagon className="w-4 h-4" />

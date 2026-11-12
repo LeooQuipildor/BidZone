@@ -115,7 +115,7 @@ export function TarjetaReportePanel({
             Subasta Involucrada
           </span>
           <Link
-            to={`/auctions/${reporte.auctionId}`}
+            to={`/subastas/${reporte.auctionId}`}
             className="font-semibold text-[#224F10] hover:underline"
           >
             {tituloSubasta}

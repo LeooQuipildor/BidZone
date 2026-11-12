@@ -3,10 +3,10 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ArrowRight, ShieldCheck } from 'lucide-react';
 
 const ENLACES_PLATAFORMA = [
-  { ruta: '/auctions', etiqueta: 'Catálogo de Lotes' },
-  { ruta: '/rules', etiqueta: 'Reglamentos (RN01–RN08)' },
-  { ruta: '/faq', etiqueta: 'Preguntas Frecuentes' },
-  { ruta: '/reports', etiqueta: 'Centro de Reportes' },
+  { ruta: '/subastas', etiqueta: 'Catálogo de Lotes' },
+  { ruta: '/reglamentos', etiqueta: 'Reglamentos (RN01–RN08)' },
+  { ruta: '/preguntas-frecuentes', etiqueta: 'Preguntas Frecuentes' },
+  { ruta: '/reportes', etiqueta: 'Centro de Reportes' },
 ];
 
 const REGLAS_NEGOCIO = [
@@ -38,7 +38,7 @@ export function Footer() {
 
             <button
               type="button"
-              onClick={() => navegar('/auctions')}
+              onClick={() => navegar('/subastas')}
               className="inline-flex items-center gap-2.5 rounded-full bg-[#EAFFD0] hover:bg-[#B0E454] text-[#0D0D0D] pl-5 pr-1.5 py-1.5 text-xs font-semibold transition-colors cursor-pointer"
             >
               <span>Explorar lotes</span>

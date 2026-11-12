@@ -53,7 +53,7 @@ export function TarjetaResenaPanel({
           <p className="truncate">
             Operación:{' '}
             <Link
-              to={`/auctions/${resena.auctionId}`}
+              to={`/subastas/${resena.auctionId}`}
               className="font-semibold text-[#224F10] hover:underline"
             >
               {tituloSubasta}

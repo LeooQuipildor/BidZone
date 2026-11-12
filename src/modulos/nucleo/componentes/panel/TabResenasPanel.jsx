@@ -3,7 +3,7 @@ import { Plus } from 'lucide-react';
 import { usarTiendaResenas } from '../../../resenas/estado/tiendaResenas';
 import { FormularioResena } from '../../../resenas/componentes/FormularioResena';
 import { buscarPorId, coincideConBusqueda, mismoId } from '../../utilidades/ayudas';
-import { obtenerSubastasPendientesResena } from './ayudasPanel';
+import { obtenerSubastasPendientesResena } from '../../../resenas/utilidades/ayudasResena';
 import { AvisoPanel, BotonPanel, CabeceraSeccionPanel, ContenedorFormularioPanel, EstadoVacioPanel } from './PanelCompartido';
 import { FiltrosBotones } from '../../diseno/componentesBloques';
 import { TarjetaResenaPanel } from './TarjetaResenaPanel';
@@ -89,7 +89,7 @@ export function TabResenasPanel({ usuarioActual, usuarios, subastas, resenas, te
       {formularioAbierto && (
         <ContenedorFormularioPanel titulo={resenaEditando ? `Editar Calificación #${resenaEditando.id}` : 'Emitir Calificación (RN07)'} alCerrar={cerrarFormulario}>
           <FormularioResena
-            key={resenaEditando ? `${resenaEditando.id}-${resenaEditando.rating}` : `nueva-${datosIniciales?.idSubasta || ''}`}
+            key={resenaEditando ? resenaEditando.id : 'nueva-resena'}
             resena={resenaEditando}
             subastasElegibles={subastasPendientes}
             otrosUsuarios={otrosUsuarios}

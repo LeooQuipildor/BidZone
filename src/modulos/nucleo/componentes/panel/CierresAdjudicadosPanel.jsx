@@ -70,7 +70,7 @@ export function CierresAdjudicadosPanel({
                   </div>
 
                   <Link
-                    to={`/auctions/${cierre.id}`}
+                    to={`/subastas/${cierre.id}`}
                     className="px-3.5 py-1.5 rounded-full bg-[#224F10] hover:bg-[#0D0D0D] text-[#EAFFD0] text-[11px] font-semibold transition-colors shrink-0"
                   >
                     Ver lote

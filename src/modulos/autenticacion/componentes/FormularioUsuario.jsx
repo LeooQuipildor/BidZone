@@ -5,14 +5,14 @@ import { Alert } from '../../nucleo/diseno/uiFeedback';
 import { AccionesFormulario } from '../../nucleo/diseno/componentesBloques';
 
 const OPCIONES_ROL = [
-  { value: 'user', label: 'Usuario Estándar' },
-  { value: 'admin', label: 'Administrador' },
+  { valor: 'user', etiqueta: 'Usuario Estándar' },
+  { valor: 'admin', etiqueta: 'Administrador' },
 ];
 
 const OPCIONES_ESTADO = [
-  { value: 'active', label: 'Activa (Habilitada)' },
-  { value: 'suspended', label: 'Suspendida (Infracción temporal)' },
-  { value: 'closed', label: 'Cerrada (Inhabilitación definitiva)' },
+  { valor: 'active', etiqueta: 'Activa (Habilitada)' },
+  { valor: 'suspended', etiqueta: 'Suspendida (Infracción temporal)' },
+  { valor: 'closed', etiqueta: 'Cerrada (Inhabilitación definitiva)' },
 ];
 
 // Formulario único reutilizado para crear o editar un usuario (Panel y rutas /new y /edit)

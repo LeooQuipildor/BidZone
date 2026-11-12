@@ -12,13 +12,13 @@ export function VistaCrearUsuario() {
     <PaginaFormulario
       titulo="Alta de Nuevo Usuario"
       subtitulo="Registrar un nuevo usuario o administrador en la plataforma."
-      alVolver={() => navegar('/users')}
+      alVolver={() => navegar('/usuarios')}
     >
       <FormularioUsuario
         esAdmin
         alCrearUsuario={crearUsuario}
-        alGuardar={() => navegar('/users')}
-        alCancelar={() => navegar('/users')}
+        alGuardar={() => navegar('/usuarios')}
+        alCancelar={() => navegar('/usuarios')}
       />
     </PaginaFormulario>
   );

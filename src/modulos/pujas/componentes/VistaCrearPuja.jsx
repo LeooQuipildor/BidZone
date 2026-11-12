@@ -20,15 +20,16 @@ export function VistaCrearPuja() {
     <PaginaFormulario
       titulo="Registrar nueva puja"
       subtitulo="Emite una oferta vinculante sobre cualquiera de las subastas activas."
-      alVolver={() => navegar('/bids')}
+      alVolver={() => navegar('/pujas')}
       cargando={cargandoSubastas && subastas.length === 0}
       textoCarga="Cargando subastas activas..."
     >
       <FormularioPuja
+        key={subastas.length > 0 ? 'con-subastas' : 'sin-subastas'}
         subastas={subastas}
         alCrearPuja={crearPuja}
-        alGuardar={() => navegar('/bids')}
-        alCancelar={() => navegar('/bids')}
+        alGuardar={() => navegar('/pujas')}
+        alCancelar={() => navegar('/pujas')}
       />
     </PaginaFormulario>
   );

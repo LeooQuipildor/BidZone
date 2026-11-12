@@ -10,7 +10,7 @@ export function VistaCrearSubasta() {
 
   async function manejarCreacion(datos) {
     const creada = await crearSubasta(datos);
-    navegar(`/auctions/${creada.id}`);
+    navegar(`/subastas/${creada.id}`);
   }
 
   return (
@@ -18,11 +18,11 @@ export function VistaCrearSubasta() {
       titulo="Publicar Nueva Subasta"
       subtitulo="Define las condiciones de subasta. Al finalizar con ganador, se liberarán mutuamente los datos de contacto."
       textoVolver="Volver al catálogo"
-      alVolver={() => navegar('/auctions')}
+      alVolver={() => navegar('/subastas')}
     >
       <FormularioSubasta
         alEnviarFormulario={manejarCreacion}
-        alCancelar={() => navegar('/auctions')}
+        alCancelar={() => navegar('/subastas')}
         textoBotonGuardar="Publicar Subasta"
       />
     </PaginaFormulario>

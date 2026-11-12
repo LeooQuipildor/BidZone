@@ -98,7 +98,7 @@ export function TabReportesPanel({ usuarioActual, usuarios, subastas, reportes, 
           alCerrar={cerrarFormulario}
         >
           <FormularioReporte
-            key={reporteEditando ? `${reporteEditando.id}-${reporteEditando.status}` : `nuevo-${datosIniciales?.idSubasta || ''}`}
+            key={reporteEditando ? reporteEditando.id : 'nuevo-reporte'}
             reporte={reporteEditando}
             subastas={subastas}
             otrosUsuarios={otrosUsuarios}
@@ -144,7 +144,7 @@ export function TabReportesPanel({ usuarioActual, usuarios, subastas, reportes, 
                 panelResolucion={
                   estaAtendiendo && (
                     <PanelResolucionTicket
-                      key={`${reporte.id}-${reporte.updatedAt || reporte.status}`}
+                      key={reporte.id}
                       reporte={reporte}
                       nombreDenunciado={nombreDenunciado}
                       estadoDenunciado={denunciado?.status}

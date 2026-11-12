@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Save, Star } from 'lucide-react';
 import { buscarPorId, mismoId } from '../../nucleo/utilidades/ayudas';
-import { obtenerValoresPorDefectoResena } from '../../nucleo/componentes/panel/ayudasPanel';
+import { obtenerValoresPorDefectoResena } from '../utilidades/ayudasResena';
 import { Textarea } from '../../nucleo/diseno/ui';
 import { Alert } from '../../nucleo/diseno/uiFeedback';
 import { AccionesFormulario } from '../../nucleo/diseno/componentesBloques';

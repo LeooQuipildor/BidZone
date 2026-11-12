@@ -10,6 +10,7 @@ import {
   CabeceraSeccionPanel,
   ContenedorFormularioPanel,
   EstadoVacioPanel,
+  SelectPanel,
 } from './PanelCompartido';
 import { FilaPujaPanel } from './FilaPujaPanel';
 
@@ -46,6 +47,17 @@ export function TabPujasPanel({ usuarioActual, subastas, pujas, textoBusqueda })
     setIdPujaEditando(null);
   }
 
+  const opcionesFiltroSubastas = [
+    { valor: 'todas', etiqueta: `Todas mis subastas (${misPujas.length})` },
+    ...idsSubastasConPujas.map((idSubasta) => {
+      const subasta = buscarPorId(subastas, idSubasta);
+      return {
+        valor: idSubasta,
+        etiqueta: `#${idSubasta} — ${subasta?.title || `Subasta #${idSubasta}`}`,
+      };
+    }),
+  ];
+
   return (
     <div className="space-y-5">
       <CabeceraSeccionPanel
@@ -55,7 +67,7 @@ export function TabPujasPanel({ usuarioActual, subastas, pujas, textoBusqueda })
           <BotonPanel
             variante="secundario"
             icono={<Compass className="w-3.5 h-3.5" />}
-            alHacerClic={() => navegar('/auctions')}
+            alHacerClic={() => navegar('/subastas')}
           >
             Explorar Subastas
           </BotonPanel>
@@ -83,21 +95,13 @@ export function TabPujasPanel({ usuarioActual, subastas, pujas, textoBusqueda })
 
       {idsSubastasConPujas.length > 0 && (
         <div className="rounded-2xl bg-white border border-[#224F10]/10 p-4 shadow-2xs">
-          <select
-            value={filtroSubasta}
-            onChange={(evento) => setFiltroSubasta(evento.target.value)}
-            className="sm:max-w-sm w-full rounded-xl bg-[#F7FBF3] border border-[#224F10]/12 px-3 py-1.5 text-xs font-medium text-[#0D0D0D] focus:outline-none"
-          >
-            <option value="todas">Todas mis subastas ({misPujas.length})</option>
-            {idsSubastasConPujas.map((idSubasta) => {
-              const subasta = buscarPorId(subastas, idSubasta);
-              return (
-                <option key={idSubasta} value={idSubasta}>
-                  #{idSubasta} — {subasta?.title || `Subasta #${idSubasta}`}
-                </option>
-              );
-            })}
-          </select>
+          <div className="sm:max-w-sm">
+            <SelectPanel
+              valor={filtroSubasta}
+              alCambiar={setFiltroSubasta}
+              opciones={opcionesFiltroSubastas}
+            />
+          </div>
         </div>
       )}
 
