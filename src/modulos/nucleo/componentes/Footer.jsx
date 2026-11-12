@@ -4,8 +4,8 @@ import { ArrowRight, ShieldCheck } from 'lucide-react';
 
 const ENLACES_PLATAFORMA = [
   { ruta: '/auctions', etiqueta: 'Catálogo de Lotes' },
-  { ruta: '/bids', etiqueta: 'Historial de Pujas' },
-  { ruta: '/reviews', etiqueta: 'Reseñas 1 a 5 ★' },
+  { ruta: '/rules', etiqueta: 'Reglamentos (RN01–RN08)' },
+  { ruta: '/faq', etiqueta: 'Preguntas Frecuentes' },
   { ruta: '/reports', etiqueta: 'Centro de Reportes' },
 ];
 

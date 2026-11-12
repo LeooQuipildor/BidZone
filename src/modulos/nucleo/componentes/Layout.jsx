@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { usarTiendaAutenticacion } from '../../autenticacion/estado/tiendaAutenticacion';
 import { usarTiendaNotificaciones } from '../../notificaciones/estado/tiendaNotificaciones';
@@ -12,11 +12,24 @@ const RUTAS_PANEL = ['/dashboard', '/bids', '/reports', '/reviews', '/users', '/
 export function Layout({ children }) {
   const navegar = useNavigate();
   const ubicacion = useLocation();
+  const rutaAnteriorRef = useRef(ubicacion.pathname);
   const usuarioActual = usarTiendaAutenticacion((estado) => estado.usuarioActual);
   const verificarSesion = usarTiendaAutenticacion((estado) => estado.verificarSesion);
   const cerrarSesion = usarTiendaAutenticacion((estado) => estado.cerrarSesion);
   const notificaciones = usarTiendaNotificaciones((estado) => estado.notificaciones);
   const obtenerNotificaciones = usarTiendaNotificaciones((estado) => estado.obtenerNotificaciones);
+
+  // Al cambiar de página vamos arriba al instante; si se toca el enlace actual, subimos suave
+  useEffect(() => {
+    const cambioDePagina = rutaAnteriorRef.current !== ubicacion.pathname;
+    rutaAnteriorRef.current = ubicacion.pathname;
+
+    if (cambioDePagina) {
+      window.scrollTo(0, 0);
+    } else if (window.scrollY > 0) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [ubicacion.pathname, ubicacion.search, ubicacion.key]);
 
   // Al iniciar la app, validamos el token guardado si existe
   useEffect(() => {

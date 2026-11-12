@@ -1,9 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Badge } from '../../nucleo/diseno/ui';
-import {
-  IMAGEN_SUBASTA_POR_DEFECTO,
-  formatearMoneda,
-} from '../../nucleo/utilidades/formatos';
+import { formatearMoneda } from '../../nucleo/utilidades/formatos';
+import { obtenerFotosSubasta } from '../utilidades/galeriaSubasta';
 
 function obtenerEtiquetaEstado(estado) {
   if (estado === 'activa') return { variant: 'success', texto: 'Subasta en Vivo' };
@@ -11,21 +9,57 @@ function obtenerEtiquetaEstado(estado) {
   return { variant: 'default', texto: 'Subasta Finalizada' };
 }
 
-// Ficha principal de una subasta: fotografía, descripción, precio base e incremento RN01
+// Ficha principal de una subasta: foto completa sin zoom, miniaturas y ficha técnica
 export function FichaProductoSubasta({ subasta, vendedor }) {
+  const fotos = obtenerFotosSubasta(subasta);
+  const [fotoSeleccionada, setFotoSeleccionada] = useState('');
+  const indiceActivo = fotos.includes(fotoSeleccionada) ? fotos.indexOf(fotoSeleccionada) : 0;
+  const fotoPrincipal = fotos[indiceActivo] || fotos[0];
   const etiquetaEstado = obtenerEtiquetaEstado(subasta.status);
 
   return (
     <div className="rounded-3xl bg-[#F5FFEB] border border-[#224F10]/15 overflow-hidden shadow-xs">
-      <div className="relative h-80 sm:h-96 bg-white">
-        <img
-          src={subasta.imageUrl || IMAGEN_SUBASTA_POR_DEFECTO}
-          alt={subasta.title}
-          className="w-full h-full object-cover"
-        />
-        <div className="absolute top-4 left-4 flex gap-2">
-          <Badge variant="lime">{subasta.category}</Badge>
-          <Badge variant={etiquetaEstado.variant}>{etiquetaEstado.texto}</Badge>
+      <div className="bg-white border-b border-[#224F10]/10 p-4 sm:p-5 space-y-3">
+        {/* Visor principal: muestra la imagen completa sin recortes ni zoom */}
+        <div className="relative h-72 sm:h-[400px] w-full rounded-2xl bg-[#F7FBF3] border border-[#224F10]/10 p-3 flex items-center justify-center overflow-hidden">
+          <img
+            src={fotoPrincipal}
+            alt={`${subasta.title} — imagen ${indiceActivo + 1}`}
+            className="max-w-full max-h-full w-auto h-auto object-contain"
+          />
+          <div className="absolute top-3 left-3 flex flex-wrap gap-2">
+            <Badge variant="lime">{subasta.category}</Badge>
+            <Badge variant={etiquetaEstado.variant}>{etiquetaEstado.texto}</Badge>
+          </div>
+          <span className="absolute bottom-3 right-3 px-2.5 py-0.5 rounded-full bg-[#0D0D0D]/75 text-[#EAFFD0] text-[11px] font-semibold">
+            {indiceActivo + 1} / {fotos.length}
+          </span>
+        </div>
+
+        {/* Galería de 4 recuadritos con fotos adicionales del producto */}
+        <div className="grid grid-cols-4 gap-2.5 sm:gap-3">
+          {fotos.map((urlFoto, indice) => {
+            const estaActiva = indice === indiceActivo;
+            const estiloRecuadro = estaActiva
+              ? 'border-2 border-[#224F10] ring-2 ring-[#B0E454]/60 bg-white'
+              : 'border border-[#224F10]/15 bg-[#F7FBF3] opacity-80 hover:opacity-100 hover:border-[#224F10]/45';
+
+            return (
+              <button
+                key={urlFoto}
+                type="button"
+                onClick={() => setFotoSeleccionada(urlFoto)}
+                aria-label={`Ver foto ${indice + 1} de ${subasta.title}`}
+                className={`h-16 sm:h-20 w-full rounded-2xl p-1.5 flex items-center justify-center overflow-hidden transition-colors cursor-pointer ${estiloRecuadro}`}
+              >
+                <img
+                  src={urlFoto}
+                  alt={`${subasta.title} — vista ${indice + 1}`}
+                  className="max-w-full max-h-full w-auto h-auto object-contain"
+                />
+              </button>
+            );
+          })}
         </div>
       </div>
 

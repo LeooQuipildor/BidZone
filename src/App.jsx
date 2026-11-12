@@ -2,6 +2,8 @@ import React from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { Layout } from './modulos/nucleo/componentes/Layout';
 import { Inicio } from './modulos/nucleo/componentes/Inicio';
+import { VistaReglamentos } from './modulos/nucleo/componentes/VistaReglamentos';
+import { VistaPreguntasFrecuentes } from './modulos/nucleo/componentes/VistaPreguntasFrecuentes';
 import { VistaPanelControl } from './modulos/nucleo/componentes/VistaPanelControl';
 import { RutaProtegida } from './modulos/nucleo/componentes/RutaProtegida';
 
@@ -35,6 +37,10 @@ function App() {
           <Route path="/register" element={<VistaRegistro />} />
           <Route path="/auctions" element={<VistaListaSubastas />} />
           <Route path="/auctions/:id" element={<VistaDetalleSubasta />} />
+          <Route path="/rules" element={<VistaReglamentos />} />
+          <Route path="/reglamentos" element={<Navigate to="/rules" replace />} />
+          <Route path="/faq" element={<VistaPreguntasFrecuentes />} />
+          <Route path="/preguntas-frecuentes" element={<Navigate to="/faq" replace />} />
 
           {/* Panel principal dinámico */}
           <Route
