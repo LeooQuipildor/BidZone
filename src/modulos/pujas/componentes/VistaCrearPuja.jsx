@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { usarTiendaPujas } from '../estado/tiendaPujas';
 import { usarTiendaSubastas } from '../../subastas/estado/tiendaSubastas';
 import { FormularioPuja } from './FormularioPuja';
-import { Loading } from '../../nucleo/diseno/uiFeedback';
 import { PaginaFormulario } from '../../nucleo/diseno/componentesBloques';
 
 export function VistaCrearPuja() {
@@ -22,17 +21,15 @@ export function VistaCrearPuja() {
       titulo="Registrar nueva puja"
       subtitulo="Emite una oferta vinculante sobre cualquiera de las subastas activas."
       alVolver={() => navegar('/bids')}
+      cargando={cargandoSubastas && subastas.length === 0}
+      textoCarga="Cargando subastas activas..."
     >
-      {cargandoSubastas && subastas.length === 0 ? (
-        <Loading text="Cargando subastas activas..." />
-      ) : (
-        <FormularioPuja
-          subastas={subastas}
-          alCrearPuja={crearPuja}
-          alGuardar={() => navegar('/bids')}
-          alCancelar={() => navegar('/bids')}
-        />
-      )}
+      <FormularioPuja
+        subastas={subastas}
+        alCrearPuja={crearPuja}
+        alGuardar={() => navegar('/bids')}
+        alCancelar={() => navegar('/bids')}
+      />
     </PaginaFormulario>
   );
 }

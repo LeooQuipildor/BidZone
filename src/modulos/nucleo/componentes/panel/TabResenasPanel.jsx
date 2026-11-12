@@ -3,6 +3,7 @@ import { Plus } from 'lucide-react';
 import { usarTiendaResenas } from '../../../resenas/estado/tiendaResenas';
 import { FormularioResena } from '../../../resenas/componentes/FormularioResena';
 import { buscarPorId, coincideConBusqueda, mismoId } from '../../utilidades/ayudas';
+import { obtenerSubastasPendientesResena } from './ayudasPanel';
 import { AvisoPanel, BotonPanel, CabeceraSeccionPanel, ContenedorFormularioPanel, EstadoVacioPanel } from './PanelCompartido';
 import { FiltrosBotones } from '../../diseno/componentesBloques';
 import { TarjetaResenaPanel } from './TarjetaResenaPanel';
@@ -12,15 +13,6 @@ const FILTROS_DIRECCION = [
   { valor: 'recibidas', etiqueta: 'Recibidas' },
   { valor: 'emitidas', etiqueta: 'Emitidas' },
 ];
-
-function obtenerSubastasPendientesResena(subastas, resenas, idUsuarioActual) {
-  return subastas.filter((subasta) => {
-    if (subasta.status !== 'finalizada' || !subasta.winnerId) return false;
-    const participa = mismoId(subasta.winnerId, idUsuarioActual) || mismoId(subasta.sellerId, idUsuarioActual);
-    const yaCalificada = resenas.some((r) => mismoId(r.auctionId, subasta.id) && mismoId(r.reviewerId, idUsuarioActual));
-    return participa && !yaCalificada;
-  });
-}
 
 // Pestaña de reseñas personales RN07 (recibidas y emitidas por el usuario conectado)
 export function TabResenasPanel({ usuarioActual, usuarios, subastas, resenas, textoBusqueda, datosIniciales }) {
@@ -103,7 +95,6 @@ export function TabResenasPanel({ usuarioActual, usuarios, subastas, resenas, te
             otrosUsuarios={otrosUsuarios}
             resenas={resenas}
             idUsuarioActual={usuarioActual?.id}
-            esAdmin={false}
             idSubastaInicial={datosIniciales?.idSubasta || ''}
             idUsuarioCalificadoInicial={datosIniciales?.idUsuarioCalificado || ''}
             alCrearResena={crearResena}

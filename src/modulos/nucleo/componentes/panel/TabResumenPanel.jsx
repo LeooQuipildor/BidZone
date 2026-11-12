@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowUpRight, Plus } from 'lucide-react';
 import { buscarPorId, coincideConBusqueda, mismoId } from '../../utilidades/ayudas';
-import { formatearCuentaRegresiva } from './ayudasPanel';
+import { calcularTiempoRestante } from '../../utilidades/formatos';
 import { BotonPanel, CabeceraSeccionPanel, GridEstadisticasPanel } from './PanelCompartido';
 import { TarjetaProximoCierre, TarjetaSubastasRecientes } from './TarjetasResumenPanel';
 import { CierresAdjudicadosPanel } from './CierresAdjudicadosPanel';
@@ -60,7 +60,9 @@ export function TabResumenPanel({ usuarioActual, usuarios, subastas, pujas, repo
   const subastaProximaACerrar = [...fuenteProximo].sort(
     (a, b) => new Date(a.endTime).getTime() - new Date(b.endTime).getTime()
   )[0] || null;
-  const cuentaRegresiva = subastaProximaACerrar ? formatearCuentaRegresiva(subastaProximaACerrar.endTime, ahoraMs) : '00:00:00';
+  const cuentaRegresiva = subastaProximaACerrar
+    ? calcularTiempoRestante(subastaProximaACerrar.endTime, ahoraMs).textoFormateado
+    : '00:00:00';
 
   const listaRecientes = (esAdmin ? subastas : misSubastas)
     .filter((s) => coincideConBusqueda([s.title, s.category], textoBusqueda))

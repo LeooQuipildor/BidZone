@@ -14,7 +14,6 @@ export function FormularioResena({
   otrosUsuarios = [],
   resenas = [],
   idUsuarioActual,
-  esAdmin = false,
   idSubastaInicial = '',
   idUsuarioCalificadoInicial = '',
   alCrearResena,
@@ -120,7 +119,7 @@ export function FormularioResena({
           idSubastaEfectiva={idSubastaEfectiva}
           idCalificadoEfectivo={idCalificadoEfectivo}
           rolEfectivo={rolEfectivo}
-          bloquearContraparte={Boolean(!esAdmin && esParticipante)}
+          bloquearContraparte={esParticipante}
           alCambiar={manejarCambio}
         />
       )}

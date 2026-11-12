@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { usarTiendaAutenticacion } from '../../autenticacion/estado/tiendaAutenticacion';
 import { usarTiendaNotificaciones } from '../../notificaciones/estado/tiendaNotificaciones';
+import { hayTokenSesion } from '../servicios/clienteApi';
 import { mismoId } from '../utilidades/ayudas';
 import { Navbar } from './Navbar';
 import { Footer } from './Footer';
@@ -33,7 +34,7 @@ export function Layout({ children }) {
 
   // Al iniciar la app, validamos el token guardado si existe
   useEffect(() => {
-    if (localStorage.getItem('bidzone_token')) verificarSesion();
+    if (hayTokenSesion()) verificarSesion();
   }, [verificarSesion]);
 
   // Cuando la persona inicia sesión, cargamos sus notificaciones

@@ -16,7 +16,7 @@ import { usarTiendaPujas } from '../../pujas/estado/tiendaPujas';
 import { usarTiendaReportes } from '../../reportes/estado/tiendaReportes';
 import { usarTiendaResenas } from '../../resenas/estado/tiendaResenas';
 import { usarTiendaNotificaciones } from '../../notificaciones/estado/tiendaNotificaciones';
-import { mismoId } from '../utilidades/ayudas';
+import { mismoId, useRelojSegundo } from '../utilidades/ayudas';
 import { Sidebar } from './panel/Sidebar';
 import { Header } from './panel/Header';
 import { TabResumenPanel } from './panel/TabResumenPanel';
@@ -44,6 +44,7 @@ export function VistaPanelControl({ seccionInicial = 'resumen' }) {
   const navegar = useNavigate();
   const ubicacion = useLocation();
   const [parametrosUrl, setParametrosUrl] = useSearchParams();
+  const ahoraMs = useRelojSegundo();
 
   const usuarioActual = usarTiendaAutenticacion((estado) => estado.usuarioActual);
   const usuarios = usarTiendaAutenticacion((estado) => estado.usuarios);
@@ -60,7 +61,6 @@ export function VistaPanelControl({ seccionInicial = 'resumen' }) {
   const obtenerNotificaciones = usarTiendaNotificaciones((estado) => estado.obtenerNotificaciones);
 
   const [textoBusqueda, setTextoBusqueda] = useState('');
-  const [ahoraMs, setAhoraMs] = useState(() => Date.now());
   const [datosInicialesSeccion, setDatosInicialesSeccion] = useState(null);
   const [contadorSeccion, setContadorSeccion] = useState(0);
 
@@ -73,12 +73,6 @@ export function VistaPanelControl({ seccionInicial = 'resumen' }) {
     obtenerResenas();
     obtenerNotificaciones();
   }, [obtenerUsuarios, obtenerSubastas, obtenerPujas, obtenerReportes, obtenerResenas, obtenerNotificaciones]);
-
-  // Reloj de 1 segundo para las subastas activas del panel
-  useEffect(() => {
-    const intervalo = setInterval(() => setAhoraMs(Date.now()), 1000);
-    return () => clearInterval(intervalo);
-  }, []);
 
   const esAdmin = usuarioActual?.role === 'admin';
   const tabUrlRaw = parametrosUrl.get('tab');

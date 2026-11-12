@@ -1,14 +1,13 @@
 import { create } from 'zustand';
-import { peticionHttp, registrarLimpiezaSesion } from '../../nucleo/servicios/clienteApi';
 import {
-  buscarPorId,
-  eliminarPorId,
-  mismoId,
-  reemplazarPorId,
-} from '../../nucleo/utilidades/ayudas';
+  hayTokenSesion,
+  peticionHttp,
+  registrarLimpiezaSesion,
+} from '../../nucleo/servicios/clienteApi';
+import { mismoId, reemplazarPorId } from '../../nucleo/utilidades/ayudas';
 import { usarTiendaSubastas } from '../../subastas/estado/tiendaSubastas';
 
-// Al crear, editar o borrar una puja también se actualiza el precio actual de su subasta
+// Al crear o editar una puja también se actualiza el precio actual de su subasta
 async function refrescarSubastaDespuesDePuja(idSubasta) {
   const tiendaSubastas = usarTiendaSubastas.getState();
   await tiendaSubastas.obtenerSubastas();
@@ -20,13 +19,13 @@ async function refrescarSubastaDespuesDePuja(idSubasta) {
 }
 
 // Tienda global de pujas u ofertas (conecta con /api/bids)
-export const usarTiendaPujas = create((set, get) => ({
+export const usarTiendaPujas = create((set) => ({
   pujas: [],
   cargando: false,
   error: null,
 
   obtenerPujas: async () => {
-    if (!localStorage.getItem('bidzone_token')) {
+    if (!hayTokenSesion()) {
       set({ pujas: [], cargando: false });
       return [];
     }
@@ -90,26 +89,8 @@ export const usarTiendaPujas = create((set, get) => ({
       throw error;
     }
   },
-
-  eliminarPuja: async (id) => {
-    set({ error: null });
-    const pujaExistente = buscarPorId(get().pujas, id);
-
-    try {
-      await peticionHttp(`/bids/${id}`, { method: 'DELETE' });
-      set((estado) => ({ pujas: eliminarPorId(estado.pujas, id) }));
-
-      if (pujaExistente) {
-        await refrescarSubastaDespuesDePuja(pujaExistente.auctionId);
-      }
-    } catch (error) {
-      set({ error: error.message });
-      throw error;
-    }
-  },
 }));
 
 registrarLimpiezaSesion(() => {
   usarTiendaPujas.setState({ pujas: [], error: null, cargando: false });
 });
-

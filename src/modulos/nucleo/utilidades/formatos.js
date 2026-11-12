@@ -80,7 +80,7 @@ export function inputLocalAFechaIso(valorLocal) {
 }
 
 // Agrega un cero a la izquierda en números de un solo dígito (ejemplo: 7 -> "07")
-export function completarDosDigitos(numero) {
+function completarDosDigitos(numero) {
   return String(numero).padStart(2, '0');
 }
 

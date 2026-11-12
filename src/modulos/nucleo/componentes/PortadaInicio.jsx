@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowRight, Clock, Layers, ShieldCheck, Tag } from "lucide-react";
-import { OPCIONES_ESTADO_SALA } from "../utilidades/formatos";
+import { OPCIONES_ESTADO_SALA, OPCIONES_ORDEN_SUBASTA } from "../utilidades/formatos";
 
 // Cajita reutilizable para cada filtro rápido de la portada
 function CajaFiltroPortada({ icono, titulo, children }) {
@@ -131,9 +131,11 @@ export function PortadaInicio({ categorias, alBuscar }) {
               onChange={(evento) => setOrdenElegido(evento.target.value)}
               className="w-full bg-transparent text-xs font-bold text-[#0D0D0D] focus:outline-none cursor-pointer"
             >
-              <option value="proximasACerrar">Próximas a cerrar</option>
-              <option value="menorPrecio">Menor oferta actual</option>
-              <option value="mayorPrecio">Mayor oferta actual</option>
+              {OPCIONES_ORDEN_SUBASTA.map((opcion) => (
+                <option key={opcion.valor} value={opcion.valor}>
+                  {opcion.etiqueta}
+                </option>
+              ))}
             </select>
           </CajaFiltroPortada>
 

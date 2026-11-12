@@ -1,5 +1,9 @@
 import { create } from 'zustand';
-import { peticionHttp, registrarLimpiezaSesion } from '../../nucleo/servicios/clienteApi';
+import {
+  hayTokenSesion,
+  peticionHttp,
+  registrarLimpiezaSesion,
+} from '../../nucleo/servicios/clienteApi';
 import { eliminarPorId, reemplazarPorId } from '../../nucleo/utilidades/ayudas';
 import { usarTiendaAutenticacion } from '../../autenticacion/estado/tiendaAutenticacion';
 
@@ -17,7 +21,7 @@ export const usarTiendaResenas = create((set) => ({
   error: null,
 
   obtenerResenas: async () => {
-    if (!localStorage.getItem('bidzone_token')) {
+    if (!hayTokenSesion()) {
       set({ resenas: [], cargando: false });
       return [];
     }

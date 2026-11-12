@@ -4,8 +4,8 @@ import { usarTiendaResenas } from '../estado/tiendaResenas';
 import { usarTiendaSubastas } from '../../subastas/estado/tiendaSubastas';
 import { usarTiendaAutenticacion } from '../../autenticacion/estado/tiendaAutenticacion';
 import { mismoId } from '../../nucleo/utilidades/ayudas';
+import { obtenerSubastasPendientesResena } from '../../nucleo/componentes/panel/ayudasPanel';
 import { FormularioResena } from './FormularioResena';
-import { Loading } from '../../nucleo/diseno/uiFeedback';
 import { PaginaFormulario } from '../../nucleo/diseno/componentesBloques';
 
 export function VistaCrearResena() {
@@ -29,14 +29,7 @@ export function VistaCrearResena() {
     obtenerResenas();
   }, [obtenerSubastas, obtenerUsuarios, obtenerResenas]);
 
-  // Solo se califican subastas finalizadas con ganador en las que haya participado la persona conectada
-  const subastasElegibles = subastas.filter((subasta) => {
-    if (subasta.status !== 'finalizada' || !subasta.winnerId) return false;
-    return (
-      mismoId(subasta.winnerId, usuarioActual?.id) ||
-      mismoId(subasta.sellerId, usuarioActual?.id)
-    );
-  });
+  const subastasElegibles = obtenerSubastasPendientesResena(subastas, resenas, usuarioActual?.id);
   const otrosUsuarios = usuarios.filter((usuario) => !mismoId(usuario.id, usuarioActual?.id));
 
   return (
@@ -44,22 +37,19 @@ export function VistaCrearResena() {
       titulo="Emitir Calificación (RN07)"
       subtitulo="Califica de 1 a 5 estrellas a tu contraparte luego de finalizar la subasta y coordinar la entrega."
       alVolver={() => navegar('/reviews')}
+      cargando={cargandoSubastas && subastas.length === 0}
+      textoCarga="Cargando operaciones calificables..."
     >
-      {cargandoSubastas && subastas.length === 0 ? (
-        <Loading text="Cargando operaciones calificables..." />
-      ) : (
-        <FormularioResena
-          subastasElegibles={subastasElegibles}
-          otrosUsuarios={otrosUsuarios}
-          resenas={resenas}
-          idUsuarioActual={usuarioActual?.id}
-          esAdmin={false}
-          idSubastaInicial={idSubastaInicial}
-          alCrearResena={crearResena}
-          alGuardar={() => navegar('/reviews')}
-          alCancelar={() => navegar('/reviews')}
-        />
-      )}
+      <FormularioResena
+        subastasElegibles={subastasElegibles}
+        otrosUsuarios={otrosUsuarios}
+        resenas={resenas}
+        idUsuarioActual={usuarioActual?.id}
+        idSubastaInicial={idSubastaInicial}
+        alCrearResena={crearResena}
+        alGuardar={() => navegar('/reviews')}
+        alCancelar={() => navegar('/reviews')}
+      />
     </PaginaFormulario>
   );
 }

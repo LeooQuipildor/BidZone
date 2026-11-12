@@ -44,146 +44,34 @@ function App() {
           <Route path="/preguntas-frecuentes" element={<Navigate to="/faq" replace />} />
 
           {/* Panel principal dinámico */}
-          <Route
-            path="/dashboard"
-            element={
-              <RutaProtegida>
-                <VistaPanelControl />
-              </RutaProtegida>
-            }
-          />
+          <Route path="/dashboard" element={<RutaProtegida><VistaPanelControl /></RutaProtegida>} />
 
           {/* Subastas: crear y editar */}
-          <Route
-            path="/auctions/new"
-            element={
-              <RutaProtegida>
-                <VistaCrearSubasta />
-              </RutaProtegida>
-            }
-          />
-          <Route
-            path="/auctions/:id/edit"
-            element={
-              <RutaProtegida>
-                <VistaEditarSubasta />
-              </RutaProtegida>
-            }
-          />
+          <Route path="/auctions/new" element={<RutaProtegida><VistaCrearSubasta /></RutaProtegida>} />
+          <Route path="/auctions/:id/edit" element={<RutaProtegida><VistaEditarSubasta /></RutaProtegida>} />
 
           {/* Pujas: pestaña del panel + formularios directos */}
-          <Route
-            path="/bids"
-            element={
-              <RutaProtegida>
-                <VistaPanelControl seccionInicial="pujas" />
-              </RutaProtegida>
-            }
-          />
-          <Route
-            path="/bids/new"
-            element={
-              <RutaProtegida>
-                <VistaCrearPuja />
-              </RutaProtegida>
-            }
-          />
-          <Route
-            path="/bids/:id/edit"
-            element={
-              <RutaProtegida>
-                <VistaEditarPuja />
-              </RutaProtegida>
-            }
-          />
+          <Route path="/bids" element={<RutaProtegida><VistaPanelControl seccionInicial="pujas" /></RutaProtegida>} />
+          <Route path="/bids/new" element={<RutaProtegida><VistaCrearPuja /></RutaProtegida>} />
+          <Route path="/bids/:id/edit" element={<RutaProtegida><VistaEditarPuja /></RutaProtegida>} />
 
           {/* Reportes e infracciones (RN06) */}
-          <Route
-            path="/reports"
-            element={
-              <RutaProtegida>
-                <VistaPanelControl seccionInicial="reportes" />
-              </RutaProtegida>
-            }
-          />
-          <Route
-            path="/reports/new"
-            element={
-              <RutaProtegida>
-                <VistaCrearReporte />
-              </RutaProtegida>
-            }
-          />
-          <Route
-            path="/reports/:id/edit"
-            element={
-              <RutaProtegida>
-                <VistaEditarReporte />
-              </RutaProtegida>
-            }
-          />
+          <Route path="/reports" element={<RutaProtegida><VistaPanelControl seccionInicial="reportes" /></RutaProtegida>} />
+          <Route path="/reports/new" element={<RutaProtegida><VistaCrearReporte /></RutaProtegida>} />
+          <Route path="/reports/:id/edit" element={<RutaProtegida><VistaEditarReporte /></RutaProtegida>} />
 
           {/* Calificaciones y reputación (RN07) */}
-          <Route
-            path="/reviews"
-            element={
-              <RutaProtegida>
-                <VistaPanelControl seccionInicial="resenas" />
-              </RutaProtegida>
-            }
-          />
-          <Route
-            path="/reviews/new"
-            element={
-              <RutaProtegida>
-                <VistaCrearResena />
-              </RutaProtegida>
-            }
-          />
-          <Route
-            path="/reviews/:id/edit"
-            element={
-              <RutaProtegida>
-                <VistaEditarResena />
-              </RutaProtegida>
-            }
-          />
+          <Route path="/reviews" element={<RutaProtegida><VistaPanelControl seccionInicial="resenas" /></RutaProtegida>} />
+          <Route path="/reviews/new" element={<RutaProtegida><VistaCrearResena /></RutaProtegida>} />
+          <Route path="/reviews/:id/edit" element={<RutaProtegida><VistaEditarResena /></RutaProtegida>} />
 
-          {/* Usuarios y roles (solo administrador) */}
-          <Route
-            path="/users"
-            element={
-              <RutaProtegida rolesPermitidos={['admin']}>
-                <VistaPanelControl seccionInicial="usuarios" />
-              </RutaProtegida>
-            }
-          />
-          <Route
-            path="/users/new"
-            element={
-              <RutaProtegida rolesPermitidos={['admin']}>
-                <VistaCrearUsuario />
-              </RutaProtegida>
-            }
-          />
-          <Route
-            path="/users/:id/edit"
-            element={
-              <RutaProtegida>
-                <VistaEditarUsuario />
-              </RutaProtegida>
-            }
-          />
+          {/* Usuarios y roles (solo administrador para crear y listar) */}
+          <Route path="/users" element={<RutaProtegida rolesPermitidos={['admin']}><VistaPanelControl seccionInicial="usuarios" /></RutaProtegida>} />
+          <Route path="/users/new" element={<RutaProtegida rolesPermitidos={['admin']}><VistaCrearUsuario /></RutaProtegida>} />
+          <Route path="/users/:id/edit" element={<RutaProtegida><VistaEditarUsuario /></RutaProtegida>} />
 
           {/* Centro de notificaciones */}
-          <Route
-            path="/notifications"
-            element={
-              <RutaProtegida>
-                <VistaPanelControl seccionInicial="notificaciones" />
-              </RutaProtegida>
-            }
-          />
+          <Route path="/notifications" element={<RutaProtegida><VistaPanelControl seccionInicial="notificaciones" /></RutaProtegida>} />
 
           {/* Ruta explícita y captura de enlaces inexistentes o no desarrollados */}
           <Route path="/404" element={<VistaError404 />} />

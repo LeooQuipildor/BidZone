@@ -5,7 +5,6 @@ import { usarTiendaSubastas } from '../../subastas/estado/tiendaSubastas';
 import { usarTiendaAutenticacion } from '../../autenticacion/estado/tiendaAutenticacion';
 import { FormularioPuja } from './FormularioPuja';
 import { buscarPorId, mismoId } from '../../nucleo/utilidades/ayudas';
-import { ErrorCard, Loading } from '../../nucleo/diseno/uiFeedback';
 import { PaginaFormulario } from '../../nucleo/diseno/componentesBloques';
 
 export function VistaEditarPuja() {
@@ -27,48 +26,40 @@ export function VistaEditarPuja() {
 
   const puja = buscarPorId(pujas, id);
 
-  if (cargandoPujas && !puja) return <Loading text="Cargando puja..." />;
-
+  let errorTitulo = '';
+  let errorMensaje = '';
   if (!puja) {
-    return (
-      <ErrorCard
-        title="Puja no encontrada"
-        message="El registro de oferta solicitado no existe."
-        backLabel="Volver a Pujas"
-        onBack={() => navegar('/bids')}
-      />
-    );
+    errorTitulo = 'Puja no encontrada';
+    errorMensaje = 'El registro de oferta solicitado no existe.';
+  } else if (!mismoId(usuarioActual?.id, puja.bidderId)) {
+    errorTitulo = 'Sin permisos de edición';
+    errorMensaje = 'RN04: Solo el postor titular puede editar su nota de coordinación; los montos ofertados no se editan.';
   }
 
-  const esDuenoPuja = mismoId(usuarioActual?.id, puja.bidderId);
-  if (!esDuenoPuja) {
-    return (
-      <ErrorCard
-        title="Sin permisos de edición"
-        message="RN04: Solo el postor titular puede editar su nota de coordinación; los montos ofertados no se editan."
-        backLabel="Volver a Pujas"
-        onBack={() => navegar('/bids')}
-      />
-    );
-  }
-
-  const subasta = buscarPorId(subastas, puja.auctionId);
-  const tituloSubasta = subasta?.title || puja.auctionTitle || `#${puja.auctionId}`;
+  const subasta = puja ? buscarPorId(subastas, puja.auctionId) : null;
+  const tituloSubasta = subasta?.title || puja?.auctionTitle || `#${puja?.auctionId}`;
 
   return (
     <PaginaFormulario
-      titulo={`Editar Nota de Puja #${puja.id}`}
+      titulo={puja ? `Editar Nota de Puja #${puja.id}` : 'Editar Nota de Puja'}
       subtitulo={`Subasta asociada: ${tituloSubasta}`}
+      textoVolver="Volver a Pujas"
       alVolver={() => navegar('/bids')}
+      cargando={cargandoPujas && !puja}
+      textoCarga="Cargando puja..."
+      errorTitulo={errorTitulo}
+      errorMensaje={errorMensaje}
     >
-      <FormularioPuja
-        key={puja.id}
-        puja={puja}
-        subastas={subastas}
-        alActualizarPuja={actualizarPuja}
-        alGuardar={() => navegar('/bids')}
-        alCancelar={() => navegar('/bids')}
-      />
+      {puja && (
+        <FormularioPuja
+          key={puja.id}
+          puja={puja}
+          subastas={subastas}
+          alActualizarPuja={actualizarPuja}
+          alGuardar={() => navegar('/bids')}
+          alCancelar={() => navegar('/bids')}
+        />
+      )}
     </PaginaFormulario>
   );
 }

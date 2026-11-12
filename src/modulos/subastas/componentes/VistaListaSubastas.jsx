@@ -11,8 +11,11 @@ import {
   OPCIONES_ESTADO_SALA,
   OPCIONES_ORDEN_SUBASTA,
 } from '../../nucleo/utilidades/formatos';
-import { mismoId } from '../../nucleo/utilidades/ayudas';
-import { filtrarYOrdenarSubastas } from '../../nucleo/componentes/panel/ayudasPanel';
+import { mismoId, useRelojSegundo } from '../../nucleo/utilidades/ayudas';
+import {
+  filtrarYOrdenarSubastas,
+  paginarLista,
+} from '../../nucleo/componentes/panel/ayudasPanel';
 import { Button, Input, Select, Card } from '../../nucleo/diseno/ui';
 import { Alert } from '../../nucleo/diseno/uiFeedback';
 import {
@@ -25,6 +28,7 @@ const SUBASTAS_POR_PAGINA = 20;
 
 export function VistaListaSubastas() {
   const navegar = useNavigate();
+  const ahoraMs = useRelojSegundo();
   const subastas = usarTiendaSubastas((estado) => estado.subastas);
   const errorSubastas = usarTiendaSubastas((estado) => estado.error);
   const filtros = usarTiendaSubastas((estado) => estado.filtros);
@@ -51,11 +55,12 @@ export function VistaListaSubastas() {
     estadoSala,
     filtros.ordenarPor
   );
-  const totalPaginas = Math.max(1, Math.ceil(subastasFiltradas.length / SUBASTAS_POR_PAGINA));
-  const paginaActiva = estadoPagina.clave === claveFiltros ? estadoPagina.numero : 1;
-  const paginaSegura = Math.min(paginaActiva, totalPaginas);
-  const indiceInicio = (paginaSegura - 1) * SUBASTAS_POR_PAGINA;
-  const subastasPaginadas = subastasFiltradas.slice(indiceInicio, indiceInicio + SUBASTAS_POR_PAGINA);
+  const paginaSolicitada = estadoPagina.clave === claveFiltros ? estadoPagina.numero : 1;
+  const {
+    elementosPagina: subastasPaginadas,
+    paginaActual: paginaSegura,
+    totalPaginas,
+  } = paginarLista(subastasFiltradas, paginaSolicitada, SUBASTAS_POR_PAGINA);
 
   function manejarCambioPagina(nuevaPagina) {
     setEstadoPagina({ clave: claveFiltros, numero: nuevaPagina });
@@ -148,9 +153,10 @@ export function VistaListaSubastas() {
                 <TarjetaSubasta
                   key={subasta.id}
                   subasta={subasta}
+                  ahoraMs={ahoraMs}
                   esPropietario={Boolean(usuarioActual && esVendedor)}
                   esAdmin={Boolean(usuarioActual && esAdmin)}
-                  alSolicitarEdicion={setSubastaSolicitada}
+                  alSolicitarRevision={setSubastaSolicitada}
                   alEliminar={manejarEliminacion}
                 />
               );

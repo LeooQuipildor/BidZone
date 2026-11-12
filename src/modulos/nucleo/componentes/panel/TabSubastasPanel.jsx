@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Plus } from 'lucide-react';
 import { usarTiendaSubastas } from '../../../subastas/estado/tiendaSubastas';
 import { FormularioSubasta } from '../../../subastas/componentes/FormularioSubasta';
 import { PanelSolicitudCorreccion } from '../../../subastas/componentes/PanelSolicitudCorreccion';
+import { PaginacionCatalogo } from '../../../subastas/componentes/PaginacionCatalogo';
+import { TarjetaSubasta } from '../../../subastas/componentes/TarjetaSubasta';
 import { buscarPorId, mismoId } from '../../utilidades/ayudas';
 import { OPCIONES_ORDEN_SUBASTA } from '../../utilidades/formatos';
 import {
@@ -14,16 +15,13 @@ import {
   obtenerTextosTabSubastas,
   paginarLista,
 } from './ayudasPanel';
-import { PaginacionCatalogo } from '../../../subastas/componentes/PaginacionCatalogo';
 import { AvisoPanel, BotonPanel, CabeceraSeccionPanel, ContenedorFormularioPanel, EstadoVacioPanel } from './PanelCompartido';
 import { FiltrosBotones } from '../../diseno/componentesBloques';
-import { TarjetaSubastaPanel } from './TarjetaSubastaPanel';
 
 const SUBASTAS_POR_PAGINA_PANEL = 12;
 
 // Pestaña de subastas: separa Moderación y Mis Subastas en Admin; en ajenas solicita corrección o elimina
 export function TabSubastasPanel({ usuarioActual, usuarios, subastas, pujas, textoBusqueda, ahoraMs, datosIniciales }) {
-  const navegar = useNavigate();
   const crearSubasta = usarTiendaSubastas((estado) => estado.crearSubasta);
   const actualizarSubasta = usarTiendaSubastas((estado) => estado.actualizarSubasta);
   const eliminarSubasta = usarTiendaSubastas((estado) => estado.eliminarSubasta);
@@ -143,18 +141,17 @@ export function TabSubastasPanel({ usuarioActual, usuarios, subastas, pujas, tex
             {subastasPagina.map((subasta) => {
               const conteoLocal = pujas.filter((p) => mismoId(p.auctionId, subasta.id)).length;
               return (
-                <TarjetaSubastaPanel
+                <TarjetaSubasta
                   key={subasta.id}
                   subasta={subasta}
-                  vendedor={buscarPorId(usuarios, subasta.sellerId)}
-                  cantidadPujas={Number(subasta.bidCount ?? conteoLocal)}
+                  vendedor={buscarPorId(usuarios, subasta.sellerId) || { name: subasta.sellerName }}
+                  cantidadOfertas={Number(subasta.bidCount ?? conteoLocal)}
                   ahoraMs={ahoraMs}
-                  esPropia={mismoId(usuarioActual?.id, subasta.sellerId)}
+                  esPropietario={mismoId(usuarioActual?.id, subasta.sellerId)}
                   esAdmin={esAdmin}
                   alEditar={(s) => { cerrarPaneles(); setIdSubastaEditando(s.id); setFormularioAbierto(true); setAviso(null); }}
-                  alSolicitarCorreccion={(s) => { cerrarPaneles(); setIdSubastaCorrigiendo(s.id); setAviso(null); }}
+                  alSolicitarRevision={(s) => { cerrarPaneles(); setIdSubastaCorrigiendo(s.id); setAviso(null); }}
                   alEliminar={manejarEliminacion}
-                  alAbrirDetalle={(id) => navegar(`/auctions/${id}`)}
                 />
               );
             })}

@@ -2,6 +2,13 @@
 const URL_BASE_API =
   import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
+export const CLAVE_TOKEN = 'bidzone_token';
+
+// Indica si existe un token de sesión guardado en el navegador
+export function hayTokenSesion() {
+  return Boolean(localStorage.getItem(CLAVE_TOKEN));
+}
+
 // Función que se ejecuta si el servidor responde 401 (sesión vencida o token inválido)
 let manejadorSinAutorizacion = null;
 
@@ -39,7 +46,7 @@ async function leerJsonSeguro(respuesta) {
 
 // Función central para enviar peticiones HTTP (GET, POST, PUT, PATCH, DELETE) al backend
 export async function peticionHttp(ruta, opciones = {}) {
-  const token = localStorage.getItem('bidzone_token');
+  const token = localStorage.getItem(CLAVE_TOKEN);
 
   const cabeceras = {
     'Content-Type': 'application/json',

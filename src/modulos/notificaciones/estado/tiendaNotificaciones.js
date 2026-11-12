@@ -1,5 +1,9 @@
 import { create } from 'zustand';
-import { peticionHttp, registrarLimpiezaSesion } from '../../nucleo/servicios/clienteApi';
+import {
+  hayTokenSesion,
+  peticionHttp,
+  registrarLimpiezaSesion,
+} from '../../nucleo/servicios/clienteApi';
 import { eliminarPorId, mismoId } from '../../nucleo/utilidades/ayudas';
 
 // Tienda global de notificaciones del usuario (conecta con /api/notifications)
@@ -9,7 +13,7 @@ export const usarTiendaNotificaciones = create((set) => ({
   error: null,
 
   obtenerNotificaciones: async () => {
-    if (!localStorage.getItem('bidzone_token')) {
+    if (!hayTokenSesion()) {
       set({ notificaciones: [], cargando: false });
       return [];
     }

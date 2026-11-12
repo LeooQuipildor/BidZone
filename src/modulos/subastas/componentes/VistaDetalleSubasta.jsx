@@ -10,7 +10,7 @@ import { PanelPujasSubasta } from './PanelPujasSubasta';
 import { PanelSolicitudCorreccion } from './PanelSolicitudCorreccion';
 import { Button } from '../../nucleo/diseno/ui';
 import { Alert, Loading, ErrorCard } from '../../nucleo/diseno/uiFeedback';
-import { buscarPorId, mismoId } from '../../nucleo/utilidades/ayudas';
+import { buscarPorId, mismoId, useRelojSegundo } from '../../nucleo/utilidades/ayudas';
 
 export function VistaDetalleSubasta() {
   const { id } = useParams();
@@ -28,7 +28,6 @@ export function VistaDetalleSubasta() {
   const usuarioActual = usarTiendaAutenticacion((estado) => estado.usuarioActual);
   const usuarios = usarTiendaAutenticacion((estado) => estado.usuarios);
 
-  const [ahoraMs, setAhoraMs] = useState(() => Date.now());
   const [mensajeError, setMensajeError] = useState('');
   const [mensajeExito, setMensajeExito] = useState('');
   const [solicitandoEdicion, setSolicitandoEdicion] = useState(false);
@@ -40,12 +39,7 @@ export function VistaDetalleSubasta() {
   const detalleEncontrado =
     detalleSubastaActual && mismoId(detalleSubastaActual.id, id) ? detalleSubastaActual : null;
   const subasta = detalleEncontrado || buscarPorId(subastas, id);
-
-  useEffect(() => {
-    if (!subasta?.endTime || subasta?.status !== 'activa') return;
-    const reloj = setInterval(() => setAhoraMs(Date.now()), 1000);
-    return () => clearInterval(reloj);
-  }, [subasta?.endTime, subasta?.status]);
+  const ahoraMs = useRelojSegundo(Boolean(subasta?.endTime && subasta?.status === 'activa'));
 
   if (cargandoDetalle && !subasta) return <Loading text="Cargando subasta..." />;
 

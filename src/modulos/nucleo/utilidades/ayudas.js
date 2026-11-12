@@ -1,4 +1,18 @@
+import { useEffect, useState } from 'react';
 import { formatearMoneda } from './formatos';
+
+// Reloj simple que actualiza la hora actual cada 1 segundo para los contadores en vivo
+export function useRelojSegundo(activo = true) {
+  const [ahoraMs, setAhoraMs] = useState(() => Date.now());
+
+  useEffect(() => {
+    if (!activo) return undefined;
+    const intervalo = setInterval(() => setAhoraMs(Date.now()), 1000);
+    return () => clearInterval(intervalo);
+  }, [activo]);
+
+  return ahoraMs;
+}
 
 // Compara dos IDs sin importar si uno es número (1) y el otro texto ("1")
 export function mismoId(idA, idB) {

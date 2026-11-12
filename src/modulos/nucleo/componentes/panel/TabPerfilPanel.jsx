@@ -1,98 +1,10 @@
 import React, { useState } from 'react';
-import { Mail, MapPin, Phone, Save, ShieldCheck, Star } from 'lucide-react';
+import { Mail, MapPin, Phone, ShieldCheck, Star } from 'lucide-react';
 import { usarTiendaAutenticacion } from '../../../autenticacion/estado/tiendaAutenticacion';
+import { FormularioUsuario } from '../../../autenticacion/componentes/FormularioUsuario';
 import { mismoId } from '../../utilidades/ayudas';
-import { Button, Input } from '../../diseno/ui';
 import { obtenerIniciales } from './ayudasPanel';
 import { AvisoPanel, CabeceraSeccionPanel } from './PanelCompartido';
-
-// Formulario separado con `key` para reiniciarse limpio cuando cambia el perfil del usuario
-function TarjetaFormularioPerfil({ usuarioActual, alActualizarUsuario, alMostrarAviso }) {
-  const [datosFormulario, setDatosFormulario] = useState(() => ({
-    nombre: usuarioActual?.name || '',
-    correo: usuarioActual?.email || '',
-    telefono: usuarioActual?.phone || '',
-    ciudad: usuarioActual?.city || '',
-  }));
-
-  function manejarCambio(evento) {
-    const { name, value } = evento.target;
-    setDatosFormulario((previo) => ({ ...previo, [name]: value }));
-  }
-
-  async function manejarEnvio(evento) {
-    evento.preventDefault();
-    alMostrarAviso(null);
-
-    if (!datosFormulario.nombre.trim() || !datosFormulario.correo.trim()) {
-      alMostrarAviso({
-        tipo: 'error',
-        texto: 'El nombre y el correo electrónico son obligatorios.',
-      });
-      return;
-    }
-
-    try {
-      await alActualizarUsuario(usuarioActual.id, datosFormulario);
-      alMostrarAviso({
-        tipo: 'exito',
-        texto: 'Tus datos de coordinación directa RN05 se actualizaron correctamente.',
-      });
-    } catch (error) {
-      alMostrarAviso({ tipo: 'error', texto: error.message });
-    }
-  }
-
-  return (
-    <div className="lg:col-span-8 rounded-2xl bg-white border border-[#224F10]/10 p-6 shadow-2xs">
-      <h2 className="text-base font-bold text-[#0D0D0D] pb-4 border-b border-[#224F10]/10">
-        Datos de Contacto y Coordinación
-      </h2>
-
-      <form onSubmit={manejarEnvio} className="space-y-4 pt-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Input
-            id="nombre"
-            name="nombre"
-            label="Nombre Completo *"
-            value={datosFormulario.nombre}
-            onChange={manejarCambio}
-          />
-          <Input
-            id="correo"
-            name="correo"
-            type="email"
-            label="Correo Electrónico *"
-            value={datosFormulario.correo}
-            onChange={manejarCambio}
-          />
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Input
-            id="telefono"
-            name="telefono"
-            label="Teléfono / WhatsApp RN05 *"
-            value={datosFormulario.telefono}
-            onChange={manejarCambio}
-          />
-          <Input
-            id="ciudad"
-            name="ciudad"
-            label="Ciudad / Localidad"
-            value={datosFormulario.ciudad}
-            onChange={manejarCambio}
-          />
-        </div>
-        <div className="flex justify-end pt-3">
-          <Button type="submit">
-            <Save className="w-3.5 h-3.5" />
-            Guardar Cambios
-          </Button>
-        </div>
-      </form>
-    </div>
-  );
-}
 
 export function TabPerfilPanel({ usuarioActual, subastas, pujas }) {
   const actualizarUsuario = usarTiendaAutenticacion((estado) => estado.actualizarUsuario);
@@ -166,14 +78,25 @@ export function TabPerfilPanel({ usuarioActual, subastas, pujas }) {
           </div>
         </div>
 
-        <TarjetaFormularioPerfil
-          key={claveFormulario}
-          usuarioActual={usuarioActual}
-          alActualizarUsuario={actualizarUsuario}
-          alMostrarAviso={setAviso}
-        />
+        <div className="lg:col-span-8 rounded-2xl bg-white border border-[#224F10]/10 p-6 shadow-2xs space-y-4">
+          <h2 className="text-base font-bold text-[#0D0D0D] pb-4 border-b border-[#224F10]/10">
+            Datos de Contacto y Coordinación
+          </h2>
+
+          <FormularioUsuario
+            key={claveFormulario}
+            usuario={usuarioActual}
+            esAdmin={false}
+            alActualizarUsuario={actualizarUsuario}
+            alGuardar={() =>
+              setAviso({
+                tipo: 'exito',
+                texto: 'Tus datos de coordinación directa RN05 se actualizaron correctamente.',
+              })
+            }
+          />
+        </div>
       </div>
     </div>
   );
 }
-

@@ -5,7 +5,6 @@ import { usarTiendaAutenticacion } from '../../autenticacion/estado/tiendaAutent
 import { buscarPorId, mismoId } from '../../nucleo/utilidades/ayudas';
 import { FormularioReporte } from './FormularioReporte';
 import { PanelResolucionTicket } from './PanelResolucionTicket';
-import { ErrorCard, Loading } from '../../nucleo/diseno/uiFeedback';
 import { PaginaFormulario } from '../../nucleo/diseno/componentesBloques';
 
 export function VistaEditarReporte() {
@@ -28,45 +27,35 @@ export function VistaEditarReporte() {
   const reporte = buscarPorId(reportes, id);
   const esAdmin = usuarioActual?.role === 'admin';
 
-  if (cargandoReportes && !reporte) return <Loading text="Cargando expediente..." />;
-
+  let errorTitulo = '';
+  let errorMensaje = '';
   if (!reporte) {
-    return (
-      <ErrorCard
-        title="Reporte no encontrado"
-        message="El expediente solicitado no existe o no tienes acceso para consultarlo."
-        backLabel="Volver a Reportes"
-        onBack={() => navegar('/reports')}
-      />
-    );
+    errorTitulo = 'Reporte no encontrado';
+    errorMensaje = 'El expediente solicitado no existe o no tienes acceso para consultarlo.';
+  } else if (!esAdmin && !mismoId(usuarioActual?.id, reporte.reporterId)) {
+    errorTitulo = 'Sin permisos de edición';
+    errorMensaje = 'Solo el denunciante original o un administrador puede modificar este reporte.';
   }
 
-  const esDenunciante = mismoId(usuarioActual?.id, reporte.reporterId);
-  if (!esAdmin && !esDenunciante) {
-    return (
-      <ErrorCard
-        title="Sin permisos de edición"
-        message="Solo el denunciante original o un administrador puede modificar este reporte."
-        backLabel="Volver a Reportes"
-        onBack={() => navegar('/reports')}
-      />
-    );
-  }
-
-  const usuarioReportado = buscarPorId(usuarios, reporte.reportedUserId);
+  const usuarioReportado = reporte ? buscarPorId(usuarios, reporte.reportedUserId) : null;
   const nombreReportado =
-    usuarioReportado?.name || reporte.reportedUserName || `#${reporte.reportedUserId}`;
+    usuarioReportado?.name || reporte?.reportedUserName || `#${reporte?.reportedUserId}`;
   const estadoReportado = usuarioReportado?.status
     ? `Estado actual: ${usuarioReportado.status}`
     : 'En evaluación';
 
   return (
     <PaginaFormulario
-      titulo={`Ticket #${reporte.id}`}
+      titulo={reporte ? `Ticket #${reporte.id}` : 'Ticket de Reporte'}
       subtitulo={`Usuario denunciado: ${nombreReportado} (${estadoReportado})`}
+      textoVolver="Volver a Reportes"
       alVolver={() => navegar('/reports')}
+      cargando={cargandoReportes && !reporte}
+      textoCarga="Cargando expediente..."
+      errorTitulo={errorTitulo}
+      errorMensaje={errorMensaje}
     >
-      {esAdmin ? (
+      {reporte && esAdmin && (
         <div className="space-y-4">
           <div className="rounded-xl bg-[#F7FBF3] border border-[#224F10]/10 p-4 space-y-1.5 text-xs">
             <h3 className="text-sm font-bold text-[#0D0D0D]">{reporte.reason}</h3>
@@ -82,7 +71,8 @@ export function VistaEditarReporte() {
             alCancelar={() => navegar('/reports')}
           />
         </div>
-      ) : (
+      )}
+      {reporte && !esAdmin && (
         <FormularioReporte
           key={`${reporte.id}-${reporte.updatedAt || reporte.status}`}
           reporte={reporte}

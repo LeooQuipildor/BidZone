@@ -5,7 +5,6 @@ import { usarTiendaPujas } from '../../pujas/estado/tiendaPujas';
 import { usarTiendaAutenticacion } from '../../autenticacion/estado/tiendaAutenticacion';
 import { FormularioSubasta } from './FormularioSubasta';
 import { buscarPorId, mismoId } from '../../nucleo/utilidades/ayudas';
-import { Loading, ErrorCard } from '../../nucleo/diseno/uiFeedback';
 import { PaginaFormulario } from '../../nucleo/diseno/componentesBloques';
 
 export function VistaEditarSubasta() {
@@ -31,39 +30,27 @@ export function VistaEditarSubasta() {
       ? detalleSubastaActual
       : buscarPorId(subastas, id);
 
-  if (cargandoDetalle && !subasta) {
-    return <Loading text="Cargando subasta..." />;
-  }
-
-  if (!subasta) {
-    return (
-      <ErrorCard
-        title="Subasta no encontrada"
-        message="La subasta que intentas editar no existe."
-        backLabel="Volver al catálogo"
-        onBack={() => navegar('/auctions')}
-      />
-    );
-  }
-
   const esAdmin = usuarioActual?.role === 'admin';
-  const esDueno = mismoId(usuarioActual?.id, subasta.sellerId);
+  const esDueno = Boolean(subasta && mismoId(usuarioActual?.id, subasta.sellerId));
 
-  if (!esDueno) {
-    return (
-      <ErrorCard
-        title="Solo el vendedor puede editar"
-        message="Únicamente el vendedor propietario puede modificar esta publicación. Desde el panel puedes solicitarle correcciones si tiene problemas."
-        backLabel="Volver al detalle"
-        onBack={() => navegar(`/auctions/${subasta.id}`)}
-      />
-    );
+  let errorTitulo = '';
+  let errorMensaje = '';
+  if (!subasta) {
+    errorTitulo = 'Subasta no encontrada';
+    errorMensaje = 'La subasta que intentas editar no existe.';
+  } else if (!esDueno) {
+    errorTitulo = 'Solo el vendedor puede editar';
+    errorMensaje =
+      'Únicamente el vendedor propietario puede modificar esta publicación. Desde el panel puedes solicitarle correcciones si tiene problemas.';
   }
 
-  const tienePujas =
-    Number(subasta.bidCount || 0) > 0 ||
-    (Array.isArray(subasta.bids) && subasta.bids.length > 0) ||
-    pujas.some((puja) => mismoId(puja.auctionId, id));
+  const rutaRetorno = subasta ? `/auctions/${subasta.id}` : '/auctions';
+  const tienePujas = Boolean(
+    subasta &&
+      (Number(subasta.bidCount || 0) > 0 ||
+        (Array.isArray(subasta.bids) && subasta.bids.length > 0) ||
+        pujas.some((puja) => mismoId(puja.auctionId, id)))
+  );
 
   async function manejarActualizacion(datos) {
     await actualizarSubasta(subasta.id, datos);
@@ -72,19 +59,25 @@ export function VistaEditarSubasta() {
 
   return (
     <PaginaFormulario
-      titulo={`Editar Subasta #${subasta.id}`}
+      titulo={subasta ? `Editar Subasta #${subasta.id}` : 'Editar Subasta'}
       subtitulo="Actualiza la información del artículo o las condiciones de la publicación."
-      textoVolver="Volver al detalle"
-      alVolver={() => navegar(`/auctions/${subasta.id}`)}
+      textoVolver={subasta ? 'Volver al detalle' : 'Volver al catálogo'}
+      alVolver={() => navegar(rutaRetorno)}
+      cargando={cargandoDetalle && !subasta}
+      textoCarga="Cargando subasta..."
+      errorTitulo={errorTitulo}
+      errorMensaje={errorMensaje}
     >
-      <FormularioSubasta
-        key={`${subasta.id}-${subasta.updatedAt || subasta.endTime}`}
-        subasta={subasta}
-        tienePujas={tienePujas}
-        esAdmin={esAdmin}
-        alEnviarFormulario={manejarActualizacion}
-        alCancelar={() => navegar(`/auctions/${subasta.id}`)}
-      />
+      {subasta && (
+        <FormularioSubasta
+          key={`${subasta.id}-${subasta.updatedAt || subasta.endTime}`}
+          subasta={subasta}
+          tienePujas={tienePujas}
+          esAdmin={esAdmin}
+          alEnviarFormulario={manejarActualizacion}
+          alCancelar={() => navegar(rutaRetorno)}
+        />
+      )}
     </PaginaFormulario>
   );
 }

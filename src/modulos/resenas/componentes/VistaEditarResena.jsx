@@ -4,7 +4,6 @@ import { usarTiendaResenas } from '../estado/tiendaResenas';
 import { usarTiendaAutenticacion } from '../../autenticacion/estado/tiendaAutenticacion';
 import { buscarPorId, mismoId } from '../../nucleo/utilidades/ayudas';
 import { FormularioResena } from './FormularioResena';
-import { Loading, ErrorCard } from '../../nucleo/diseno/uiFeedback';
 import { PaginaFormulario } from '../../nucleo/diseno/componentesBloques';
 
 export function VistaEditarResena() {
@@ -23,44 +22,36 @@ export function VistaEditarResena() {
 
   const resena = buscarPorId(resenas, id);
 
-  if (cargandoResenas && !resena) return <Loading text="Cargando calificación..." />;
-
+  let errorTitulo = '';
+  let errorMensaje = '';
   if (!resena) {
-    return (
-      <ErrorCard
-        title="Calificación no encontrada"
-        message="El registro solicitado no existe."
-        backLabel="Volver a Calificaciones"
-        onBack={() => navegar('/reviews')}
-      />
-    );
-  }
-
-  const esAutor = mismoId(usuarioActual?.id, resena.reviewerId);
-  if (!esAutor) {
-    return (
-      <ErrorCard
-        title="Sin permisos de edición"
-        message="Solo el autor de la reseña puede modificarla."
-        backLabel="Volver a Calificaciones"
-        onBack={() => navegar('/reviews')}
-      />
-    );
+    errorTitulo = 'Calificación no encontrada';
+    errorMensaje = 'El registro solicitado no existe.';
+  } else if (!mismoId(usuarioActual?.id, resena.reviewerId)) {
+    errorTitulo = 'Sin permisos de edición';
+    errorMensaje = 'Solo el autor de la reseña puede modificarla.';
   }
 
   return (
     <PaginaFormulario
-      titulo={`Editar Calificación #${resena.id}`}
+      titulo={resena ? `Editar Calificación #${resena.id}` : 'Editar Calificación'}
       subtitulo="Modifica la puntuación o el comentario asociado a esta operación."
+      textoVolver="Volver a Calificaciones"
       alVolver={() => navegar('/reviews')}
+      cargando={cargandoResenas && !resena}
+      textoCarga="Cargando calificación..."
+      errorTitulo={errorTitulo}
+      errorMensaje={errorMensaje}
     >
-      <FormularioResena
-        key={`${resena.id}-${resena.updatedAt || resena.rating}`}
-        resena={resena}
-        alActualizarResena={actualizarResena}
-        alGuardar={() => navegar('/reviews')}
-        alCancelar={() => navegar('/reviews')}
-      />
+      {resena && (
+        <FormularioResena
+          key={`${resena.id}-${resena.updatedAt || resena.rating}`}
+          resena={resena}
+          alActualizarResena={actualizarResena}
+          alGuardar={() => navegar('/reviews')}
+          alCancelar={() => navegar('/reviews')}
+        />
+      )}
     </PaginaFormulario>
   );
 }

@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { TarjetaSubasta } from '../../subastas/componentes/TarjetaSubasta';
+import { useRelojSegundo } from '../utilidades/ayudas';
 import { FiltrosBotones, TarjetaCtaCatalogo } from '../diseno/componentesBloques';
 
 // Catálogo rápido de subastas en el inicio con filtro por categoría
@@ -12,6 +13,7 @@ export function SeccionCatalogoInicio({
   errorSubastas,
 }) {
   const navegar = useNavigate();
+  const ahoraMs = useRelojSegundo();
 
   const catalogoFiltrado =
     categoriaSeleccionada === 'Todas'
@@ -47,7 +49,7 @@ export function SeccionCatalogoInicio({
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {catalogoFiltrado.slice(0, 7).map((subasta) => (
-          <TarjetaSubasta key={subasta.id} subasta={subasta} />
+          <TarjetaSubasta key={subasta.id} subasta={subasta} ahoraMs={ahoraMs} />
         ))}
 
         <TarjetaCtaCatalogo

@@ -1,22 +1,7 @@
 import React from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
-function obtenerNumerosVisibles(paginaActual, totalPaginas) {
-  if (totalPaginas <= 7) {
-    return Array.from({ length: totalPaginas }, (_, indice) => indice + 1);
-  }
-  const paginas = [1];
-  const inicio = Math.max(2, paginaActual - 1);
-  const fin = Math.min(totalPaginas - 1, paginaActual + 1);
-  if (inicio > 2) paginas.push('elipsis-izq');
-  for (let numero = inicio; numero <= fin; numero += 1) {
-    paginas.push(numero);
-  }
-  if (fin < totalPaginas - 1) paginas.push('elipsis-der');
-  paginas.push(totalPaginas);
-  return paginas;
-}
-
+// Barra de paginación reutilizada en el Catálogo público y en el Panel de Control
 export function PaginacionCatalogo({
   paginaActual,
   totalPaginas,
@@ -28,7 +13,7 @@ export function PaginacionCatalogo({
 
   const desde = (paginaActual - 1) * elementosPorPagina + 1;
   const hasta = Math.min(paginaActual * elementosPorPagina, totalElementos);
-  const paginas = obtenerNumerosVisibles(paginaActual, totalPaginas);
+  const paginas = Array.from({ length: totalPaginas }, (_, indice) => indice + 1);
 
   return (
     <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-[#224F10]/12">
@@ -49,28 +34,21 @@ export function PaginacionCatalogo({
             Anterior
           </button>
 
-          {paginas.map((item) => {
-            if (typeof item !== 'number') {
-              return (
-                <span key={item} className="px-1.5 text-xs text-[#0D0D0D]/45 select-none">
-                  …
-                </span>
-              );
-            }
-            const estaActiva = item === paginaActual;
+          {paginas.map((numero) => {
+            const estaActiva = numero === paginaActual;
             return (
               <button
-                key={item}
+                key={numero}
                 type="button"
                 aria-current={estaActiva ? 'page' : undefined}
-                onClick={() => alCambiarPagina(item)}
+                onClick={() => alCambiarPagina(numero)}
                 className={`w-8 h-8 rounded-full text-xs font-semibold transition-colors cursor-pointer ${
                   estaActiva
                     ? 'bg-[#224F10] text-[#EAFFD0]'
                     : 'bg-white border border-[#224F10]/15 text-[#0D0D0D]/75 hover:bg-[#EAFFD0] hover:text-[#0D0D0D]'
                 }`}
               >
-                {item}
+                {numero}
               </button>
             );
           })}
@@ -89,4 +67,3 @@ export function PaginacionCatalogo({
     </div>
   );
 }
-

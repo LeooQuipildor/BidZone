@@ -1,7 +1,6 @@
 import {
   CATEGORIAS_FILTRO_SUBASTA,
   OPCIONES_ESTADO_SALA,
-  completarDosDigitos,
 } from '../../utilidades/formatos';
 import { coincideConBusqueda, mismoId } from '../../utilidades/ayudas';
 
@@ -17,21 +16,6 @@ export const OPCIONES_ESTADO_PANEL = [
   ...OPCIONES_ESTADO_SALA,
 ];
 
-// Devuelve el tiempo restante en formato HH:MM:SS para relojes en vivo del panel
-export function formatearCuentaRegresiva(fechaFinTexto, ahoraMs) {
-  if (!fechaFinTexto) return '00:00:00';
-
-  const diferenciaMs = new Date(fechaFinTexto).getTime() - ahoraMs;
-  if (Number.isNaN(diferenciaMs) || diferenciaMs <= 0) return '00:00:00';
-
-  const totalSegundos = Math.floor(diferenciaMs / 1000);
-  const horas = Math.floor(totalSegundos / 3600);
-  const minutos = Math.floor((totalSegundos % 3600) / 60);
-  const segundos = totalSegundos % 60;
-
-  return `${completarDosDigitos(horas)}:${completarDosDigitos(minutos)}:${completarDosDigitos(segundos)}`;
-}
-
 // Toma las primeras 2 iniciales de un nombre para el avatar circular (ejemplo: "Juan Pérez" -> "JP")
 export function obtenerIniciales(nombre, respaldo = 'BZ') {
   const texto = String(nombre || respaldo).trim();
@@ -44,6 +28,20 @@ export function obtenerIniciales(nombre, respaldo = 'BZ') {
     if (iniciales.length === 2) break;
   }
   return (iniciales || respaldo).toUpperCase();
+}
+
+// Devuelve las subastas finalizadas con ganador en las que participó el usuario y aún no calificó (RN07)
+export function obtenerSubastasPendientesResena(subastas, resenas, idUsuarioActual) {
+  return subastas.filter((subasta) => {
+    if (subasta.status !== 'finalizada' || !subasta.winnerId) return false;
+    const participa =
+      mismoId(subasta.winnerId, idUsuarioActual) || mismoId(subasta.sellerId, idUsuarioActual);
+    const yaCalificada = resenas.some(
+      (resena) =>
+        mismoId(resena.auctionId, subasta.id) && mismoId(resena.reviewerId, idUsuarioActual)
+    );
+    return participa && !yaCalificada;
+  });
 }
 
 // Calcula a qué usuario calificar y en qué rol según quién abre la reseña (RN07)

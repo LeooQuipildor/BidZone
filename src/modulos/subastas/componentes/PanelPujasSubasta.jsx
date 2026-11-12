@@ -6,10 +6,7 @@ import { CasillaCompromisoPuja } from '../../pujas/componentes/BloquesPuja';
 import { HistorialPujasSubasta } from './HistorialPujasSubasta';
 import { Button, Input, Badge, Card } from '../../nucleo/diseno/ui';
 import { Alert } from '../../nucleo/diseno/uiFeedback';
-import {
-  calcularTiempoRestante,
-  formatearMoneda,
-} from '../../nucleo/utilidades/formatos';
+import { calcularTiempoRestante, formatearMoneda } from '../../nucleo/utilidades/formatos';
 import {
   mismoId,
   obtenerMontoPujaMaximo,
@@ -36,6 +33,7 @@ export function PanelPujasSubasta({
   const [mostrarConfirmacion, setMostrarConfirmacion] = useState(false);
   const [enviando, setEnviando] = useState(false);
 
+  const esActiva = subasta.status === 'activa';
   const tiempoRestante = subasta.endTime
     ? calcularTiempoRestante(subasta.endTime, ahoraMs)
     : { textoFormateado: '—' };
@@ -114,62 +112,64 @@ export function PanelPujasSubasta({
             <span className="text-[11px] text-[#0D0D0D]/60 block">Tiempo Restante</span>
             <p className="text-sm font-mono font-bold text-[#0D0D0D] flex items-center justify-end gap-1.5 mt-1">
               <Clock className="w-4 h-4 text-[#224F10]" />
-              {subasta.status === 'activa' ? tiempoRestante.textoFormateado : 'Finalizada'}
+              {esActiva ? tiempoRestante.textoFormateado : 'Finalizada'}
             </p>
           </div>
         </div>
 
-        {usuarioActual && subasta.status === 'activa' && esPostorLider && (
+        {usuarioActual && esActiva && esPostorLider && (
           <Badge variant="lime" className="w-full justify-center py-2">
             ★ Eres el postor líder actual en esta subasta
           </Badge>
         )}
-        {usuarioActual && subasta.status === 'activa' && !esPostorLider && yaParticipo && (
+        {usuarioActual && esActiva && !esPostorLider && yaParticipo && (
           <Badge variant="success" className="w-full justify-center py-2">
             ⚠ Tu oferta fue superada — Puja nuevamente para liderar
           </Badge>
         )}
 
-        {subasta.status === 'activa' ? (
-          esVendedor ? (
-            <Alert type="info" title="Eres el dueño de este artículo (RN02)">
-              Como vendedor no puedes realizar auto-pujas sobre tu propia publicación. Al cumplirse la fecha de cierre se adjudicará automáticamente al mejor postor.
-            </Alert>
-          ) : (
-            <form onSubmit={abrirConfirmacion} className="space-y-4">
-              <Input
-                id="montoPuja"
-                type="number"
-                label={`Tu Oferta en ARS (Mínimo ${formatearMoneda(montoSugerido)})`}
-                helperText={`Máximo permitido: ${formatearMoneda(montoMaximoPermitido)} (10 veces el precio inicial)`}
-                max={montoMaximoPermitido}
-                value={montoActualInput}
-                onChange={(evento) => setMontoPersonalizado(evento.target.value)}
-              />
-              <Input
-                id="notaPuja"
-                label="Nota de coordinación (Opcional)"
-                placeholder="Ej: Pago en efectivo o transferencia y retiro en el día"
-                value={notaPuja}
-                onChange={(evento) => setNotaPuja(evento.target.value)}
-              />
-
-              <CasillaCompromisoPuja
-                aceptado={compromisoAceptado}
-                alCambiar={setCompromisoAceptado}
-                textoDetallado
-              />
-
-              <Button type="submit" size="lg" className="w-full">
-                <Gavel className="w-4 h-4" />
-                Enviar Oferta Vinculante
-              </Button>
-            </form>
-          )
-        ) : (
+        {!esActiva && (
           <div className="bg-[#0D0D0D] text-[#EAFFD0] p-4 rounded-2xl text-center text-xs font-medium">
             Esta subasta se encuentra cerrada y ya no admite nuevas pujas (RN03).
           </div>
+        )}
+
+        {esActiva && esVendedor && (
+          <Alert type="info" title="Eres el dueño de este artículo (RN02)">
+            Como vendedor no puedes realizar auto-pujas sobre tu propia publicación. Al cumplirse la fecha de cierre se adjudicará automáticamente al mejor postor.
+          </Alert>
+        )}
+
+        {esActiva && !esVendedor && (
+          <form onSubmit={abrirConfirmacion} className="space-y-4">
+            <Input
+              id="montoPuja"
+              type="number"
+              label={`Tu Oferta en ARS (Mínimo ${formatearMoneda(montoSugerido)})`}
+              helperText={`Máximo permitido: ${formatearMoneda(montoMaximoPermitido)} (10 veces el precio inicial)`}
+              max={montoMaximoPermitido}
+              value={montoActualInput}
+              onChange={(evento) => setMontoPersonalizado(evento.target.value)}
+            />
+            <Input
+              id="notaPuja"
+              label="Nota de coordinación (Opcional)"
+              placeholder="Ej: Pago en efectivo o transferencia y retiro en el día"
+              value={notaPuja}
+              onChange={(evento) => setNotaPuja(evento.target.value)}
+            />
+
+            <CasillaCompromisoPuja
+              aceptado={compromisoAceptado}
+              alCambiar={setCompromisoAceptado}
+              textoDetallado
+            />
+
+            <Button type="submit" size="lg" className="w-full">
+              <Gavel className="w-4 h-4" />
+              Enviar Oferta Vinculante
+            </Button>
+          </form>
         )}
       </Card>
 

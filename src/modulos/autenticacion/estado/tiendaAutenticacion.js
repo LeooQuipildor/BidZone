@@ -1,19 +1,20 @@
 import { create } from 'zustand';
 import {
+  CLAVE_TOKEN,
   ejecutarLimpiezaSesion,
+  hayTokenSesion,
   peticionHttp,
   registrarLimpiezaSesion,
   registrarManejadorSinAutorizacion,
 } from '../../nucleo/servicios/clienteApi';
 import { eliminarPorId, mismoId, reemplazarPorId } from '../../nucleo/utilidades/ayudas';
 
-const CLAVE_TOKEN = 'bidzone_token';
 const CLAVE_USUARIO_SESION = 'bidzone_session_user';
 
 // Lee el usuario guardado en localStorage al abrir la app (si todavía hay token)
 function obtenerUsuarioGuardado() {
   try {
-    if (!localStorage.getItem(CLAVE_TOKEN)) {
+    if (!hayTokenSesion()) {
       localStorage.removeItem(CLAVE_USUARIO_SESION);
       return null;
     }
@@ -32,10 +33,10 @@ function guardarSesion(token, usuario) {
 // Traduce los campos en español del formulario al formato JSON que espera el backend
 function construirCuerpoUsuario(datos) {
   const cuerpo = {
-    name: datos.nombre ? datos.nombre.trim() : '',
-    email: datos.correo ? datos.correo.trim().toLowerCase() : '',
-    phone: datos.telefono ? datos.telefono.trim() : '',
-    city: datos.ciudad ? datos.ciudad.trim() : '',
+    name: String(datos.nombre || '').trim(),
+    email: String(datos.correo || '').trim().toLowerCase(),
+    phone: String(datos.telefono || '').trim(),
+    city: String(datos.ciudad || '').trim(),
   };
   if (datos.contrasena) cuerpo.password = datos.contrasena;
   if (datos.rol !== undefined) cuerpo.role = datos.rol;
@@ -54,7 +55,7 @@ export const usarTiendaAutenticacion = create((set, get) => ({
   error: null,
 
   verificarSesion: async () => {
-    if (!localStorage.getItem(CLAVE_TOKEN)) {
+    if (!hayTokenSesion()) {
       set({ usuarioActual: null });
       return null;
     }
@@ -72,7 +73,7 @@ export const usarTiendaAutenticacion = create((set, get) => ({
   },
 
   obtenerUsuarios: async () => {
-    if (!localStorage.getItem(CLAVE_TOKEN)) {
+    if (!hayTokenSesion()) {
       set({ usuarios: [], cargando: false });
       return [];
     }

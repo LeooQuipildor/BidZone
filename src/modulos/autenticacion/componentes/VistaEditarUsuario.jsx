@@ -3,7 +3,6 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { usarTiendaAutenticacion } from '../estado/tiendaAutenticacion';
 import { buscarPorId, mismoId } from '../../nucleo/utilidades/ayudas';
 import { FormularioUsuario } from './FormularioUsuario';
-import { ErrorCard, Loading } from '../../nucleo/diseno/uiFeedback';
 import { PaginaFormulario } from '../../nucleo/diseno/componentesBloques';
 
 export function VistaEditarUsuario() {
@@ -24,47 +23,37 @@ export function VistaEditarUsuario() {
   const esAdmin = usuarioActual?.role === 'admin';
   const rutaRetorno = esAdmin ? '/users' : '/dashboard?tab=perfil';
 
-  if (cargandoUsuarios && !usuarioObjetivo) {
-    return <Loading text="Cargando perfil de usuario..." />;
-  }
-
+  let errorTitulo = '';
+  let errorMensaje = '';
   if (!usuarioObjetivo) {
-    return (
-      <ErrorCard
-        title="Usuario no encontrado"
-        message="El registro solicitado no existe."
-        backLabel="Volver"
-        onBack={() => navegar(rutaRetorno)}
-      />
-    );
-  }
-
-  const esPropioPerfil = mismoId(usuarioActual?.id, usuarioObjetivo.id);
-  if (!esAdmin && !esPropioPerfil) {
-    return (
-      <ErrorCard
-        title="Sin permisos de edición"
-        message="Solo puedes editar tu propio perfil o contar con permisos de administrador."
-        backLabel="Volver"
-        onBack={() => navegar(rutaRetorno)}
-      />
-    );
+    errorTitulo = 'Usuario no encontrado';
+    errorMensaje = 'El registro solicitado no existe.';
+  } else if (!esAdmin && !mismoId(usuarioActual?.id, usuarioObjetivo.id)) {
+    errorTitulo = 'Sin permisos de edición';
+    errorMensaje = 'Solo puedes editar tu propio perfil o contar con permisos de administrador.';
   }
 
   return (
     <PaginaFormulario
-      titulo={`Editar Usuario: ${usuarioObjetivo.name}`}
+      titulo={usuarioObjetivo ? `Editar Usuario: ${usuarioObjetivo.name}` : 'Editar Usuario'}
       subtitulo="Modificación de datos de contacto, rol de acceso y estado disciplinario de la cuenta."
+      textoVolver="Volver"
       alVolver={() => navegar(rutaRetorno)}
+      cargando={cargandoUsuarios && !usuarioObjetivo}
+      textoCarga="Cargando perfil de usuario..."
+      errorTitulo={errorTitulo}
+      errorMensaje={errorMensaje}
     >
-      <FormularioUsuario
-        key={usuarioObjetivo.id}
-        usuario={usuarioObjetivo}
-        esAdmin={esAdmin}
-        alActualizarUsuario={actualizarUsuario}
-        alGuardar={() => navegar(rutaRetorno)}
-        alCancelar={() => navegar(rutaRetorno)}
-      />
+      {usuarioObjetivo && (
+        <FormularioUsuario
+          key={usuarioObjetivo.id}
+          usuario={usuarioObjetivo}
+          esAdmin={esAdmin}
+          alActualizarUsuario={actualizarUsuario}
+          alGuardar={() => navegar(rutaRetorno)}
+          alCancelar={() => navegar(rutaRetorno)}
+        />
+      )}
     </PaginaFormulario>
   );
 }

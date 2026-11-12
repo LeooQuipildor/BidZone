@@ -1,5 +1,9 @@
 import { create } from 'zustand';
-import { peticionHttp, registrarLimpiezaSesion } from '../../nucleo/servicios/clienteApi';
+import {
+  hayTokenSesion,
+  peticionHttp,
+  registrarLimpiezaSesion,
+} from '../../nucleo/servicios/clienteApi';
 import { eliminarPorId, reemplazarPorId } from '../../nucleo/utilidades/ayudas';
 import { usarTiendaAutenticacion } from '../../autenticacion/estado/tiendaAutenticacion';
 import { usarTiendaNotificaciones } from '../../notificaciones/estado/tiendaNotificaciones';
@@ -11,7 +15,7 @@ export const usarTiendaReportes = create((set) => ({
   error: null,
 
   obtenerReportes: async () => {
-    if (!localStorage.getItem('bidzone_token')) {
+    if (!hayTokenSesion()) {
       set({ reportes: [], cargando: false });
       return [];
     }
@@ -72,7 +76,7 @@ export const usarTiendaReportes = create((set) => ({
 
       // Al resolver un reporte puede cambiar el estado del usuario denunciado y llegar avisos
       await usarTiendaAutenticacion.getState().obtenerUsuarios();
-      if (localStorage.getItem('bidzone_token')) {
+      if (hayTokenSesion()) {
         await usarTiendaNotificaciones.getState().obtenerNotificaciones();
       }
       return actualizado;

@@ -1,6 +1,7 @@
 import React from 'react';
 import { ArrowLeft, ArrowRight, Mail, MapPin, Phone, Sparkles } from 'lucide-react';
 import { Button, Card } from './ui';
+import { ErrorCard, Loading } from './uiFeedback';
 
 // Encabezado estándar para vistas independientes del sistema
 export function CabeceraPagina({ titulo, subtitulo, accion }) {
@@ -22,7 +23,29 @@ export function CabeceraPagina({ titulo, subtitulo, accion }) {
 }
 
 // Contenedor estándar para todas las vistas de Crear y Editar (/new y /edit)
-export function PaginaFormulario({ titulo, subtitulo, textoVolver = 'Volver al listado', alVolver, children }) {
+export function PaginaFormulario({
+  titulo,
+  subtitulo,
+  textoVolver = 'Volver al listado',
+  alVolver,
+  cargando = false,
+  textoCarga = 'Cargando...',
+  errorTitulo = '',
+  errorMensaje = '',
+  children,
+}) {
+  if (cargando) return <Loading text={textoCarga} />;
+  if (errorTitulo) {
+    return (
+      <ErrorCard
+        title={errorTitulo}
+        message={errorMensaje}
+        backLabel={textoVolver}
+        onBack={alVolver}
+      />
+    );
+  }
+
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <CabeceraPagina
@@ -48,22 +71,20 @@ export function AccionesFormulario({
   textoGuardar = 'Guardar',
   iconoGuardar = null,
   enviando = false,
-  izquierda = null,
 }) {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
-      <div>{izquierda}</div>
-      <div className="flex items-center gap-3 ml-auto">
+    <div className="flex flex-wrap items-center justify-end gap-3 pt-2">
+      {alCancelar && (
         <Button variant="ghost" onClick={alCancelar} disabled={enviando}>
           {textoCancelar}
         </Button>
-        {mostrarGuardar && (
-          <Button type="submit" disabled={enviando}>
-            {iconoGuardar}
-            {textoGuardar}
-          </Button>
-        )}
-      </div>
+      )}
+      {mostrarGuardar && (
+        <Button type="submit" disabled={enviando}>
+          {iconoGuardar}
+          {textoGuardar}
+        </Button>
+      )}
     </div>
   );
 }
