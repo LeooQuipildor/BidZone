@@ -5,9 +5,9 @@ import { usarTiendaSubastas } from '../../subastas/estado/tiendaSubastas';
 
 const ENLACES_IZQUIERDA = [
   { ruta: '/', etiqueta: 'Inicio' },
-  { ruta: '/auctions', etiqueta: 'Explorar' },
-  { ruta: '/rules', etiqueta: 'Reglamentos' },
-  { ruta: '/faq', etiqueta: 'Preguntas Frecuentes' },
+  { ruta: '/subastas', etiqueta: 'Explorar' },
+  { ruta: '/reglamentos', etiqueta: 'Reglamentos' },
+  { ruta: '/preguntas-frecuentes', etiqueta: 'Preguntas Frecuentes' },
 ];
 
 // Campo buscador compartido entre la barra superior y el menú móvil
@@ -54,7 +54,7 @@ export function Navbar({ esInicio, usuarioActual, cantidadSinLeer, alCerrarSesio
 
   const clasePosicionBarra = esInicio ? 'fixed top-0 left-0 right-0' : 'sticky top-0';
   const enlacesMovil = usuarioActual
-    ? [...ENLACES_IZQUIERDA, { ruta: '/dashboard', etiqueta: 'Panel' }]
+    ? [...ENLACES_IZQUIERDA, { ruta: '/panel', etiqueta: 'Panel' }]
     : ENLACES_IZQUIERDA;
 
   function cambiarBusqueda(nuevoTexto) {
@@ -64,7 +64,7 @@ export function Navbar({ esInicio, usuarioActual, cantidadSinLeer, alCerrarSesio
   function manejarBusqueda(evento) {
     evento.preventDefault();
     actualizarFiltros({ busqueda: textoBusqueda.trim() });
-    navegar('/auctions');
+    navegar('/subastas');
   }
 
   return (
@@ -107,14 +107,14 @@ export function Navbar({ esInicio, usuarioActual, cantidadSinLeer, alCerrarSesio
           {usuarioActual ? (
             <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
               <Link
-                to="/dashboard?tab=subastas&nuevo=1"
+                to="/panel?tab=subastas&nuevo=1"
                 className="hidden sm:inline-flex items-center gap-1 bg-[#224F10] hover:bg-[#B0E454] text-[#EAFFD0] hover:text-[#0D0D0D] px-3 py-1 rounded-full text-xs font-semibold transition-colors whitespace-nowrap"
               >
                 <Plus className="w-3.5 h-3.5" />
                 Publicar
               </Link>
               <Link
-                to="/dashboard"
+                to="/panel"
                 className="inline-flex items-center gap-1.5 text-xs text-[#EAFFD0] hover:text-[#B0E454] whitespace-nowrap"
                 title={`${usuarioActual.name} (${usuarioActual.role}) — Ir al Panel`}
               >
@@ -124,7 +124,7 @@ export function Navbar({ esInicio, usuarioActual, cantidadSinLeer, alCerrarSesio
                 </span>
               </Link>
               <Link
-                to="/dashboard?tab=notificaciones"
+                to="/panel?tab=notificaciones"
                 className="relative inline-flex items-center text-[#EAFFD0] hover:text-[#B0E454]"
                 title="Notificaciones"
               >
@@ -145,7 +145,7 @@ export function Navbar({ esInicio, usuarioActual, cantidadSinLeer, alCerrarSesio
           ) : (
             <div className="flex items-center gap-2 sm:gap-3 shrink-0">
               <Link
-                to="/login"
+                to="/iniciar-sesion"
                 title="Ingresar"
                 className="inline-flex items-center gap-1.5 text-xs font-medium text-[#EAFFD0] hover:text-[#B0E454]"
               >
@@ -153,7 +153,7 @@ export function Navbar({ esInicio, usuarioActual, cantidadSinLeer, alCerrarSesio
                 <span className="hidden sm:inline">Ingresar</span>
               </Link>
               <Link
-                to="/register"
+                to="/registro"
                 className="inline-flex items-center px-3 py-1 rounded-full bg-[#B0E454] text-[#0D0D0D] text-xs font-semibold hover:bg-[#EAFFD0] transition-colors"
               >
                 Registro

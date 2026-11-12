@@ -7,7 +7,20 @@ import { mismoId } from '../utilidades/ayudas';
 import { Navbar } from './Navbar';
 import { Footer } from './Footer';
 
-const RUTAS_PANEL = ['/dashboard', '/bids', '/reports', '/reviews', '/users', '/notifications'];
+const RUTAS_PANEL = [
+  '/panel',
+  '/dashboard',
+  '/pujas',
+  '/bids',
+  '/reportes',
+  '/reports',
+  '/resenas',
+  '/reviews',
+  '/usuarios',
+  '/users',
+  '/notificaciones',
+  '/notifications',
+];
 
 // Estructura general que envuelve todas las páginas con Navbar, contenido y Footer
 export function Layout({ children }) {
