@@ -4,6 +4,7 @@ import { usarTiendaReportes } from '../estado/tiendaReportes';
 import { usarTiendaAutenticacion } from '../../autenticacion/estado/tiendaAutenticacion';
 import { buscarPorId, mismoId } from '../../nucleo/utilidades/ayudas';
 import { FormularioReporte } from './FormularioReporte';
+import { PanelResolucionTicket } from './PanelResolucionTicket';
 import { ErrorCard, Loading } from '../../nucleo/diseno/uiFeedback';
 import { PaginaFormulario } from '../../nucleo/diseno/componentesBloques';
 
@@ -61,18 +62,35 @@ export function VistaEditarReporte() {
 
   return (
     <PaginaFormulario
-      titulo={`Expediente de reporte #${reporte.id}`}
+      titulo={`Ticket #${reporte.id}`}
       subtitulo={`Usuario denunciado: ${nombreReportado} (${estadoReportado})`}
       alVolver={() => navegar('/reports')}
     >
-      <FormularioReporte
-        key={`${reporte.id}-${reporte.updatedAt || reporte.status}`}
-        reporte={reporte}
-        esAdmin={esAdmin}
-        alActualizarReporte={actualizarReporte}
-        alGuardar={() => navegar('/reports')}
-        alCancelar={() => navegar('/reports')}
-      />
+      {esAdmin ? (
+        <div className="space-y-4">
+          <div className="rounded-xl bg-[#F7FBF3] border border-[#224F10]/10 p-4 space-y-1.5 text-xs">
+            <h3 className="text-sm font-bold text-[#0D0D0D]">{reporte.reason}</h3>
+            <p className="text-[#0D0D0D]/75">{reporte.description}</p>
+          </div>
+          <PanelResolucionTicket
+            key={`${reporte.id}-${reporte.updatedAt || reporte.status}`}
+            reporte={reporte}
+            nombreDenunciado={nombreReportado}
+            estadoDenunciado={usuarioReportado?.status}
+            alActualizarReporte={actualizarReporte}
+            alGuardar={() => navegar('/reports')}
+            alCancelar={() => navegar('/reports')}
+          />
+        </div>
+      ) : (
+        <FormularioReporte
+          key={`${reporte.id}-${reporte.updatedAt || reporte.status}`}
+          reporte={reporte}
+          alActualizarReporte={actualizarReporte}
+          alGuardar={() => navegar('/reports')}
+          alCancelar={() => navegar('/reports')}
+        />
+      )}
     </PaginaFormulario>
   );
 }

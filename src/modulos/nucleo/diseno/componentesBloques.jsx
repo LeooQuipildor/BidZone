@@ -47,17 +47,18 @@ export function AccionesFormulario({
   mostrarGuardar = true,
   textoGuardar = 'Guardar',
   iconoGuardar = null,
+  enviando = false,
   izquierda = null,
 }) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
       <div>{izquierda}</div>
       <div className="flex items-center gap-3 ml-auto">
-        <Button variant="ghost" onClick={alCancelar}>
+        <Button variant="ghost" onClick={alCancelar} disabled={enviando}>
           {textoCancelar}
         </Button>
         {mostrarGuardar && (
-          <Button type="submit">
+          <Button type="submit" disabled={enviando}>
             {iconoGuardar}
             {textoGuardar}
           </Button>

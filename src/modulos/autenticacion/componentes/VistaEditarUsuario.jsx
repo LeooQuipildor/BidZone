@@ -22,6 +22,7 @@ export function VistaEditarUsuario() {
 
   const usuarioObjetivo = buscarPorId(usuarios, id);
   const esAdmin = usuarioActual?.role === 'admin';
+  const rutaRetorno = esAdmin ? '/users' : '/dashboard?tab=perfil';
 
   if (cargandoUsuarios && !usuarioObjetivo) {
     return <Loading text="Cargando perfil de usuario..." />;
@@ -32,8 +33,8 @@ export function VistaEditarUsuario() {
       <ErrorCard
         title="Usuario no encontrado"
         message="El registro solicitado no existe."
-        backLabel="Volver a Usuarios"
-        onBack={() => navegar('/users')}
+        backLabel="Volver"
+        onBack={() => navegar(rutaRetorno)}
       />
     );
   }
@@ -44,8 +45,8 @@ export function VistaEditarUsuario() {
       <ErrorCard
         title="Sin permisos de edición"
         message="Solo puedes editar tu propio perfil o contar con permisos de administrador."
-        backLabel="Volver a Usuarios"
-        onBack={() => navegar('/users')}
+        backLabel="Volver"
+        onBack={() => navegar(rutaRetorno)}
       />
     );
   }
@@ -54,15 +55,15 @@ export function VistaEditarUsuario() {
     <PaginaFormulario
       titulo={`Editar Usuario: ${usuarioObjetivo.name}`}
       subtitulo="Modificación de datos de contacto, rol de acceso y estado disciplinario de la cuenta."
-      alVolver={() => navegar('/users')}
+      alVolver={() => navegar(rutaRetorno)}
     >
       <FormularioUsuario
         key={usuarioObjetivo.id}
         usuario={usuarioObjetivo}
         esAdmin={esAdmin}
         alActualizarUsuario={actualizarUsuario}
-        alGuardar={() => navegar('/users')}
-        alCancelar={() => navegar('/users')}
+        alGuardar={() => navegar(rutaRetorno)}
+        alCancelar={() => navegar(rutaRetorno)}
       />
     </PaginaFormulario>
   );

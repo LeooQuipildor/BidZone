@@ -29,13 +29,10 @@ export function VistaCrearResena() {
     obtenerResenas();
   }, [obtenerSubastas, obtenerUsuarios, obtenerResenas]);
 
-  const esAdmin = usuarioActual?.role === 'admin';
-
-  // Solo se califican subastas finalizadas con ganador donde participó la persona (o todas si es admin)
+  // Solo se califican subastas finalizadas con ganador en las que haya participado la persona conectada
   const subastasElegibles = subastas.filter((subasta) => {
     if (subasta.status !== 'finalizada' || !subasta.winnerId) return false;
     return (
-      esAdmin ||
       mismoId(subasta.winnerId, usuarioActual?.id) ||
       mismoId(subasta.sellerId, usuarioActual?.id)
     );
@@ -56,7 +53,7 @@ export function VistaCrearResena() {
           otrosUsuarios={otrosUsuarios}
           resenas={resenas}
           idUsuarioActual={usuarioActual?.id}
-          esAdmin={esAdmin}
+          esAdmin={false}
           idSubastaInicial={idSubastaInicial}
           alCrearResena={crearResena}
           alGuardar={() => navegar('/reviews')}

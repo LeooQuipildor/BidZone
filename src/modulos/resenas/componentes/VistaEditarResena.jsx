@@ -22,7 +22,6 @@ export function VistaEditarResena() {
   }, [obtenerResenas]);
 
   const resena = buscarPorId(resenas, id);
-  const esAdmin = usuarioActual?.role === 'admin';
 
   if (cargandoResenas && !resena) return <Loading text="Cargando calificación..." />;
 
@@ -38,11 +37,11 @@ export function VistaEditarResena() {
   }
 
   const esAutor = mismoId(usuarioActual?.id, resena.reviewerId);
-  if (!esAdmin && !esAutor) {
+  if (!esAutor) {
     return (
       <ErrorCard
         title="Sin permisos de edición"
-        message="Solo el autor de la reseña o un administrador puede modificarla."
+        message="Solo el autor de la reseña puede modificarla."
         backLabel="Volver a Calificaciones"
         onBack={() => navegar('/reviews')}
       />

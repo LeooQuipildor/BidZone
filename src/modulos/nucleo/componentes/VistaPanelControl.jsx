@@ -48,7 +48,6 @@ export function VistaPanelControl({ seccionInicial = 'resumen' }) {
   const usuarioActual = usarTiendaAutenticacion((estado) => estado.usuarioActual);
   const usuarios = usarTiendaAutenticacion((estado) => estado.usuarios);
   const obtenerUsuarios = usarTiendaAutenticacion((estado) => estado.obtenerUsuarios);
-  const cerrarSesion = usarTiendaAutenticacion((estado) => estado.cerrarSesion);
   const subastas = usarTiendaSubastas((estado) => estado.subastas);
   const obtenerSubastas = usarTiendaSubastas((estado) => estado.obtenerSubastas);
   const pujas = usarTiendaPujas((estado) => estado.pujas);
@@ -61,12 +60,11 @@ export function VistaPanelControl({ seccionInicial = 'resumen' }) {
   const obtenerNotificaciones = usarTiendaNotificaciones((estado) => estado.obtenerNotificaciones);
 
   const [textoBusqueda, setTextoBusqueda] = useState('');
-  const [relojPausado, setRelojPausado] = useState(false);
   const [ahoraMs, setAhoraMs] = useState(() => Date.now());
   const [datosInicialesSeccion, setDatosInicialesSeccion] = useState(null);
   const [contadorSeccion, setContadorSeccion] = useState(0);
 
-  // Al entrar al panel cargamos la información de todos los módulos
+  // Al entrar al panel cargamos los datos de cada módulo
   useEffect(() => {
     obtenerUsuarios();
     obtenerSubastas();
@@ -76,17 +74,18 @@ export function VistaPanelControl({ seccionInicial = 'resumen' }) {
     obtenerNotificaciones();
   }, [obtenerUsuarios, obtenerSubastas, obtenerPujas, obtenerReportes, obtenerResenas, obtenerNotificaciones]);
 
-  // Reloj de 1 segundo para actualizar los contadores regresivos en vivo
+  // Reloj de 1 segundo para las subastas activas del panel
   useEffect(() => {
-    if (relojPausado) return;
     const intervalo = setInterval(() => setAhoraMs(Date.now()), 1000);
     return () => clearInterval(intervalo);
-  }, [relojPausado]);
+  }, []);
 
+  const esAdmin = usuarioActual?.role === 'admin';
   const tabUrlRaw = parametrosUrl.get('tab');
   const tabDesdeUrl = tabUrlRaw ? ALIAS_SECCION_URL[tabUrlRaw] || tabUrlRaw : '';
   const abrirNuevoDesdeUrl = parametrosUrl.get('nuevo') === '1' || parametrosUrl.get('new') === '1';
-  const seccionActiva = tabDesdeUrl || seccionInicial || 'resumen';
+  const seccionSolicitada = tabDesdeUrl || seccionInicial || 'resumen';
+  const seccionActiva = !esAdmin && seccionSolicitada === 'usuarios' ? 'resumen' : seccionSolicitada;
   const datosInicialesEfectivos =
     datosInicialesSeccion || (abrirNuevoDesdeUrl ? { abrirFormulario: true } : null);
 
@@ -102,27 +101,33 @@ export function VistaPanelControl({ seccionInicial = 'resumen' }) {
     setParametrosUrl(siguienteSeccion === 'resumen' ? {} : { tab: siguienteSeccion }, { replace: true });
   }
 
-  function manejarCierreSesion() {
-    cerrarSesion();
-    navegar('/');
-  }
-
+  const misSubastas = subastas.filter((item) => mismoId(item.sellerId, usuarioActual?.id));
+  const misPujas = pujas.filter((item) => mismoId(item.bidderId, usuarioActual?.id));
+  const misResenas = resenas.filter(
+    (item) => mismoId(item.reviewerId, usuarioActual?.id) || mismoId(item.targetUserId, usuarioActual?.id)
+  );
   const reportesAbiertos = reportes.filter((item) => item.status === 'en_revision').length;
   const notificacionesSinLeer = notificaciones.filter(
     (item) => mismoId(item.userId, usuarioActual?.id) && !item.read
   );
 
+  const etiquetaSubastas = esAdmin ? 'Subastas' : 'Mis Subastas';
+  const etiquetaReportes = esAdmin ? 'Tickets RN06' : 'Mis Reportes';
+
   const seccionesMenu = [
-    { id: 'resumen', etiqueta: 'Panel Principal', icono: LayoutDashboard },
-    { id: 'subastas', etiqueta: 'Subastas', icono: Gavel, insignia: subastas.length, varianteInsignia: 'oscuro' },
-    { id: 'pujas', etiqueta: 'Pujas', icono: TrendingUp, cantidad: pujas.length },
-    { id: 'reportes', etiqueta: 'Reportes', icono: AlertOctagon, insignia: reportesAbiertos || null },
-    { id: 'resenas', etiqueta: 'Reseñas', icono: Star, cantidad: resenas.length },
-    { id: 'usuarios', etiqueta: 'Usuarios', icono: Users, cantidad: usuarios.length },
+    { id: 'resumen', etiqueta: 'Resumen', icono: LayoutDashboard },
+    { id: 'subastas', etiqueta: etiquetaSubastas, icono: Gavel, cantidad: esAdmin ? subastas.length : misSubastas.length },
+    { id: 'pujas', etiqueta: 'Mis Pujas', icono: TrendingUp, cantidad: misPujas.length },
+    { id: 'reportes', etiqueta: etiquetaReportes, icono: AlertOctagon, insignia: reportesAbiertos || null },
+    { id: 'resenas', etiqueta: 'Mis Reseñas', icono: Star, cantidad: misResenas.length },
   ];
 
-  const seccionesGenerales = [
-    { id: 'notificaciones', etiqueta: 'Notificaciones', icono: Bell, insignia: notificacionesSinLeer.length || null },
+  if (esAdmin) {
+    seccionesMenu.push({ id: 'usuarios', etiqueta: 'Usuarios', icono: Users, cantidad: usuarios.length });
+  }
+
+  const seccionesCuenta = [
+    { id: 'notificaciones', etiqueta: 'Mis Notificaciones', icono: Bell, insignia: notificacionesSinLeer.length || null },
     { id: 'perfil', etiqueta: 'Mi Perfil', icono: IconoUsuario },
   ];
 
@@ -130,25 +135,13 @@ export function VistaPanelControl({ seccionInicial = 'resumen' }) {
   const claveTab = `${seccionActiva}-${contadorSeccion}-${abrirNuevoDesdeUrl ? 'nuevo' : 'lista'}`;
 
   const contenidoPorSeccion = {
-    resumen: (
-      <TabResumenPanel
-        {...base}
-        pujas={pujas}
-        reportes={reportes}
-        ahoraMs={ahoraMs}
-        relojPausado={relojPausado}
-        alAlternarPausa={() => setRelojPausado((pausado) => !pausado)}
-        alElegirSeccion={elegirSeccion}
-      />
-    ),
+    resumen: <TabResumenPanel {...base} pujas={pujas} reportes={reportes} resenas={resenas} ahoraMs={ahoraMs} alElegirSeccion={elegirSeccion} />,
     subastas: <TabSubastasPanel key={claveTab} {...base} pujas={pujas} ahoraMs={ahoraMs} datosIniciales={datosInicialesEfectivos} />,
     pujas: <TabPujasPanel key={claveTab} {...base} pujas={pujas} />,
     reportes: <TabReportesPanel key={claveTab} {...base} reportes={reportes} datosIniciales={datosInicialesEfectivos} />,
     resenas: <TabResenasPanel key={claveTab} {...base} resenas={resenas} datosIniciales={datosInicialesEfectivos} />,
-    usuarios: <TabUsuariosPanel key={claveTab} {...base} />,
-    notificaciones: (
-      <TabNotificacionesPanel key={claveTab} usuarioActual={usuarioActual} notificaciones={notificaciones} textoBusqueda={textoBusqueda} />
-    ),
+    usuarios: esAdmin ? <TabUsuariosPanel key={claveTab} {...base} /> : null,
+    notificaciones: <TabNotificacionesPanel key={claveTab} usuarioActual={usuarioActual} notificaciones={notificaciones} textoBusqueda={textoBusqueda} />,
     perfil: <TabPerfilPanel key={claveTab} usuarioActual={usuarioActual} subastas={subastas} pujas={pujas} />,
   };
 
@@ -156,11 +149,10 @@ export function VistaPanelControl({ seccionInicial = 'resumen' }) {
     <div className="rounded-[28px] bg-[#F7FBF3] border border-[#224F10]/12 shadow-sm overflow-hidden flex flex-col lg:flex-row">
       <Sidebar
         seccionActiva={seccionActiva}
-        etiquetaRol={usuarioActual?.role === 'admin' ? 'Admin' : 'Socio'}
+        etiquetaRol={esAdmin ? 'Admin' : 'Socio'}
         seccionesMenu={seccionesMenu}
-        seccionesGenerales={seccionesGenerales}
+        seccionesCuenta={seccionesCuenta}
         alElegirSeccion={elegirSeccion}
-        alCerrarSesion={manejarCierreSesion}
       />
 
       <div className="flex-1 p-5 sm:p-7 space-y-6 min-w-0">
@@ -168,12 +160,10 @@ export function VistaPanelControl({ seccionInicial = 'resumen' }) {
           seccionActiva={seccionActiva}
           textoBusqueda={textoBusqueda}
           alCambiarBusqueda={setTextoBusqueda}
-          cantidadSinLeer={notificacionesSinLeer.length}
           usuarioActual={usuarioActual}
-          alElegirSeccion={elegirSeccion}
         />
 
-        {contenidoPorSeccion[seccionActiva] || null}
+        {contenidoPorSeccion[seccionActiva] || contenidoPorSeccion.resumen}
       </div>
     </div>
   );

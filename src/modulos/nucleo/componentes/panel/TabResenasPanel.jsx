@@ -1,59 +1,54 @@
 import React, { useState } from 'react';
-import { Plus, Star } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { usarTiendaResenas } from '../../../resenas/estado/tiendaResenas';
 import { FormularioResena } from '../../../resenas/componentes/FormularioResena';
 import { buscarPorId, coincideConBusqueda, mismoId } from '../../utilidades/ayudas';
-import {
-  AvisoPanel,
-  BotonPanel,
-  CabeceraSeccionPanel,
-  ContenedorFormularioPanel,
-  EstadoVacioPanel,
-  GridEstadisticasPanel,
-} from './PanelCompartido';
+import { AvisoPanel, BotonPanel, CabeceraSeccionPanel, ContenedorFormularioPanel, EstadoVacioPanel } from './PanelCompartido';
+import { FiltrosBotones } from '../../diseno/componentesBloques';
 import { TarjetaResenaPanel } from './TarjetaResenaPanel';
 
-export function TabResenasPanel({
-  usuarioActual,
-  usuarios,
-  subastas,
-  resenas,
-  textoBusqueda,
-  datosIniciales,
-}) {
+const FILTROS_DIRECCION = [
+  { valor: 'todas', etiqueta: 'Todas' },
+  { valor: 'recibidas', etiqueta: 'Recibidas' },
+  { valor: 'emitidas', etiqueta: 'Emitidas' },
+];
+
+function obtenerSubastasPendientesResena(subastas, resenas, idUsuarioActual) {
+  return subastas.filter((subasta) => {
+    if (subasta.status !== 'finalizada' || !subasta.winnerId) return false;
+    const participa = mismoId(subasta.winnerId, idUsuarioActual) || mismoId(subasta.sellerId, idUsuarioActual);
+    const yaCalificada = resenas.some((r) => mismoId(r.auctionId, subasta.id) && mismoId(r.reviewerId, idUsuarioActual));
+    return participa && !yaCalificada;
+  });
+}
+
+// Pestaña de reseñas personales RN07 (recibidas y emitidas por el usuario conectado)
+export function TabResenasPanel({ usuarioActual, usuarios, subastas, resenas, textoBusqueda, datosIniciales }) {
   const crearResena = usarTiendaResenas((estado) => estado.crearResena);
   const actualizarResena = usarTiendaResenas((estado) => estado.actualizarResena);
   const eliminarResena = usarTiendaResenas((estado) => estado.eliminarResena);
 
-  const esAdmin = usuarioActual?.role === 'admin';
-  const subastasElegibles = subastas.filter((subasta) => {
-    if (subasta.status !== 'finalizada' || !subasta.winnerId) return false;
-    return (
-      esAdmin ||
-      mismoId(subasta.winnerId, usuarioActual?.id) ||
-      mismoId(subasta.sellerId, usuarioActual?.id)
-    );
-  });
-  const otrosUsuarios = usuarios.filter((usuario) => !mismoId(usuario.id, usuarioActual?.id));
-
+  const [filtroDireccion, setFiltroDireccion] = useState('todas');
   const [aviso, setAviso] = useState(null);
   const [formularioAbierto, setFormularioAbierto] = useState(Boolean(datosIniciales?.abrirFormulario));
   const [idResenaEditando, setIdResenaEditando] = useState(null);
 
+  const subastasPendientes = obtenerSubastasPendientesResena(subastas, resenas, usuarioActual?.id);
+  const otrosUsuarios = usuarios.filter((u) => !mismoId(u.id, usuarioActual?.id));
   const resenaEditando = idResenaEditando ? buscarPorId(resenas, idResenaEditando) : null;
-  const cantidadCincoEstrellas = resenas.filter((item) => Number(item.rating) === 5).length;
 
-  const resenasFiltradas = resenas.filter((resena) => {
+  const misResenas = resenas.filter(
+    (r) => mismoId(r.reviewerId, usuarioActual?.id) || mismoId(r.targetUserId, usuarioActual?.id)
+  );
+
+  const resenasFiltradas = misResenas.filter((resena) => {
+    if (filtroDireccion === 'recibidas' && !mismoId(resena.targetUserId, usuarioActual?.id)) return false;
+    if (filtroDireccion === 'emitidas' && !mismoId(resena.reviewerId, usuarioActual?.id)) return false;
     const calificado = buscarPorId(usuarios, resena.targetUserId);
     const autor = buscarPorId(usuarios, resena.reviewerId);
     const subasta = buscarPorId(subastas, resena.auctionId);
     return coincideConBusqueda(
-      [
-        resena.comment,
-        calificado?.name || resena.targetUserName,
-        autor?.name || resena.reviewerName,
-        subasta?.title || resena.auctionTitle,
-      ],
+      [resena.comment, calificado?.name || resena.targetUserName, autor?.name || resena.reviewerName, subasta?.title || resena.auctionTitle],
       textoBusqueda
     );
   });
@@ -83,45 +78,32 @@ export function TabResenasPanel({
     }
   }
 
-  const tarjetasResumen = [
-    { destacada: true, titulo: 'Total Reseñas', icono: <Star className="w-3.5 h-3.5" />, valor: resenas.length, subtitulo: 'Operaciones evaluadas RN07' },
-    { titulo: 'Mi Reputación', valor: `${usuarioActual?.reputation || '5.0'} ★`, claseValor: 'text-4xl text-[#224F10]', subtitulo: 'Escala promedio 1 a 5' },
-    { titulo: 'Máxima Puntuación (5★)', valor: cantidadCincoEstrellas, subtitulo: 'Cumplimiento destacado', claseSubtitulo: 'text-[#224F10] font-semibold' },
-    { titulo: 'Cierres Calificables', valor: subastasElegibles.length, subtitulo: 'Subastas elegibles' },
-  ];
-
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <CabeceraSeccionPanel
-        titulo="Reseñas y Reputación"
-        subtitulo="Evaluaciones mutuas de 1 a 5 estrellas emitidas en subastas finalizadas (RN07)."
+        titulo="Mis Reseñas"
+        subtitulo={`Tu reputación: ${usuarioActual?.reputation || '5.0'} ★ · ${subastasPendientes.length} operaciones pendientes de calificar.`}
         botonPrincipal={
-          <BotonPanel
-            icono={<Plus className="w-3.5 h-3.5" />}
-            alHacerClic={() => { setIdResenaEditando(null); setFormularioAbierto(true); setAviso(null); }}
-          >
-            Emitir Calificación
-          </BotonPanel>
+          subastasPendientes.length > 0 && (
+            <BotonPanel icono={<Plus className="w-3.5 h-3.5" />} alHacerClic={() => { setIdResenaEditando(null); setFormularioAbierto(true); setAviso(null); }}>
+              Emitir Calificación
+            </BotonPanel>
+          )
         }
       />
-
-      <GridEstadisticasPanel tarjetas={tarjetasResumen} />
 
       <AvisoPanel aviso={aviso} alCerrar={() => setAviso(null)} />
 
       {formularioAbierto && (
-        <ContenedorFormularioPanel
-          titulo={resenaEditando ? `Editar Calificación #${resenaEditando.id}` : 'Emitir Calificación (RN07)'}
-          alCerrar={cerrarFormulario}
-        >
+        <ContenedorFormularioPanel titulo={resenaEditando ? `Editar Calificación #${resenaEditando.id}` : 'Emitir Calificación (RN07)'} alCerrar={cerrarFormulario}>
           <FormularioResena
             key={resenaEditando ? `${resenaEditando.id}-${resenaEditando.rating}` : `nueva-${datosIniciales?.idSubasta || ''}`}
             resena={resenaEditando}
-            subastasElegibles={subastasElegibles}
+            subastasElegibles={subastasPendientes}
             otrosUsuarios={otrosUsuarios}
             resenas={resenas}
             idUsuarioActual={usuarioActual?.id}
-            esAdmin={esAdmin}
+            esAdmin={false}
             idSubastaInicial={datosIniciales?.idSubasta || ''}
             idUsuarioCalificadoInicial={datosIniciales?.idUsuarioCalificado || ''}
             alCrearResena={crearResena}
@@ -132,15 +114,18 @@ export function TabResenasPanel({
         </ContenedorFormularioPanel>
       )}
 
+      <div className="rounded-2xl bg-white border border-[#224F10]/10 p-4 shadow-2xs">
+        <FiltrosBotones opciones={FILTROS_DIRECCION} valorActual={filtroDireccion} alElegir={setFiltroDireccion} />
+      </div>
+
       {resenasFiltradas.length === 0 ? (
-        <EstadoVacioPanel mensaje="No se encontraron reseñas para los criterios actuales." />
+        <EstadoVacioPanel mensaje="Todavía no tienes reseñas recibidas ni emitidas para mostrar." />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {resenasFiltradas.map((resena) => {
             const subasta = buscarPorId(subastas, resena.auctionId);
             const autor = buscarPorId(usuarios, resena.reviewerId);
             const calificado = buscarPorId(usuarios, resena.targetUserId);
-
             return (
               <TarjetaResenaPanel
                 key={resena.id}
@@ -148,7 +133,7 @@ export function TabResenasPanel({
                 tituloSubasta={subasta?.title || resena.auctionTitle || `Subasta #${resena.auctionId}`}
                 nombreAutor={autor?.name || resena.reviewerName || `Usuario #${resena.reviewerId}`}
                 nombreCalificado={calificado?.name || resena.targetUserName || `Usuario #${resena.targetUserId}`}
-                puedeEditar={esAdmin || mismoId(usuarioActual?.id, resena.reviewerId)}
+                puedeEditar={mismoId(usuarioActual?.id, resena.reviewerId)}
                 alEditar={() => { setIdResenaEditando(resena.id); setFormularioAbierto(true); setAviso(null); }}
                 alEliminar={() => manejarEliminacion(resena)}
               />

@@ -26,7 +26,6 @@ export function VistaEditarPuja() {
   }, [obtenerPujas, obtenerSubastas]);
 
   const puja = buscarPorId(pujas, id);
-  const esAdmin = usuarioActual?.role === 'admin';
 
   if (cargandoPujas && !puja) return <Loading text="Cargando puja..." />;
 
@@ -42,11 +41,11 @@ export function VistaEditarPuja() {
   }
 
   const esDuenoPuja = mismoId(usuarioActual?.id, puja.bidderId);
-  if (!esAdmin && !esDuenoPuja) {
+  if (!esDuenoPuja) {
     return (
       <ErrorCard
         title="Sin permisos de edición"
-        message="Solo el postor titular o un administrador puede modificar esta puja."
+        message="RN04: Solo el postor titular puede editar su nota de coordinación; los montos ofertados no se editan."
         backLabel="Volver a Pujas"
         onBack={() => navegar('/bids')}
       />
@@ -58,7 +57,7 @@ export function VistaEditarPuja() {
 
   return (
     <PaginaFormulario
-      titulo={`Editar Registro de Puja #${puja.id}`}
+      titulo={`Editar Nota de Puja #${puja.id}`}
       subtitulo={`Subasta asociada: ${tituloSubasta}`}
       alVolver={() => navegar('/bids')}
     >
@@ -66,7 +65,6 @@ export function VistaEditarPuja() {
         key={puja.id}
         puja={puja}
         subastas={subastas}
-        esAdmin={esAdmin}
         alActualizarPuja={actualizarPuja}
         alGuardar={() => navegar('/bids')}
         alCancelar={() => navegar('/bids')}

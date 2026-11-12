@@ -64,54 +64,31 @@ export function EstadoVacioPanel({ mensaje }) {
   );
 }
 
-// Tarjeta de métrica (KPI) compartida entre todas las pestañas del panel
-function TarjetaEstadisticaPanel({
-  titulo,
-  valor,
-  subtitulo,
-  destacada = false,
-  icono = null,
-  accionSuperior = null,
-  claseSubtitulo = '',
-  claseValor = '',
-}) {
+// Tarjeta de métrica (KPI) para el resumen del panel
+function TarjetaEstadisticaPanel({ titulo, valor, subtitulo, destacada = false, accionSuperior = null }) {
   const claseCaja = destacada
     ? 'bg-gradient-to-br from-[#224F10] to-[#122B08] text-[#EAFFD0] shadow-sm'
     : 'bg-white border border-[#224F10]/10 shadow-2xs';
   const claseTitulo = destacada ? 'font-medium text-[#EAFFD0]/90' : 'font-semibold text-[#0D0D0D]/80';
-  const valorPorDefecto = destacada ? 'text-4xl' : 'text-4xl text-[#0D0D0D]';
-  const subPorDefecto = destacada ? 'text-[#EAFFD0]/75' : 'text-[#0D0D0D]/55';
-
-  let elementoDerecha = accionSuperior;
-  if (!elementoDerecha && destacada && icono) {
-    elementoDerecha = (
-      <span className="w-7 h-7 rounded-full bg-[#EAFFD0]/15 text-[#B0E454] flex items-center justify-center">
-        {icono}
-      </span>
-    );
-  }
+  const claseValor = destacada ? 'text-4xl' : 'text-4xl text-[#0D0D0D]';
+  const claseSub = destacada ? 'text-[#EAFFD0]/75' : 'text-[#0D0D0D]/55';
 
   return (
     <div className={`rounded-2xl p-5 flex flex-col justify-between ${claseCaja}`}>
       <div className="flex items-center justify-between gap-2">
         <span className={`text-xs ${claseTitulo}`}>{titulo}</span>
-        {elementoDerecha}
+        {accionSuperior}
       </div>
-      <p className={`font-bold tracking-tight my-2 ${claseValor || valorPorDefecto}`}>{valor}</p>
-      <span className={`text-[11px] ${claseSubtitulo || subPorDefecto}`}>{subtitulo}</span>
+      <p className={`font-bold tracking-tight my-2 ${claseValor}`}>{valor}</p>
+      <span className={`text-[11px] ${claseSub}`}>{subtitulo}</span>
     </div>
   );
 }
 
-// Grilla uniforme de tarjetas KPI en todas las pestañas del panel
-export function GridEstadisticasPanel({ tarjetas, columnas = 4 }) {
-  const claseGrilla =
-    columnas === 3
-      ? 'grid grid-cols-1 sm:grid-cols-3 gap-4'
-      : 'grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4';
-
+// Grilla uniforme de 4 tarjetas KPI en el resumen del panel
+export function GridEstadisticasPanel({ tarjetas }) {
   return (
-    <div className={claseGrilla}>
+    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
       {tarjetas.map((tarjeta) => (
         <TarjetaEstadisticaPanel key={tarjeta.titulo} {...tarjeta} />
       ))}

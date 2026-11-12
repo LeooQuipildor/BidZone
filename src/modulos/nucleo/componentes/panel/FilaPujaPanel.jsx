@@ -1,19 +1,16 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Edit3, ExternalLink, Gavel, Trash2 } from 'lucide-react';
+import { Edit3, ExternalLink, Gavel } from 'lucide-react';
 import { formatearFechaHora, formatearMoneda } from '../../utilidades/formatos';
 import { obtenerIniciales } from './ayudasPanel';
 
-// Fila individual de una puja en el listado del Panel
+// Fila individual de una puja propia en "Mis Pujas" (RN04: el monto es irrevocable; solo se edita la nota)
 export function FilaPujaPanel({
   puja,
   tituloSubasta,
   nombrePostor,
   esOfertaLider,
-  puedeEditar,
-  esAdmin,
   alEditar,
-  alEliminar,
 }) {
   return (
     <div className="p-4 sm:p-5 hover:bg-[#F7FBF3]/70 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -45,8 +42,7 @@ export function FilaPujaPanel({
             </Link>
           </div>
           <p className="text-xs text-[#0D0D0D]/70">
-            Postor: <strong className="text-[#0D0D0D]">{nombrePostor}</strong> · &ldquo;
-            {puja.note || 'Sin nota adicional'}&rdquo;
+            Nota: &ldquo;{puja.note || 'Sin nota adicional'}&rdquo;
           </p>
           <p className="text-[11px] text-[#0D0D0D]/50">
             {formatearFechaHora(puja.createdAt)} · Compromiso RN04 aceptado
@@ -64,28 +60,14 @@ export function FilaPujaPanel({
           </span>
         </div>
 
-        <div className="flex items-center gap-1.5">
-          {puedeEditar && (
-            <button
-              type="button"
-              onClick={alEditar}
-              title="Editar puja"
-              className="w-8 h-8 rounded-full border border-[#224F10]/15 hover:bg-[#EAFFD0] text-[#0D0D0D]/75 flex items-center justify-center transition-colors cursor-pointer"
-            >
-              <Edit3 className="w-3.5 h-3.5" />
-            </button>
-          )}
-          {esAdmin && (
-            <button
-              type="button"
-              onClick={alEliminar}
-              title="Eliminar puja"
-              className="w-8 h-8 rounded-full border border-red-200 hover:bg-red-50 text-red-700 flex items-center justify-center transition-colors cursor-pointer"
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-            </button>
-          )}
-        </div>
+        <button
+          type="button"
+          onClick={alEditar}
+          title="Editar nota de coordinación"
+          className="w-8 h-8 rounded-full border border-[#224F10]/15 hover:bg-[#EAFFD0] text-[#0D0D0D]/75 flex items-center justify-center transition-colors cursor-pointer"
+        >
+          <Edit3 className="w-3.5 h-3.5" />
+        </button>
       </div>
     </div>
   );

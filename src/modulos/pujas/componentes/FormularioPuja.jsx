@@ -14,11 +14,10 @@ import { Input, Select } from '../../nucleo/diseno/ui';
 import { Alert } from '../../nucleo/diseno/uiFeedback';
 import { AccionesFormulario } from '../../nucleo/diseno/componentesBloques';
 
-// Formulario único para crear o editar una puja vinculante (Panel y vistas /new y /edit)
+// Formulario único para crear o editar la nota de una puja vinculante (RN04: el monto nunca se edita)
 export function FormularioPuja({
   puja = null,
   subastas = [],
-  esAdmin = false,
   alCrearPuja,
   alActualizarPuja,
   alGuardar,
@@ -64,9 +63,8 @@ export function FormularioPuja({
     setMensajeError('');
 
     if (estaEditando) {
-      const cambios = esAdmin ? { monto: Number(montoActualInput), nota: nota.trim() } : { nota: nota.trim() };
       try {
-        const actualizada = await alActualizarPuja(puja.id, cambios);
+        const actualizada = await alActualizarPuja(puja.id, { nota: nota.trim() });
         alGuardar?.(actualizada, montoActualInput);
       } catch (error) {
         setMensajeError(error.message);
@@ -112,7 +110,7 @@ export function FormularioPuja({
   }));
 
   let textoAyudaMonto;
-  if (estaEditando && !esAdmin) {
+  if (estaEditando) {
     textoAyudaMonto = 'RN04: El monto ofertado es vinculante e irrevocable.';
   } else if (maximoPermitido) {
     textoAyudaMonto = `Máximo permitido (10x precio inicial): ${formatearMoneda(maximoPermitido)}`;
@@ -121,9 +119,9 @@ export function FormularioPuja({
   return (
     <>
       <form onSubmit={manejarEnvio} className="space-y-4">
-        {estaEditando && !esAdmin && (
+        {estaEditando && (
           <Alert type="info" title="Regla de Negocio RN04 (Irrevocabilidad del Monto)">
-            Como postor puedes actualizar tu nota de coordinación, pero el importe ofertado es irrevocable.
+            Puedes actualizar tu nota de coordinación, pero el importe ofertado no se modifica.
           </Alert>
         )}
 
@@ -144,7 +142,7 @@ export function FormularioPuja({
             id="monto"
             type="number"
             label="Monto de la Oferta (ARS) *"
-            disabled={estaEditando && !esAdmin}
+            disabled={estaEditando}
             max={maximoPermitido}
             helperText={textoAyudaMonto}
             value={montoActualInput}

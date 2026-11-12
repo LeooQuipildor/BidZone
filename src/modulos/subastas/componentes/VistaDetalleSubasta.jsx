@@ -125,9 +125,11 @@ export function VistaDetalleSubasta() {
                 Finalizar y Adjudicar Ahora
               </Button>
             )}
-            <Link to={`/auctions/${subasta.id}/edit`}>
-              <Button variant="outline" size="sm">Editar Subasta</Button>
-            </Link>
+            {esVendedor && (
+              <Link to={`/auctions/${subasta.id}/edit`}>
+                <Button variant="outline" size="sm">Editar Subasta</Button>
+              </Link>
+            )}
           </div>
         )}
       </div>

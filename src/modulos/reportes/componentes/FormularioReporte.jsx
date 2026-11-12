@@ -4,7 +4,6 @@ import { elegirIdValido } from '../../nucleo/utilidades/ayudas';
 import { Input, Select, Textarea } from '../../nucleo/diseno/ui';
 import { Alert } from '../../nucleo/diseno/uiFeedback';
 import { AccionesFormulario } from '../../nucleo/diseno/componentesBloques';
-import { SeccionResolucionAdmin } from './SeccionResolucionAdmin';
 
 const OPCIONES_MOTIVO = [
   { valor: 'Incumplimiento de pago en plazo acordado', etiqueta: 'El ganador no realizó el pago acordado' },
@@ -13,12 +12,11 @@ const OPCIONES_MOTIVO = [
   { valor: 'Artículo distinto a la descripción publicada', etiqueta: 'El producto no coincide con lo publicado' },
 ];
 
-// Formulario único para denunciar incumplimientos o resolver expedientes RN06
+// Formulario para que el socio abra un nuevo ticket de reclamo o edite el suyo mientras siga abierto
 export function FormularioReporte({
   reporte = null,
   subastas = [],
   otrosUsuarios = [],
-  esAdmin = false,
   idSubastaInicial = '',
   idUsuarioReportadoInicial = '',
   alCrearReporte,
@@ -27,7 +25,7 @@ export function FormularioReporte({
   alCancelar,
 }) {
   const estaEditando = Boolean(reporte);
-  const bloqueadoParaDenunciante = Boolean(estaEditando && !esAdmin && reporte.status !== 'en_revision');
+  const bloqueado = Boolean(estaEditando && reporte.status !== 'en_revision');
 
   const [datosFormulario, setDatosFormulario] = useState(() => ({
     idSubasta: reporte ? String(reporte.auctionId) : idSubastaInicial,
@@ -35,9 +33,6 @@ export function FormularioReporte({
     motivo: reporte ? reporte.reason || '' : 'Incumplimiento de pago en plazo acordado',
     descripcion: reporte?.description || '',
     urlEvidencia: reporte?.evidenceUrl || '',
-    estado: reporte?.status || 'en_revision',
-    sancionAplicada: reporte?.sanctionApplied || '',
-    accionCuenta: 'none',
   }));
   const [mensajeError, setMensajeError] = useState('');
 
@@ -64,14 +59,11 @@ export function FormularioReporte({
 
     try {
       if (estaEditando) {
-        const cambios = esAdmin
-          ? datosFormulario
-          : {
-              motivo: datosFormulario.motivo.trim(),
-              descripcion: datosFormulario.descripcion.trim(),
-              urlEvidencia: datosFormulario.urlEvidencia.trim(),
-            };
-        const actualizado = await alActualizarReporte(reporte.id, cambios);
+        const actualizado = await alActualizarReporte(reporte.id, {
+          motivo: datosFormulario.motivo.trim(),
+          descripcion: datosFormulario.descripcion.trim(),
+          urlEvidencia: datosFormulario.urlEvidencia.trim(),
+        });
         alGuardar?.(actualizado);
       } else {
         if (!idSubastaEfectiva || !idUsuarioEfectivo) {
@@ -107,9 +99,9 @@ export function FormularioReporte({
 
   return (
     <form onSubmit={manejarEnvio} className="space-y-4">
-      {bloqueadoParaDenunciante && (
-        <Alert type="warning" title="Expediente cerrado para edición">
-          Este expediente ya fue resuelto por moderación y no admite cambios del denunciante.
+      {bloqueado && (
+        <Alert type="warning" title="Ticket cerrado para edición">
+          Este ticket ya fue resuelto por moderación y no admite cambios del denunciante.
         </Alert>
       )}
       {mensajeError && (
@@ -143,7 +135,7 @@ export function FormularioReporte({
             id="motivo"
             name="motivo"
             label="Motivo del Reclamo *"
-            disabled={bloqueadoParaDenunciante}
+            disabled={bloqueado}
             value={datosFormulario.motivo}
             onChange={manejarCambio}
           />
@@ -162,7 +154,7 @@ export function FormularioReporte({
           name="urlEvidencia"
           label="Enlace de Evidencia (Opcional)"
           placeholder="https://..."
-          disabled={bloqueadoParaDenunciante}
+          disabled={bloqueado}
           value={datosFormulario.urlEvidencia}
           onChange={manejarCambio}
         />
@@ -173,19 +165,15 @@ export function FormularioReporte({
         name="descripcion"
         label="Descripción Detallada de los Hechos *"
         placeholder="Explica los hechos y plazos incumplidos..."
-        disabled={bloqueadoParaDenunciante}
+        disabled={bloqueado}
         value={datosFormulario.descripcion}
         onChange={manejarCambio}
       />
 
-      {estaEditando && esAdmin && (
-        <SeccionResolucionAdmin datosFormulario={datosFormulario} alCambiar={manejarCambio} />
-      )}
-
       <AccionesFormulario
         alCancelar={alCancelar}
-        mostrarGuardar={!bloqueadoParaDenunciante}
-        textoGuardar={estaEditando ? 'Guardar Resolución' : 'Radicar Reporte'}
+        mostrarGuardar={!bloqueado}
+        textoGuardar={estaEditando ? 'Guardar Reclamo' : 'Abrir Ticket'}
         iconoGuardar={estaEditando ? <Save className="w-4 h-4" /> : <AlertOctagon className="w-4 h-4" />}
       />
     </form>

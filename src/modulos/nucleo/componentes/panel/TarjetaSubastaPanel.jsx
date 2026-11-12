@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowUpRight, Clock, Edit3, Trash2 } from 'lucide-react';
+import { AlertTriangle, ArrowUpRight, Clock, Edit3, Trash2 } from 'lucide-react';
 import {
   IMAGEN_SUBASTA_POR_DEFECTO,
   formatearMoneda,
@@ -28,20 +28,23 @@ function obtenerEstadoTarjeta(subasta, estaEnVivo, cuentaRegresiva) {
   };
 }
 
-// Tarjeta individual de una subasta dentro de la pestaña Subastas del panel
+// Tarjeta individual de subasta: el propietario edita/elimina; el admin modera las ajenas pidiendo corrección o eliminando
 export function TarjetaSubastaPanel({
   subasta,
   vendedor,
   cantidadPujas,
   ahoraMs,
-  puedeAdministrar,
+  esPropia,
+  esAdmin,
   alEditar,
+  alSolicitarCorreccion,
   alEliminar,
   alAbrirDetalle,
 }) {
   const cuentaRegresiva = formatearCuentaRegresiva(subasta.endTime, ahoraMs);
   const estaEnVivo = subasta.status === 'activa' && cuentaRegresiva !== '00:00:00';
   const infoEstado = obtenerEstadoTarjeta(subasta, estaEnVivo, cuentaRegresiva);
+  const puedeEliminar = esPropia || esAdmin;
 
   return (
     <div className="group rounded-2xl bg-white border border-[#224F10]/10 p-3 flex flex-col justify-between shadow-2xs hover:shadow-md transition-all">
@@ -84,7 +87,7 @@ export function TarjetaSubastaPanel({
 
           <p className="text-[11px] text-[#0D0D0D]/55 truncate">
             {cantidadPujas} {cantidadPujas === 1 ? 'oferta' : 'ofertas'} · Vende:{' '}
-            {vendedor?.name || subasta.sellerName || 'Socio'}
+            {esPropia ? 'Tú' : vendedor?.name || subasta.sellerName || 'Socio'}
           </p>
         </div>
       </div>
@@ -100,25 +103,37 @@ export function TarjetaSubastaPanel({
         </div>
 
         <div className="flex items-center gap-1.5">
-          {puedeAdministrar && (
-            <>
-              <button
-                type="button"
-                onClick={() => alEditar(subasta)}
-                title="Editar en el panel"
-                className="w-8 h-8 rounded-full border border-[#224F10]/15 hover:bg-[#EAFFD0] text-[#0D0D0D]/75 flex items-center justify-center transition-colors cursor-pointer"
-              >
-                <Edit3 className="w-3.5 h-3.5" />
-              </button>
-              <button
-                type="button"
-                onClick={() => alEliminar(subasta)}
-                title="Eliminar subasta"
-                className="w-8 h-8 rounded-full border border-red-200 hover:bg-red-50 text-red-700 flex items-center justify-center transition-colors cursor-pointer"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-              </button>
-            </>
+          {esPropia && (
+            <button
+              type="button"
+              onClick={() => alEditar(subasta)}
+              title="Editar mi subasta"
+              className="w-8 h-8 rounded-full border border-[#224F10]/15 hover:bg-[#EAFFD0] text-[#0D0D0D]/75 flex items-center justify-center transition-colors cursor-pointer"
+            >
+              <Edit3 className="w-3.5 h-3.5" />
+            </button>
+          )}
+
+          {!esPropia && esAdmin && (
+            <button
+              type="button"
+              onClick={() => alSolicitarCorreccion(subasta)}
+              title="Solicitar corrección al vendedor"
+              className="w-8 h-8 rounded-full border border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-800 flex items-center justify-center transition-colors cursor-pointer"
+            >
+              <AlertTriangle className="w-3.5 h-3.5" />
+            </button>
+          )}
+
+          {puedeEliminar && (
+            <button
+              type="button"
+              onClick={() => alEliminar(subasta)}
+              title="Eliminar subasta"
+              className="w-8 h-8 rounded-full border border-red-200 hover:bg-red-50 text-red-700 flex items-center justify-center transition-colors cursor-pointer"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+            </button>
           )}
 
           <button

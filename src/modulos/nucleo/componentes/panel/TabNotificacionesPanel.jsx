@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Bell, Check, CheckCheck, Trash2 } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Bell, Check, CheckCheck, ExternalLink, Trash2 } from 'lucide-react';
 import { usarTiendaNotificaciones } from '../../../notificaciones/estado/tiendaNotificaciones';
 import { formatearFechaHora } from '../../utilidades/formatos';
 import { coincideConBusqueda, mismoId } from '../../utilidades/ayudas';
@@ -8,10 +9,8 @@ import {
   BotonPanel,
   CabeceraSeccionPanel,
   EstadoVacioPanel,
-  GridEstadisticasPanel,
 } from './PanelCompartido';
 
-// Fila individual de una notificación recibida
 function FilaNotificacion({ item, alMarcarLeida, alEliminar }) {
   const sinLeer = !item.read;
   return (
@@ -38,7 +37,18 @@ function FilaNotificacion({ item, alMarcarLeida, alEliminar }) {
             )}
           </div>
           <p className="text-xs text-[#0D0D0D]/75">{item.message}</p>
-          <span className="text-[11px] text-[#0D0D0D]/45 block">{formatearFechaHora(item.createdAt)}</span>
+          <div className="flex flex-wrap items-center gap-3 text-[11px] text-[#0D0D0D]/45">
+            <span>{formatearFechaHora(item.createdAt)}</span>
+            {item.auctionId && (
+              <Link
+                to={`/auctions/${item.auctionId}`}
+                className="inline-flex items-center gap-1 font-semibold text-[#224F10] hover:underline"
+              >
+                <span>Ver subasta #{item.auctionId}</span>
+                <ExternalLink className="w-3 h-3" />
+              </Link>
+            )}
+          </div>
         </div>
       </div>
 
@@ -66,18 +76,20 @@ function FilaNotificacion({ item, alMarcarLeida, alEliminar }) {
   );
 }
 
+// Bandeja estrictamente personal de notificaciones del usuario conectado
 export function TabNotificacionesPanel({ usuarioActual, notificaciones, textoBusqueda }) {
   const marcarComoLeida = usarTiendaNotificaciones((estado) => estado.marcarComoLeida);
   const marcarTodasComoLeidas = usarTiendaNotificaciones((estado) => estado.marcarTodasComoLeidas);
   const eliminarNotificacion = usarTiendaNotificaciones((estado) => estado.eliminarNotificacion);
   const [mensajeError, setMensajeError] = useState('');
 
-  const misNotificaciones = notificaciones.filter((item) => mismoId(item.userId, usuarioActual?.id));
+  const misNotificaciones = notificaciones.filter((item) =>
+    mismoId(item.userId, usuarioActual?.id)
+  );
   const filtradas = misNotificaciones.filter((item) =>
     coincideConBusqueda([item.title, item.message], textoBusqueda)
   );
   const cantidadSinLeer = misNotificaciones.filter((item) => !item.read).length;
-  const cantidadLeidas = misNotificaciones.filter((item) => item.read).length;
 
   async function ejecutarAccion(accion) {
     setMensajeError('');
@@ -88,17 +100,11 @@ export function TabNotificacionesPanel({ usuarioActual, notificaciones, textoBus
     }
   }
 
-  const tarjetasResumen = [
-    { destacada: true, titulo: 'Total Alertas', icono: <Bell className="w-3.5 h-3.5" />, valor: misNotificaciones.length, subtitulo: 'Bandeja del sistema' },
-    { titulo: 'Pendientes sin leer', valor: cantidadSinLeer, claseValor: 'text-4xl text-[#224F10]', subtitulo: 'Requieren atención' },
-    { titulo: 'Leídas', valor: cantidadLeidas, subtitulo: 'Historial archivado' },
-  ];
-
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <CabeceraSeccionPanel
-        titulo="Notificaciones"
-        subtitulo="Alertas en tiempo real sobre pujas superadas, cierres RN05 y expedientes de mediación."
+        titulo="Mis Notificaciones"
+        subtitulo={`Solo tus avisos personales · ${cantidadSinLeer} pendientes sin leer de ${misNotificaciones.length}.`}
         botonPrincipal={
           usuarioActual &&
           cantidadSinLeer > 0 && (
@@ -117,10 +123,8 @@ export function TabNotificacionesPanel({ usuarioActual, notificaciones, textoBus
         alCerrar={() => setMensajeError('')}
       />
 
-      <GridEstadisticasPanel tarjetas={tarjetasResumen} columnas={3} />
-
       {filtradas.length === 0 ? (
-        <EstadoVacioPanel mensaje="No tienes notificaciones para mostrar." />
+        <EstadoVacioPanel mensaje="No tienes notificaciones personales para mostrar." />
       ) : (
         <div className="rounded-2xl bg-white border border-[#224F10]/10 divide-y divide-[#224F10]/8 shadow-2xs overflow-hidden">
           {filtradas.map((item) => (

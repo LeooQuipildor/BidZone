@@ -22,9 +22,9 @@ const TARJETAS_MOSAICO = [
     imagen: 'https://images.unsplash.com/photo-1521791136064-7986c2920216?auto=format&fit=crop&w=700&q=80',
   },
   {
-    titulo: 'Comunidad y Roles',
-    subtitulo: 'Gestión de usuarios y estados',
-    ruta: '/users',
+    titulo: 'Mi Perfil y Contacto',
+    subtitulo: 'Datos personales para entrega directa',
+    ruta: '/dashboard?tab=perfil',
     imagen: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=700&q=80',
   },
 ];

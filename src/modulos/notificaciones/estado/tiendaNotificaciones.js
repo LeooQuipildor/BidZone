@@ -73,6 +73,27 @@ export const usarTiendaNotificaciones = create((set) => ({
       throw error;
     }
   },
+
+  // Envía un aviso administrativo a un usuario (solo Admin: POST /api/notifications)
+  enviarNotificacion: async ({ idUsuario, idSubasta = null, titulo, mensaje, tipo = 'system' }) => {
+    set({ error: null });
+    try {
+      const cuerpo = {
+        userId: Number(idUsuario),
+        auctionId: idSubasta ? Number(idSubasta) : null,
+        title: String(titulo || '').trim(),
+        message: String(mensaje || '').trim(),
+        type: tipo,
+      };
+      return await peticionHttp('/notifications', {
+        method: 'POST',
+        body: JSON.stringify(cuerpo),
+      });
+    } catch (error) {
+      set({ error: error.message });
+      throw error;
+    }
+  },
 }));
 
 registrarLimpiezaSesion(() => {

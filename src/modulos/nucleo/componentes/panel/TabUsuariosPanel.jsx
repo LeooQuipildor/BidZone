@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { UserPlus, Users as IconoUsuarios } from 'lucide-react';
+import { UserPlus } from 'lucide-react';
 import { usarTiendaAutenticacion } from '../../../autenticacion/estado/tiendaAutenticacion';
 import { FormularioUsuario } from '../../../autenticacion/componentes/FormularioUsuario';
 import { buscarPorId, coincideConBusqueda, mismoId } from '../../utilidades/ayudas';
@@ -9,16 +9,15 @@ import {
   CabeceraSeccionPanel,
   ContenedorFormularioPanel,
   EstadoVacioPanel,
-  GridEstadisticasPanel,
 } from './PanelCompartido';
 import { TarjetaUsuarioPanel } from './TarjetaUsuarioPanel';
 
+// Pestaña exclusiva de Administrador para gestionar cuentas, roles y sanciones RN06
 export function TabUsuariosPanel({ usuarioActual, usuarios, textoBusqueda }) {
   const crearUsuario = usarTiendaAutenticacion((estado) => estado.crearUsuario);
   const actualizarUsuario = usarTiendaAutenticacion((estado) => estado.actualizarUsuario);
   const eliminarUsuario = usarTiendaAutenticacion((estado) => estado.eliminarUsuario);
 
-  const esAdmin = usuarioActual?.role === 'admin';
   const [filtroRol, setFiltroRol] = useState('todos');
   const [filtroEstado, setFiltroEstado] = useState('todos');
   const [aviso, setAviso] = useState(null);
@@ -26,8 +25,6 @@ export function TabUsuariosPanel({ usuarioActual, usuarios, textoBusqueda }) {
   const [idUsuarioEditando, setIdUsuarioEditando] = useState(null);
 
   const usuarioEditando = idUsuarioEditando ? buscarPorId(usuarios, idUsuarioEditando) : null;
-  const cantidadActivos = usuarios.filter((item) => item.status === 'active').length;
-  const cantidadAdmins = usuarios.filter((item) => item.role === 'admin').length;
   const cantidadSancionados = usuarios.filter(
     (item) => item.status === 'suspended' || item.status === 'closed'
   ).length;
@@ -48,8 +45,8 @@ export function TabUsuariosPanel({ usuarioActual, usuarios, textoBusqueda }) {
     setAviso({
       tipo: 'exito',
       texto: usuarioEditando
-        ? `Usuario "${nombreGuardado}" actualizado correctamente.`
-        : `Usuario "${nombreGuardado}" registrado en la plataforma.`,
+        ? `Usuario "${nombreGuardado}" actualizado.`
+        : `Usuario "${nombreGuardado}" creado correctamente.`,
     });
     cerrarFormulario();
   }
@@ -59,41 +56,33 @@ export function TabUsuariosPanel({ usuarioActual, usuarios, textoBusqueda }) {
       setAviso({ tipo: 'error', texto: 'No puedes eliminar tu propia sesión activa.' });
       return;
     }
-    const etiquetaUsuario = usuario.email ? `"${usuario.name}" (${usuario.email})` : `"${usuario.name}"`;
-    if (!window.confirm(`¿Estás seguro de eliminar al usuario ${etiquetaUsuario}?`)) return;
+    if (!window.confirm(`¿Confirmas eliminar al usuario "${usuario.name}"?`)) return;
     try {
       await eliminarUsuario(usuario.id);
-      setAviso({ tipo: 'exito', texto: `Usuario "${usuario.name}" eliminado correctamente.` });
+      setAviso({ tipo: 'exito', texto: `Usuario "${usuario.name}" eliminado.` });
     } catch (error) {
       setAviso({ tipo: 'error', texto: error.message });
     }
   }
 
-  const tarjetasResumen = [
-    { destacada: true, titulo: 'Total Comunidad', icono: <IconoUsuarios className="w-3.5 h-3.5" />, valor: usuarios.length, subtitulo: 'Socios verificados' },
-    { titulo: 'Cuentas Activas', valor: cantidadActivos, subtitulo: 'Habilitadas para pujar', claseSubtitulo: 'text-[#224F10] font-semibold' },
-    { titulo: 'Moderadores', valor: cantidadAdmins, subtitulo: 'Rol Administrador' },
-    { titulo: 'Sancionados', valor: cantidadSancionados, subtitulo: 'Suspensión o cierre RN06', claseSubtitulo: 'text-red-700 font-semibold' },
-  ];
-
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <CabeceraSeccionPanel
-        titulo="Directorio de Usuarios"
-        subtitulo="Gestión de socios, control de roles (Admin/User), reputación y estado disciplinario."
+        titulo="Gestión de Usuarios"
+        subtitulo={`Administración de cuentas (${usuarios.length} registradas · ${cantidadSancionados} sancionadas).`}
         botonPrincipal={
-          esAdmin && (
-            <BotonPanel
-              icono={<UserPlus className="w-3.5 h-3.5" />}
-              alHacerClic={() => { setIdUsuarioEditando(null); setFormularioAbierto(true); setAviso(null); }}
-            >
-              Nuevo Usuario
-            </BotonPanel>
-          )
+          <BotonPanel
+            icono={<UserPlus className="w-3.5 h-3.5" />}
+            alHacerClic={() => {
+              setIdUsuarioEditando(null);
+              setFormularioAbierto(true);
+              setAviso(null);
+            }}
+          >
+            Nuevo Usuario
+          </BotonPanel>
         }
       />
-
-      <GridEstadisticasPanel tarjetas={tarjetasResumen} />
 
       <AvisoPanel aviso={aviso} alCerrar={() => setAviso(null)} />
 
@@ -105,7 +94,7 @@ export function TabUsuariosPanel({ usuarioActual, usuarios, textoBusqueda }) {
           <FormularioUsuario
             key={usuarioEditando ? usuarioEditando.id : 'nuevo-usuario'}
             usuario={usuarioEditando}
-            esAdmin={esAdmin}
+            esAdmin
             alCrearUsuario={crearUsuario}
             alActualizarUsuario={actualizarUsuario}
             alGuardar={manejarGuardado}
@@ -120,9 +109,9 @@ export function TabUsuariosPanel({ usuarioActual, usuarios, textoBusqueda }) {
           onChange={(evento) => setFiltroRol(evento.target.value)}
           className="w-full rounded-xl bg-[#F7FBF3] border border-[#224F10]/12 px-3 py-1.5 text-xs font-medium text-[#0D0D0D] focus:outline-none"
         >
-          <option value="todos">Rol: Todos los roles</option>
+          <option value="todos">Rol: Todos</option>
           <option value="admin">Rol: Administrador</option>
-          <option value="user">Rol: Usuario estándar</option>
+          <option value="user">Rol: Socio</option>
         </select>
 
         <select
@@ -130,7 +119,7 @@ export function TabUsuariosPanel({ usuarioActual, usuarios, textoBusqueda }) {
           onChange={(evento) => setFiltroEstado(evento.target.value)}
           className="w-full rounded-xl bg-[#F7FBF3] border border-[#224F10]/12 px-3 py-1.5 text-xs font-medium text-[#0D0D0D] focus:outline-none"
         >
-          <option value="todos">Estado: Todos los estados</option>
+          <option value="todos">Estado: Todos</option>
           <option value="active">Estado: Activa</option>
           <option value="suspended">Estado: Suspendida</option>
           <option value="closed">Estado: Cerrada</option>
@@ -146,9 +135,13 @@ export function TabUsuariosPanel({ usuarioActual, usuarios, textoBusqueda }) {
               key={usuario.id}
               usuario={usuario}
               indiceColor={indice}
-              puedeEditar={esAdmin || mismoId(usuarioActual?.id, usuario.id)}
-              puedeEliminar={esAdmin && !mismoId(usuarioActual?.id, usuario.id)}
-              alEditar={() => { setIdUsuarioEditando(usuario.id); setFormularioAbierto(true); setAviso(null); }}
+              puedeEditar
+              puedeEliminar={!mismoId(usuarioActual?.id, usuario.id)}
+              alEditar={() => {
+                setIdUsuarioEditando(usuario.id);
+                setFormularioAbierto(true);
+                setAviso(null);
+              }}
               alEliminar={() => manejarEliminacion(usuario)}
             />
           ))}

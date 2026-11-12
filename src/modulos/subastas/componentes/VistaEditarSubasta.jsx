@@ -49,11 +49,11 @@ export function VistaEditarSubasta() {
   const esAdmin = usuarioActual?.role === 'admin';
   const esDueno = mismoId(usuarioActual?.id, subasta.sellerId);
 
-  if (!esAdmin && !esDueno) {
+  if (!esDueno) {
     return (
       <ErrorCard
-        title="Sin permisos de edición"
-        message="Solo el vendedor propietario o un administrador puede editar esta subasta."
+        title="Solo el vendedor puede editar"
+        message="Únicamente el vendedor propietario puede modificar esta publicación. Desde el panel puedes solicitarle correcciones si tiene problemas."
         backLabel="Volver al detalle"
         onBack={() => navegar(`/auctions/${subasta.id}`)}
       />

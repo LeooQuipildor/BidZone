@@ -148,11 +148,11 @@ function App() {
             }
           />
 
-          {/* Usuarios y roles */}
+          {/* Usuarios y roles (solo administrador) */}
           <Route
             path="/users"
             element={
-              <RutaProtegida>
+              <RutaProtegida rolesPermitidos={['admin']}>
                 <VistaPanelControl seccionInicial="usuarios" />
               </RutaProtegida>
             }
