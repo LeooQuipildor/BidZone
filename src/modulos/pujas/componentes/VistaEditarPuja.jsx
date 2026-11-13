@@ -1,3 +1,28 @@
+/**
+ * ==============================================================================
+ * ARCHIVO: src/modulos/pujas/componentes/VistaEditarPuja.jsx
+ * ==============================================================================
+ *
+ * ¿QUÉ ES ESTE ARCHIVO?
+ * Es el componente de vista de página completa para modificar la nota u observación
+ * de una puja existente en la ruta `/pujas/:id/editar`.
+ *
+ * ¿QUÉ HACE ESTE COMPONENTE?
+ * 1. Obtiene el parámetro dinámico `id` de la puja desde la URL con `useParams()`.
+ * 2. Carga en memoria las ofertas y las subastas mediante sus respectivos stores Zustand.
+ * 3. Valida la titularidad de la oferta:
+ *    - Comprueba con `mismoId` si el usuario autenticado es el autor de la puja (`puja.bidderId`).
+ *    - Si no es el titular, deniega el acceso explicando la regla de privacidad y autoría.
+ * 4. Pasa la información a `FormularioPuja` asegurando que el importe económico permanezca
+ *    congelado de acuerdo con la Regla de Negocio RN04.
+ * 5. Redirige a `/pujas` al guardar o cancelar.
+ *
+ * CONCEPTOS DIDÁCTICOS EXPLICADOS:
+ * - Protección de Entidades Inmutables en Frontend:
+ *   Aunque la ruta se llame "Editar", este componente educa al programador en que no todos los campos
+ *   deben ser editables en un sistema transaccional de subastas.
+ */
+
 import React, { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { usarTiendaPujas } from '../estado/tiendaPujas';
@@ -11,6 +36,9 @@ export function VistaEditarPuja() {
   const { id } = useParams();
   const navegar = useNavigate();
 
+  /**
+   * Suscripciones a tiendas:
+   */
   const pujas = usarTiendaPujas((estado) => estado.pujas);
   const cargandoPujas = usarTiendaPujas((estado) => estado.cargando);
   const obtenerPujas = usarTiendaPujas((estado) => estado.obtenerPujas);
@@ -19,13 +47,18 @@ export function VistaEditarPuja() {
   const obtenerSubastas = usarTiendaSubastas((estado) => estado.obtenerSubastas);
   const usuarioActual = usarTiendaAutenticacion((estado) => estado.usuarioActual);
 
+  /**
+   * Sincronización inicial de datos con useEffect
+   */
   useEffect(() => {
     obtenerPujas();
     obtenerSubastas();
   }, [obtenerPujas, obtenerSubastas]);
 
+  // Búsqueda de la puja objetivo
   const puja = buscarPorId(pujas, id);
 
+  // Verificación de seguridad y titularidad
   let errorTitulo = '';
   let errorMensaje = '';
   if (!puja) {
@@ -36,6 +69,7 @@ export function VistaEditarPuja() {
     errorMensaje = 'RN04: Solo el postor titular puede editar su nota de coordinación; los montos ofertados no se editan.';
   }
 
+  // Identificación de la subasta vinculada
   const subasta = puja ? buscarPorId(subastas, puja.auctionId) : null;
   const tituloSubasta = subasta?.title || puja?.auctionTitle || `#${puja?.auctionId}`;
 

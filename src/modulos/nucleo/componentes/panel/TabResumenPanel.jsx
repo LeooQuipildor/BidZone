@@ -1,3 +1,41 @@
+/**
+ * ==============================================================================
+ * ARCHIVO: src/modulos/nucleo/componentes/panel/TabResumenPanel.jsx
+ * ==============================================================================
+ *
+ * ¿QUÉ ES ESTE COMPONENTE?
+ * Es la vista principal o pestaña por defecto ("Resumen") del Panel de Control de BidZone.
+ *
+ * ¿POR QUÉ EXISTE Y CUÁL ES SU PROPÓSITO?
+ * Ofrece un cuadro de mando integral adaptado dinámicamente según el rol del usuario:
+ * 1. Para un Administrador:
+ *    - Presenta métricas globales de la plataforma: cantidad total de subastas activas,
+ *      ofertas realizadas, tickets de soporte y mediación RN06 pendientes de resolución,
+ *      y usuarios registrados.
+ * 2. Para un Socio (Usuario regular):
+ *    - Presenta métricas estrictamente personales: cantidad de subastas publicadas propias,
+ *      pujas emitidas (RN04), operaciones cerradas con contacto liberado (RN05) y su
+ *      reputación promedio en estrellas (RN07).
+ *
+ * Además, ambos roles visualizan:
+ * - Una tarjeta con la cuenta regresiva en vivo de la subasta más próxima a finalizar.
+ * - Una lista de publicaciones recientes con acceso directo.
+ * - El panel de operaciones cerradas y contactos liberados (`CierresAdjudicadosPanel`)
+ *   donde pueden calificar a su contraparte o reportar incidentes.
+ *
+ * ¿DE DÓNDE PROVIENEN LOS DATOS?
+ * - `usuarioActual`: Sesión activa de `tiendaAutenticacion.js`.
+ * - `usuarios`: Lista de usuarios de `tiendaAutenticacion.js`.
+ * - `subastas`: Lista de lotes de `tiendaSubastas.js`.
+ * - `pujas`: Lista de ofertas de `tiendaPujas.js`.
+ * - `reportes`: Tickets de disputa de `tiendaReportes.js`.
+ * - `resenas`: Calificaciones de `tiendaResenas.js`.
+ * - `textoBusqueda`: Cadena de búsqueda ingresada en la barra superior del Header.
+ * - `ahoraMs`: Timestamp en milisegundos actualizado cada segundo en `VistaPanelControl.jsx`.
+ * - `alElegirSeccion`: Función para navegar programáticamente entre pestañas del panel.
+ * ==============================================================================
+ */
+
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowUpRight, Plus } from 'lucide-react';
@@ -7,6 +45,12 @@ import { BotonPanel, CabeceraSeccionPanel, GridEstadisticasPanel } from './Panel
 import { TarjetaProximoCierre, TarjetaSubastasRecientes } from './TarjetasResumenPanel';
 import { CierresAdjudicadosPanel } from './CierresAdjudicadosPanel';
 
+/**
+ * Subcomponente auxiliar: BotonFlecha
+ * ----------------------------------------------------------------------------
+ * Renderiza el botón circular con flecha diagonal para saltar rápidamente
+ * desde una tarjeta estadística hacia su pestaña correspondiente.
+ */
 function BotonFlecha({ alHacerClic, titulo, destacada = false }) {
   const claseColor = destacada
     ? 'bg-[#EAFFD0] hover:bg-[#B0E454]'
@@ -23,7 +67,12 @@ function BotonFlecha({ alHacerClic, titulo, destacada = false }) {
   );
 }
 
-// Construye las 4 tarjetas de resumen según el rol del usuario
+/**
+ * Función auxiliar: obtenerTarjetasResumen
+ * ----------------------------------------------------------------------------
+ * Construye la configuración de las 4 tarjetas métricas superiores según si
+ * el usuario conectado tiene privilegios de administrador o es un socio común.
+ */
 function obtenerTarjetasResumen({ esAdmin, usuarioActual, totales, alElegirSeccion }) {
   if (esAdmin) {
     return [
@@ -84,7 +133,12 @@ function obtenerTarjetasResumen({ esAdmin, usuarioActual, totales, alElegirSecci
   ];
 }
 
-// Vista principal de resumen: métricas globales para Admin (sin exponer contactos ajenos) o personales para Socio
+/**
+ * Componente principal: TabResumenPanel
+ * ----------------------------------------------------------------------------
+ * Renderiza la cabecera, la grilla de estadísticas, el bloque de próximo cierre
+ * y el panel de liberaciones de contacto directo post-cierre.
+ */
 export function TabResumenPanel({
   usuarioActual,
   usuarios,
@@ -99,6 +153,7 @@ export function TabResumenPanel({
   const navegar = useNavigate();
   const esAdmin = usuarioActual?.role === 'admin';
 
+  // Segmentación de datos personales vs globales
   const misSubastas = subastas.filter((s) => mismoId(s.sellerId, usuarioActual?.id));
   const misSubastasActivas = misSubastas.filter((s) => s.status === 'activa');
   const misPujas = pujas.filter((p) => mismoId(p.bidderId, usuarioActual?.id));
@@ -111,6 +166,7 @@ export function TabResumenPanel({
     (s) => mismoId(s.winnerId, usuarioActual?.id) || mismoId(s.sellerId, usuarioActual?.id)
   );
 
+  // Subasta más próxima a cerrar para alimentar el reloj regresivo destacado
   const fuenteProximo = !esAdmin && misSubastasActivas.length > 0 ? misSubastasActivas : subastasActivas;
   const subastaProximaACerrar =
     [...fuenteProximo].sort((a, b) => new Date(a.endTime).getTime() - new Date(b.endTime).getTime())[0] ||
@@ -119,10 +175,12 @@ export function TabResumenPanel({
     ? calcularTiempoRestante(subastaProximaACerrar.endTime, ahoraMs).textoFormateado
     : '00:00:00';
 
+  // Lista de publicaciones recientes filtrada por el buscador
   const listaRecientes = (esAdmin ? subastas : misSubastas)
     .filter((s) => coincideConBusqueda([s.title, s.category], textoBusqueda))
     .slice(0, 5);
 
+  // Cierres adjudicados filtrados por búsqueda
   const cierresFiltrados = misCierres.filter((cierre) => {
     const vendedor = buscarPorId(usuarios, cierre.sellerId);
     const ganador = buscarPorId(usuarios, cierre.winnerId);
@@ -132,6 +190,7 @@ export function TabResumenPanel({
     );
   });
 
+  // Generación de tarjetas estadísticas
   const tarjetasResumen = obtenerTarjetasResumen({
     esAdmin,
     usuarioActual,
@@ -152,6 +211,7 @@ export function TabResumenPanel({
 
   return (
     <div className="space-y-6">
+      {/* Cabecera de la sección con botón directo para crear una subasta */}
       <CabeceraSeccionPanel
         titulo={esAdmin ? 'Panel de Administración' : 'Resumen de mi cuenta'}
         subtitulo={esAdmin ? 'Supervisa subastas globales, tickets RN06 y cuentas.' : 'Controla tus subastas publicadas, pujas y cierres adjudicados.'}
@@ -162,8 +222,10 @@ export function TabResumenPanel({
         }
       />
 
+      {/* Grilla superior de 4 tarjetas estadísticas */}
       <GridEstadisticasPanel tarjetas={tarjetasResumen} />
 
+      {/* Bloque central: Próximo cierre con cuenta regresiva y publicaciones recientes */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
         <TarjetaProximoCierre
           subasta={subastaProximaACerrar}
@@ -181,6 +243,7 @@ export function TabResumenPanel({
         />
       </div>
 
+      {/* Panel inferior de cierres con datos de contacto liberados (RN05) */}
       {(!esAdmin || misCierres.length > 0) && (
         <CierresAdjudicadosPanel
           cierres={cierresFiltrados}

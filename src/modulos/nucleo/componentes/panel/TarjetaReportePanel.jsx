@@ -1,8 +1,57 @@
+/**
+ * ==============================================================================
+ * ARCHIVO: src/modulos/nucleo/componentes/panel/TarjetaReportePanel.jsx
+ * ==============================================================================
+ *
+ * ¿QUÉ ES ESTE COMPONENTE?
+ * Es la tarjeta visual que representa un Ticket de Soporte y Mediación de Conflictos,
+ * dando soporte a la Regla de Negocio RN06: "Mesa de Ayuda, Disputas y Sanciones".
+ *
+ * ¿POR QUÉ EXISTE Y CUÁL ES SU PROPÓSITO?
+ * Cuando surge un problema en el trato directo posterior al cierre (por ejemplo,
+ * el ganador no se presenta a pagar o el vendedor entrega un artículo roto),
+ * los usuarios abren un ticket de reporte.
+ *
+ * Este componente permite:
+ * 1. Para el Socio (denunciante o denunciado):
+ *    - Ver el estado actual de su reclamo ('en_revision', 'resuelto_sancion', 'desestimado').
+ *    - Ver la evidencia adjunta y los dictámenes emitidos.
+ *    - Editar el texto de su reclamo mientras el ticket permanezca en revisión abierta.
+ * 2. Para el Administrador:
+ *    - Revisar ambas partes y el enlace a la subasta en cuestión.
+ *    - Desplegar el panel de mediación interactivo (`PanelResolucionTicket`) para
+ *      emitir una sanción (apercibimiento, suspensión, cierre) o desestimar el caso.
+ *    - Eliminar tickets obsoletos.
+ *
+ * ¿DE DÓNDE PROVIENEN LAS PROPS?
+ * - `reporte`: Objeto reporte individual de `tiendaReportes.js`.
+ * - `tituloSubasta`: Título del lote asociado obtenido de `subastas`.
+ * - `nombreDenunciante`: Nombre del usuario que abrió el ticket.
+ * - `nombreDenunciado`: Nombre del usuario reportado.
+ * - `estadoDenunciado`: Estado de la cuenta del acusado ('active', 'suspended', 'closed').
+ * - `puedeEditarReclamo`: Booleano (solo el autor puede editarlo si sigue 'en_revision').
+ * - `esAdmin`: Booleano indicando si la sesión actual tiene permisos de moderación.
+ * - `estaAtendiendo`: Booleano que indica si el panel de resolución está desplegado.
+ * - `alAtenderTicket`: Función para alternar la apertura/cierre del panel de resolución.
+ * - `alEditarReclamo`: Función para abrir el formulario de edición del reclamo.
+ * - `alEliminar`: Función para borrar el ticket.
+ * - `panelResolucion`: Nodo JSX `<PanelResolucionTicket />` inyectado por el contenedor padre.
+ * ==============================================================================
+ */
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { AlertOctagon, ExternalLink, MessageSquareCheck, ShieldAlert, Trash2 } from 'lucide-react';
 import { formatearFechaHora } from '../../utilidades/formatos';
 
+/**
+ * Función auxiliar: obtenerInsigniaTicket
+ * ----------------------------------------------------------------------------
+ * Retorna el texto y la combinación de colores CSS para la insignia de estado del ticket.
+ *
+ * @param {string} estado - Estado del ticket ('en_revision', 'resuelto_sancion', 'desestimado').
+ * @returns {{ texto: string, claseColor: string }}
+ */
 function obtenerInsigniaTicket(estado) {
   if (estado === 'resuelto_sancion') {
     return { texto: 'Cerrado · Sancionado', claseColor: 'bg-red-50 text-red-700 border-red-200' };
@@ -19,12 +68,22 @@ function obtenerInsigniaTicket(estado) {
   };
 }
 
+/**
+ * Función auxiliar: obtenerTextoBotonAdmin
+ * ----------------------------------------------------------------------------
+ * Determina el texto adecuado para el botón del moderador según el estado del panel.
+ */
 function obtenerTextoBotonAdmin(estaAtendiendo, estado) {
   if (estaAtendiendo) return 'Cerrar panel';
   return estado === 'en_revision' ? 'Atender Ticket' : 'Cambiar resolución';
 }
 
-// Tarjeta tipo Ticket de soporte/mediación para un reporte RN06
+/**
+ * Componente principal: TarjetaReportePanel
+ * ----------------------------------------------------------------------------
+ * Muestra el ticket completo con resumen de partes, motivo, descripción,
+ * enlace de evidencia y las acciones disponibles según el rol.
+ */
 export function TarjetaReportePanel({
   reporte,
   tituloSubasta,
@@ -44,6 +103,7 @@ export function TarjetaReportePanel({
 
   return (
     <div className="rounded-2xl bg-white border border-[#224F10]/10 p-5 space-y-4 shadow-2xs">
+      {/* Cabecera del ticket: Insignia de estado, Número de ticket, Fecha y Botones de acción */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#224F10]/8 pb-3">
         <div className="flex flex-wrap items-center gap-2">
           <span
@@ -60,7 +120,9 @@ export function TarjetaReportePanel({
           </span>
         </div>
 
+        {/* Acciones de gestión */}
         <div className="flex items-center gap-1.5">
+          {/* Botón para que el administrador atienda o modifique la resolución del ticket */}
           {esAdmin && (
             <button
               type="button"
@@ -71,6 +133,8 @@ export function TarjetaReportePanel({
               {textoBotonAdmin}
             </button>
           )}
+
+          {/* Botón para que el usuario que reportó edite los detalles si sigue abierto */}
           {!esAdmin && puedeEditarReclamo && (
             <button
               type="button"
@@ -80,6 +144,8 @@ export function TarjetaReportePanel({
               Editar reclamo
             </button>
           )}
+
+          {/* Botón para eliminar el ticket (solo administradores) */}
           {esAdmin && (
             <button
               type="button"
@@ -93,6 +159,7 @@ export function TarjetaReportePanel({
         </div>
       </div>
 
+      {/* Cuerpo del ticket: Motivo principal y Descripción detallada */}
       <div className="space-y-1.5">
         <h3 className="text-base font-bold text-[#0D0D0D]">{reporte.reason}</h3>
         <p className="text-xs text-[#0D0D0D]/75 leading-relaxed">{reporte.description}</p>
@@ -109,6 +176,7 @@ export function TarjetaReportePanel({
         )}
       </div>
 
+      {/* Ficha técnica: Subasta vinculada, partes involucradas y dictamen administrativo actual */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-[#F7FBF3] p-3.5 rounded-xl border border-[#224F10]/10 text-xs">
         <div>
           <span className="text-[10px] uppercase tracking-wider text-[#0D0D0D]/50 block">
@@ -144,6 +212,7 @@ export function TarjetaReportePanel({
         </div>
       </div>
 
+      {/* Renderizado condicional del panel de mediación interactivo para administradores */}
       {estaAtendiendo && panelResolucion}
     </div>
   );

@@ -1,8 +1,30 @@
+// ============================================================================
+// ARCHIVO: src/modulos/nucleo/diseno/uiFeedback.jsx
+// RESPONSABILIDAD: Componentes de retroalimentación visual al usuario (Feedback UI).
+// ============================================================================
+//
+// ¿QUÉ ENCONTRAMOS AQUÍ?
+// Elementos interactivos para comunicar estados del sistema:
+// 1. 'Alert': Avisos informativos, confirmaciones de éxito, advertencias y errores.
+// 2. 'Loading': Spinner animado durante peticiones asíncronas.
+// 3. 'Modal': Diálogo emergente accesible (cierre con tecla Escape y clic en fondo oscuro).
+// 4. 'ErrorCard': Tarjeta de bloqueo por error con botón de retorno.
+// ============================================================================
+
 import React, { useEffect } from 'react';
 import { AlertTriangle, CheckCircle2, Info, X } from 'lucide-react';
 import { Button } from './ui';
 
-// Cartel para avisos informativos, de éxito, advertencia o error
+/**
+ * Componente: Alert
+ * Muestra un banner visual con ícono y texto para alertar al usuario.
+ * 
+ * PROPS:
+ * - 'type': Variante ('info', 'success', 'error', 'warning').
+ * - 'title': Título opcional en negrita.
+ * - 'children': Mensaje o contenido detallado del aviso.
+ * - 'onClose': Callback opcional para mostrar una 'X' y permitir cerrarlo.
+ */
 export function Alert({ type = 'info', title, children, onClose }) {
   const estilos = {
     info: 'bg-[#B0E454]/40 border-[#224F10]/30 text-[#0D0D0D]',
@@ -34,7 +56,10 @@ export function Alert({ type = 'info', title, children, onClose }) {
   );
 }
 
-// Indicador giratorio mientras cargan los datos desde el servidor
+/**
+ * Componente: Loading
+ * Rueda animada de carga con CSS 'animate-spin' para llamadas asíncronas.
+ */
 export function Loading({ text = 'Cargando...' }) {
   return (
     <div className="flex flex-col items-center justify-center py-12 gap-3">
@@ -44,7 +69,18 @@ export function Loading({ text = 'Cargando...' }) {
   );
 }
 
-// Ventana emergente reutilizable (se cierra con Escape o al tocar el fondo oscuro)
+/**
+ * Componente: Modal
+ * Ventana emergente accesible (Overlay / Dialog).
+ * 
+ * CONCEPTOS CLAVE DE EVENTOS EN REACT Y JAVASCRIPT:
+ * 1. 'Escape Key': Escucha el evento global 'keydown'. Si la persona presiona Escape, se llama a 'onClose()'.
+ * 2. 'Limpieza del Event Listener': En el return del 'useEffect', se ejecuta 'removeEventListener'
+ *    para no acumular escuchadores en el objeto 'window'.
+ * 3. 'Propagación de Eventos (Event Bubbling)': El fondo oscuro ('backdrop') tiene un 'onClick={onClose}'.
+ *    Para que al hacer clic DENTRO de la tarjeta blanca no se cierre el modal accidentalmente,
+ *    se coloca 'evento.stopPropagation()' en el contenedor interno.
+ */
 export function Modal({ isOpen, onClose, title, children }) {
   useEffect(() => {
     if (!isOpen) return;
@@ -82,7 +118,10 @@ export function Modal({ isOpen, onClose, title, children }) {
   );
 }
 
-// Tarjeta reutilizable para mostrar un error o falta de permisos con botón para volver
+/**
+ * Componente: ErrorCard
+ * Tarjeta centrada para estados de error de carga de página con botón de regreso.
+ */
 export function ErrorCard({ title, message, backLabel, onBack }) {
   return (
     <div className="max-w-xl mx-auto my-12">

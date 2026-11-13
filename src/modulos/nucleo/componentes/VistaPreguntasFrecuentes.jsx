@@ -1,9 +1,26 @@
+// ============================================================================
+// ARCHIVO: src/modulos/nucleo/componentes/VistaPreguntasFrecuentes.jsx
+// RESPONSABILIDAD: Sección de Preguntas Frecuentes (FAQ) con acordeón interactivo.
+// ============================================================================
+//
+// CONCEPTO REACT: COMPONENTE ACORDEÓN CON ESTADO LOCAL
+// En este archivo se implementa un patrón clásico de interfaz: el "Acordeón".
+// 1. 'const [indiceAbierto, setIndiceAbierto] = useState(0)': Guarda el índice de
+//    la pregunta que se encuentra desplegada actualmente (0 para que la primera
+//    comience abierta al entrar).
+// 2. 'alternarPregunta(indice)': Si el usuario hace clic sobre la pregunta ya abierta,
+//    la cierra fijando el estado en -1; si hace clic sobre otra, cambia el índice.
+// 3. Renderizado Condicional: '{estaAbierta && ( ... )}' solo monta el bloque
+//    de respuesta cuando 'indiceAbierto === indice'.
+// ============================================================================
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronDown, HelpCircle } from 'lucide-react';
 import { Button, Card } from '../diseno/ui';
 import { CabeceraPagina } from '../diseno/componentesBloques';
 
+// Listado de preguntas y respuestas informativas
 const PREGUNTAS_FRECUENTES = [
   {
     pregunta: '¿Cómo participo y envío una oferta en BidZone?',
@@ -42,17 +59,23 @@ const PREGUNTAS_FRECUENTES = [
   },
 ];
 
-// Página pública de preguntas frecuentes con acordeón simple
 export function VistaPreguntasFrecuentes() {
   const navegar = useNavigate();
+
+  // Estado local: Guarda qué pregunta está desplegada (inicia con la primera, índice 0)
   const [indiceAbierto, setIndiceAbierto] = useState(0);
 
+  /**
+   * Alterna la apertura de una pregunta.
+   * Si la pregunta cliqueada ya estaba abierta, la cierra asignando -1.
+   */
   function alternarPregunta(indice) {
     setIndiceAbierto((actual) => (actual === indice ? -1 : indice));
   }
 
   return (
     <div className="space-y-8">
+      {/* Cabecera común de la página */}
       <CabeceraPagina
         titulo="Preguntas Frecuentes"
         subtitulo="Respuestas claras sobre cómo pujar, coordinar la entrega al ganar y usar BidZone con seguridad."
@@ -61,6 +84,7 @@ export function VistaPreguntasFrecuentes() {
         }
       />
 
+      {/* Lista de preguntas tipo acordeón */}
       <div className="space-y-3 max-w-4xl">
         {PREGUNTAS_FRECUENTES.map((item, indice) => {
           const estaAbierta = indiceAbierto === indice;
@@ -82,6 +106,7 @@ export function VistaPreguntasFrecuentes() {
                 />
               </button>
 
+              {/* Renderizado condicional del cuerpo de la respuesta */}
               {estaAbierta && (
                 <div className="px-6 pb-5 pt-1 text-xs sm:text-sm text-[#0D0D0D]/75 leading-relaxed border-t border-[#224F10]/10">
                   {item.respuesta}

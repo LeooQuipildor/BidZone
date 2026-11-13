@@ -1,3 +1,21 @@
+// ============================================================================
+// ARCHIVO: src/modulos/reportes/estado/tiendaReportes.js
+// RESPONSABILIDAD: Estado global de reclamos y mesa de mediación RN06.
+// ============================================================================
+//
+// ¿QUÉ HACE ESTA TIENDA?
+// Administra los tickets de reclamo (reportes de incumplimiento) y conecta con '/api/reports'.
+//
+// REGLA DE NEGOCIO RN06 (Mesa de Mediación y Sanción):
+// 1. Cuando un socio incumple (ej: comprador no paga o vendedor no entrega), la contraparte
+//    puede abrir un Ticket de Reclamo adjuntando motivo, descripción y enlace de evidencia.
+// 2. Un usuario Administrador atiende el caso y decide la resolución:
+//    - Desestimar reclamo (sin falta cometida).
+//    - Resolver con sanción: advertencia formal, suspensión temporal o cierre definitivo de cuenta.
+// 3. Cuando se aplica una sanción de cuenta, esta tienda actualiza automáticamente
+//    la lista de usuarios ('usarTiendaAutenticacion') y las notificaciones del sistema.
+// ============================================================================
+
 import { create } from 'zustand';
 import {
   hayTokenSesion,
@@ -10,10 +28,16 @@ import { usarTiendaNotificaciones } from '../../notificaciones/estado/tiendaNoti
 
 // Tienda global de reportes e infracciones RN06 (conecta con /api/reports)
 export const usarTiendaReportes = create((set) => ({
-  reportes: [],
-  cargando: false,
-  error: null,
+  // ESTADOS REACTIVOS
+  reportes: [],     // Listado de tickets (abiertos, en revisión, resueltos)
+  cargando: false,  // Bandera de llamada HTTP en curso
+  error: null,      // Mensaje de error si falla la conexión
 
+  /**
+   * Obtiene la lista de reportes desde el servidor ('GET /api/reports').
+   * Si es socio, el backend devuelve sus reportes propios.
+   * Si es administrador, devuelve los reportes de toda la plataforma para mediar.
+   */
   obtenerReportes: async () => {
     if (!hayTokenSesion()) {
       set({ reportes: [], cargando: false });
@@ -31,6 +55,9 @@ export const usarTiendaReportes = create((set) => ({
     }
   },
 
+  /**
+   * Abre un nuevo ticket de reclamo ('POST /api/reports').
+   */
   crearReporte: async (datos) => {
     set({ error: null });
     try {
@@ -54,6 +81,11 @@ export const usarTiendaReportes = create((set) => ({
     }
   },
 
+  /**
+   * Actualiza o resuelve un ticket de mediación ('PATCH /api/reports/:id').
+   * Utiliza el método HTTP PATCH porque solo se envían los campos modificados.
+   * Si el administrador sanciona al usuario, sincroniza las tiendas de usuarios y notificaciones.
+   */
   actualizarReporte: async (id, cambios) => {
     set({ error: null });
     try {
@@ -86,6 +118,9 @@ export const usarTiendaReportes = create((set) => ({
     }
   },
 
+  /**
+   * Elimina un ticket de reclamo ('DELETE /api/reports/:id').
+   */
   eliminarReporte: async (id) => {
     set({ error: null });
     try {
@@ -98,6 +133,7 @@ export const usarTiendaReportes = create((set) => ({
   },
 }));
 
+// Al cerrar sesión, limpiamos los reportes cargados en memoria
 registrarLimpiezaSesion(() => {
   usarTiendaReportes.setState({ reportes: [], error: null, cargando: false });
 });

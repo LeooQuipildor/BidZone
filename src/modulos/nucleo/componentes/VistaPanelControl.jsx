@@ -1,3 +1,39 @@
+/**
+ * ==============================================================================
+ * ARCHIVO: src/modulos/nucleo/componentes/VistaPanelControl.jsx
+ * ==============================================================================
+ *
+ * ¿QUÉ ES ESTE ARCHIVO?
+ * Es el componente principal del Panel de Control (Dashboard) de BidZone (ruta `/panel`).
+ * Funciona como una aplicación interna (Single Page Dashboard) que integra los 5 módulos
+ * del sistema tanto para usuarios estándar como para administradores.
+ *
+ * ¿QUÉ HACE ESTE COMPONENTE?
+ * 1. Al montarse (`useEffect`), sincroniza los datos de todas las tiendas Zustand:
+ *    usuarios, subastas, pujas, reportes, reseñas y notificaciones.
+ * 2. Gestiona la navegación interna por pestañas mediante el parámetro URL `?tab=nombre`:
+ *    - `resumen`: Métricas globales, actividad reciente y lotes adjudicados.
+ *    - `subastas`: Gestión de publicaciones propias o moderación general.
+ *    - `pujas`: Historial de ofertas emitidas y seguimiento de liderazgo.
+ *    - `reportes`: Mesa de ayuda y resolución de reclamos RN06.
+ *    - `resenas`: Historial de calificaciones recibidas y otorgadas RN07.
+ *    - `usuarios`: Directorio y administración disciplinaria (exclusivo administradores).
+ *    - `notificaciones`: Centro de alertas del sistema.
+ *    - `perfil`: Modificación de datos de contacto personales (RN05).
+ * 3. Provee un buscador superior transversal en el `Header` que filtra los datos de la pestaña activa.
+ * 4. Mantiene compatibilidad con nombres en inglés anteriores gracias al mapa `ALIAS_SECCION_URL`.
+ *
+ * CONCEPTOS DIDÁCTICOS EXPLICADOS:
+ * - Diccionario de Vistas (View Map Pattern):
+ *   `const contenidoPorSeccion = { resumen: <TabResumen />, ... }`
+ *   En lugar de una cadena kilométrica de `if/else` o `switch`, se utiliza un objeto donde la clave
+ *   es el nombre de la pestaña y el valor es el elemento JSX correspondiente.
+ * - Sincronización Bidireccional de Pestaña con URL:
+ *   Al hacer clic en una pestaña del sidebar, actualizamos `setParametrosUrl({ tab: nuevaPestaña })`.
+ *   Esto permite al usuario compartir enlaces directos (ej: `/panel?tab=perfil`) o usar los botones
+ *   de avance/retroceso del navegador sin perder su lugar.
+ */
+
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { usarTiendaAutenticacion } from '../../autenticacion/estado/tiendaAutenticacion';
@@ -20,7 +56,9 @@ import { TabUsuariosPanel } from './panel/TabUsuariosPanel';
 import { TabNotificacionesPanel } from './panel/TabNotificacionesPanel';
 import { TabPerfilPanel } from './panel/TabPerfilPanel';
 
-// Permite aceptar nombres de pestaña previos por URL sin romper enlaces
+/**
+ * Diccionario de equivalencias para admitir parámetros de URL heredados en inglés.
+ */
 const ALIAS_SECCION_URL = {
   overview: 'resumen',
   auctions: 'subastas',
@@ -36,8 +74,13 @@ export function VistaPanelControl({ seccionInicial = 'resumen' }) {
   const navegar = useNavigate();
   const ubicacion = useLocation();
   const [parametrosUrl, setParametrosUrl] = useSearchParams();
+
+  // Reloj de cuenta regresiva sincronizado para los componentes del panel
   const ahoraMs = useRelojSegundo();
 
+  /**
+   * Suscripciones a los 6 stores Zustand:
+   */
   const usuarioActual = usarTiendaAutenticacion((estado) => estado.usuarioActual);
   const usuarios = usarTiendaAutenticacion((estado) => estado.usuarios);
   const obtenerUsuarios = usarTiendaAutenticacion((estado) => estado.obtenerUsuarios);
@@ -52,11 +95,15 @@ export function VistaPanelControl({ seccionInicial = 'resumen' }) {
   const notificaciones = usarTiendaNotificaciones((estado) => estado.notificaciones);
   const obtenerNotificaciones = usarTiendaNotificaciones((estado) => estado.obtenerNotificaciones);
 
+  // Estados locales para la barra de búsqueda y paginación interna
   const [textoBusqueda, setTextoBusqueda] = useState('');
   const [paginaSubastas, setPaginaSubastas] = useState(1);
   const [datosInicialesSeccion, setDatosInicialesSeccion] = useState(null);
 
-  // Al entrar al panel cargamos los datos de cada módulo
+  /**
+   * Hook `useEffect`:
+   * Carga la totalidad de datos al ingresar al panel de control para tener la información lista.
+   */
   useEffect(() => {
     obtenerUsuarios();
     obtenerSubastas();
@@ -67,17 +114,27 @@ export function VistaPanelControl({ seccionInicial = 'resumen' }) {
   }, [obtenerUsuarios, obtenerSubastas, obtenerPujas, obtenerReportes, obtenerResenas, obtenerNotificaciones]);
 
   const esAdmin = usuarioActual?.role === 'admin';
+
+  // Resolución de la pestaña activa leyendo query params
   const tabUrlRaw = parametrosUrl.get('tab');
   const tabDesdeUrl = tabUrlRaw ? ALIAS_SECCION_URL[tabUrlRaw] || tabUrlRaw : '';
   const abrirNuevoDesdeUrl = parametrosUrl.get('nuevo') === '1' || parametrosUrl.get('new') === '1';
   const seccionSolicitada = tabDesdeUrl || seccionInicial || 'resumen';
+
+  // Seguridad: Si un usuario regular intenta entrar a la pestaña de usuarios, se le redirige al resumen
   const seccionActiva = !esAdmin && seccionSolicitada === 'usuarios' ? 'resumen' : seccionSolicitada;
 
+  /**
+   * Manejador de búsqueda transversal en el Header.
+   */
   function manejarCambioBusqueda(nuevoTexto) {
     setTextoBusqueda(nuevoTexto);
     setPaginaSubastas(1);
   }
 
+  /**
+   * Cambia de pestaña actualizando los parámetros de URL de forma limpia.
+   */
   function elegirSeccion(siguienteSeccion, datosPrevios = null) {
     setTextoBusqueda('');
     setPaginaSubastas(1);
@@ -92,6 +149,9 @@ export function VistaPanelControl({ seccionInicial = 'resumen' }) {
     setParametrosUrl(siguienteSeccion === 'resumen' ? {} : { tab: siguienteSeccion }, { replace: true });
   }
 
+  /**
+   * Limpia parámetros de modal tras abrir una creación.
+   */
   function limpiarAperturaFormulario() {
     if (abrirNuevoDesdeUrl) {
       setParametrosUrl({ tab: 'subastas' }, { replace: true });
@@ -101,6 +161,7 @@ export function VistaPanelControl({ seccionInicial = 'resumen' }) {
     }
   }
 
+  // Generación de elementos de menú con contadores reactivos (insignias numéricas)
   const { seccionesMenu, seccionesCuenta } = construirMenuPanel({
     esAdmin,
     usuarioActual,
@@ -114,6 +175,9 @@ export function VistaPanelControl({ seccionInicial = 'resumen' }) {
 
   const abrirFormularioSubasta = abrirNuevoDesdeUrl || Boolean(datosInicialesSeccion?.abrirFormulario);
 
+  /**
+   * Mapeo de vistas por sección:
+   */
   const contenidoPorSeccion = {
     resumen: (
       <TabResumenPanel
@@ -151,6 +215,7 @@ export function VistaPanelControl({ seccionInicial = 'resumen' }) {
 
   return (
     <div className="rounded-[28px] bg-[#F7FBF3] border border-[#224F10]/12 shadow-sm overflow-hidden flex flex-col lg:flex-row">
+      {/* Barra lateral de navegación con insignias numéricas */}
       <Sidebar
         seccionActiva={seccionActiva}
         etiquetaRol={formatearRolUsuario(usuarioActual?.role, true)}
@@ -159,6 +224,7 @@ export function VistaPanelControl({ seccionInicial = 'resumen' }) {
         alElegirSeccion={elegirSeccion}
       />
 
+      {/* Área de contenido dinámico */}
       <div className="flex-1 p-5 sm:p-7 space-y-6 min-w-0">
         <Header
           seccionActiva={seccionActiva}
@@ -167,6 +233,7 @@ export function VistaPanelControl({ seccionInicial = 'resumen' }) {
           usuarioActual={usuarioActual}
         />
 
+        {/* Renderizado de la pestaña activa o resumen por defecto */}
         {contenidoPorSeccion[seccionActiva] || contenidoPorSeccion.resumen}
       </div>
     </div>

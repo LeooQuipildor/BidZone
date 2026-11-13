@@ -1,7 +1,41 @@
+/**
+ * ==============================================================================
+ * ARCHIVO: src/modulos/nucleo/componentes/SeccionModulosInicio.jsx
+ * ==============================================================================
+ *
+ * ¿QUÉ ES ESTE ARCHIVO?
+ * Es el componente de presentación de la sección de "Ecosistema Completo" en la página de inicio.
+ * Presenta un mosaico visual atractivo con enlaces directos hacia los 5 módulos funcionales de BidZone.
+ *
+ * ¿QUÉ HACE ESTE COMPONENTE?
+ * 1. Muestra un bloque grande destacado enfocado en la Sala de Adjudicación Directa (Regla RN05).
+ * 2. Ofrece dos botones de acción: uno para ir al Panel de Control (`/panel`) y otro para el Historial de Pujas (`/pujas`).
+ * 3. Renderiza una cuadrícula de 4 tarjetas de acceso rápido (Mosaico) para:
+ *    - Pujas en Vivo (`/pujas`)
+ *    - Denuncias e Infracciones RN06 (`/reportes`)
+ *    - Reseñas de Reputación RN07 (`/resenas`)
+ *    - Perfil y Datos de Contacto (`/panel?tab=perfil`)
+ *
+ * CONCEPTOS DIDÁCTICOS EXPLICADOS:
+ * - Navegación Declarativa vs Programática:
+ *   * En las 4 tarjetas del mosaico se usa `<Link to="...">` (declarativo, ideal para enlaces visuales estándar).
+ *   * En los botones del bloque principal se usa `useNavigate()` con `onClick={() => navegar(...)` (programático).
+ * - Efectos de interacción en Tailwind (`group` y `group-hover`):
+ *   Al poner la clase `group` en el contenedor `<Link>`, sus hijos pueden reaccionar cuando el usuario pasa el mouse,
+ *   por ejemplo aplicando un suave zoom en la imagen con `group-hover:scale-105 transition-transform`.
+ * - Capas visuales de contraste (Overlays):
+ *   Para que el texto blanco/verde claro sea legible sobre fotos fotográficas variables, se coloca un `div`
+ *   absoluto con un degradado negro (`bg-gradient-to-t from-[#0D0D0D]/90 ...`) entre la foto y el texto.
+ */
+
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 
+/**
+ * Arreglo con la configuración del mosaico de accesos rápidos a los módulos.
+ * Contiene el título, subtítulo explicativo, ruta de destino y la URL de imagen de fondo.
+ */
 const TARJETAS_MOSAICO = [
   {
     titulo: 'Pujas en Vivo',
@@ -29,12 +63,16 @@ const TARJETAS_MOSAICO = [
   },
 ];
 
-// Accesos directos de la portada hacia los 5 módulos principales de BidZone
 export function SeccionModulosInicio() {
+  /**
+   * Hook `useNavigate`:
+   * Función para navegar entre rutas en respuesta a eventos de clic.
+   */
   const navegar = useNavigate();
 
   return (
     <section className="space-y-7">
+      {/* Cabecera explicativa de la sección */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-end">
         <div className="lg:col-span-6 space-y-1.5">
           <div className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-[#224F10]">
@@ -50,7 +88,9 @@ export function SeccionModulosInicio() {
         </p>
       </div>
 
+      {/* Cuadrícula de 12 columnas: 6 columnas para el bloque grande y 6 para las 4 tarjetas del mosaico */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+        {/* Bloque grande izquierdo: Sala de Adjudicación Directa (RN05) */}
         <div className="lg:col-span-6 relative rounded-3xl overflow-hidden min-h-[410px] bg-[#0D0D0D] p-6 sm:p-8 flex flex-col justify-end">
           <img
             src="https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=1200&q=80"
@@ -72,6 +112,7 @@ export function SeccionModulosInicio() {
               </p>
             </div>
 
+            {/* Botones de acción directa */}
             <div className="flex flex-wrap items-center gap-3 pt-1">
               <button
                 type="button"
@@ -97,6 +138,7 @@ export function SeccionModulosInicio() {
           </div>
         </div>
 
+        {/* Bloque derecho: Mosaico 2x2 con enlaces a los módulos */}
         <div className="lg:col-span-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
           {TARJETAS_MOSAICO.map((item) => (
             <Link

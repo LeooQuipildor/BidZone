@@ -1,3 +1,47 @@
+/**
+ * ==============================================================================
+ * ARCHIVO: src/modulos/nucleo/componentes/panel/TabSubastasPanel.jsx
+ * ==============================================================================
+ *
+ * ¿QUÉ ES ESTE COMPONENTE?
+ * Es la pestaña de gestión de subastas del Panel de Control de BidZone.
+ *
+ * ¿POR QUÉ EXISTE Y CUÁL ES SU PROPÓSITO?
+ * Permite a los usuarios administrar sus publicaciones y a los administradores
+ * auditar y moderar el catálogo global de lotes.
+ *
+ * Características clave:
+ * 1. Separación de Roles:
+ *    - Un Socio solo puede ver y gestionar las subastas de las cuales es propietario (`sellerId`).
+ *    - Un Administrador puede alternar entre "Todas las Subastas" (modo moderación de catálogo)
+ *      y "Mis Subastas" (sus publicaciones particulares).
+ * 2. Publicación y Edición (RN01, RN02, RN03):
+ *    - Permite crear nuevas subastas con fecha futura e incremento de puja mínimo.
+ *    - Al editar, si la subasta ya recibió pujas (`subastaEditandoTienePujas`), se bloquean
+ *      los campos críticos (precio base, fecha de cierre) para proteger a los postores activos.
+ * 3. Moderación y Solicitud de Corrección:
+ *    - Si un administrador detecta un lote con infracciones o datos confusos, puede
+ *      desplegar el `PanelSolicitudCorreccion` para notificar al vendedor formalmente.
+ * 4. Filtrado, Ordenamiento y Paginación:
+ *    - Filtro por categoría temática.
+ *    - Filtro por estado ('activa', 'finalizada', etc.).
+ *    - Ordenamiento por proximidad de cierre o precio.
+ *    - Paginación local de 12 elementos por página con scroll automático arriba.
+ *
+ * ¿DE DÓNDE PROVIENEN LAS PROPS?
+ * - `usuarioActual`: Sesión activa de `tiendaAutenticacion.js`.
+ * - `usuarios`: Lista completa de usuarios para resolver el nombre del vendedor.
+ * - `subastas`: Array completo de lotes provenientes de `tiendaSubastas.js`.
+ * - `pujas`: Array de pujas de `tiendaPujas.js` (para comprobar si un lote tiene ofertas).
+ * - `textoBusqueda`: Filtro de texto libre del Header superior.
+ * - `ahoraMs`: Timestamp en milisegundos para calcular tiempos restantes con precisión.
+ * - `paginaActual`: Número de página administrado por el estado de `VistaPanelControl.jsx`.
+ * - `alCambiarPagina`: Callback para actualizar la página en el contenedor padre.
+ * - `abrirDesdeAccesoExterno`: Booleano para forzar la apertura del formulario de creación.
+ * - `alLimpiarNuevo`: Callback para resetear el flag de apertura externa.
+ * ==============================================================================
+ */
+
 import React, { useState } from 'react';
 import { Plus } from 'lucide-react';
 import { usarTiendaSubastas } from '../../../subastas/estado/tiendaSubastas';
@@ -24,9 +68,15 @@ import {
 } from './PanelCompartido';
 import { FiltrosBotones } from '../../diseno/componentesBloques';
 
+/** Cantidad máxima de subastas mostradas por página dentro del panel */
 const SUBASTAS_POR_PAGINA_PANEL = 12;
 
-// Pestaña de subastas: separa Moderación y Mis Subastas en Admin; en ajenas solicita corrección o elimina
+/**
+ * Componente principal: TabSubastasPanel
+ * ----------------------------------------------------------------------------
+ * Gestiona el ciclo completo de vida de las subastas en el panel (listado, filtrado,
+ * creación, edición, corrección y eliminación).
+ */
 export function TabSubastasPanel({
   usuarioActual,
   usuarios,
@@ -39,10 +89,12 @@ export function TabSubastasPanel({
   abrirDesdeAccesoExterno = false,
   alLimpiarNuevo,
 }) {
+  // Acciones asíncronas del store de Zustand `tiendaSubastas.js`
   const crearSubasta = usarTiendaSubastas((estado) => estado.crearSubasta);
   const actualizarSubasta = usarTiendaSubastas((estado) => estado.actualizarSubasta);
   const eliminarSubasta = usarTiendaSubastas((estado) => estado.eliminarSubasta);
 
+  // Estados locales de filtrado y control de formularios
   const esAdmin = usuarioActual?.role === 'admin';
   const [vistaAdmin, setVistaAdmin] = useState('todas');
   const [categoria, setCategoria] = useState('Todas');
@@ -53,8 +105,11 @@ export function TabSubastasPanel({
   const [idSubastaEditando, setIdSubastaEditando] = useState(null);
   const [idSubastaCorrigiendo, setIdSubastaCorrigiendo] = useState(null);
 
+  // Filtrado por propiedad: socio solo ve las suyas; admin puede ver todas o las suyas
   const misSubastas = subastas.filter((s) => mismoId(s.sellerId, usuarioActual?.id));
   const subastasVisibles = esAdmin && vistaAdmin === 'todas' ? subastas : misSubastas;
+
+  // Aplicación de búsqueda, categoría, estado y ordenamiento
   const subastasFiltradas = filtrarYOrdenarSubastas(
     subastasVisibles,
     textoBusqueda,
@@ -64,9 +119,11 @@ export function TabSubastasPanel({
     ahoraMs
   );
 
+  // Paginación matemática con ayuda utilitaria
   const { elementosPagina: subastasPagina, paginaActual: paginaSegura, totalPaginas } =
     paginarLista(subastasFiltradas, paginaActual, SUBASTAS_POR_PAGINA_PANEL);
 
+  // Detección de subasta en edición o corrección
   const mostrarFormulario = formularioAbierto || abrirDesdeAccesoExterno;
   const subastaEditando = !abrirDesdeAccesoExterno && idSubastaEditando
     ? buscarPorId(subastas, idSubastaEditando)
@@ -74,22 +131,27 @@ export function TabSubastasPanel({
   const subastaACorregir = !abrirDesdeAccesoExterno && idSubastaCorrigiendo
     ? buscarPorId(subastas, idSubastaCorrigiendo)
     : null;
+
+  // Verificación de existencia de pujas activas para aplicar restricciones de edición (RN03)
   const subastaEditandoTienePujas = Boolean(
     subastaEditando &&
       (Number(subastaEditando.bidCount ?? 0) > 0 ||
         pujas.some((p) => mismoId(p.auctionId, subastaEditando.id)))
   );
 
+  /** Cambia un criterio de filtro y reinicia la paginación a la primera página */
   function cambiarFiltro(aplicarCambio, valor) {
     aplicarCambio(valor);
     alCambiarPagina(1);
   }
 
+  /** Cambia la página y desplaza la ventana suavemente hacia el inicio */
   function cambiarPagina(nuevaPagina) {
     alCambiarPagina(nuevaPagina);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
+  /** Cierra todos los paneles flotantes y resetea las variables de selección */
   function cerrarPaneles() {
     setFormularioAbierto(false);
     setIdSubastaEditando(null);
@@ -97,6 +159,7 @@ export function TabSubastasPanel({
     alLimpiarNuevo?.();
   }
 
+  /** Maneja el guardado de una subasta nueva o la actualización de una existente */
   async function guardarFormulario(datosEnvio) {
     if (subastaEditando) {
       await actualizarSubasta(subastaEditando.id, datosEnvio);
@@ -108,6 +171,7 @@ export function TabSubastasPanel({
     cerrarPaneles();
   }
 
+  /** Maneja la eliminación de una subasta previa confirmación del usuario */
   async function manejarEliminacion(subasta) {
     if (!window.confirm(`¿Confirmas eliminar la subasta "${subasta.title}"?`)) return;
     try {
@@ -118,10 +182,12 @@ export function TabSubastasPanel({
     }
   }
 
+  // Generación de textos de cabecera según el modo de visualización y rol
   const textos = obtenerTextosTabSubastas(esAdmin, vistaAdmin, subastas.length, misSubastas.length);
 
   return (
     <div className="space-y-5">
+      {/* Cabecera con título dinámico y botón para publicar nueva subasta */}
       <CabeceraSeccionPanel
         titulo={textos.titulo}
         subtitulo={textos.subtitulo}
@@ -135,8 +201,10 @@ export function TabSubastasPanel({
         }
       />
 
+      {/* Banner de mensajes de éxito o error */}
       <AvisoPanel aviso={aviso} alCerrar={() => setAviso(null)} />
 
+      {/* Formulario modal inline para crear o editar subasta */}
       {mostrarFormulario && (
         <ContenedorFormularioPanel
           titulo={subastaEditando ? `Editar Mi Subasta #${subastaEditando.id}` : 'Publicar Nueva Subasta'}
@@ -153,6 +221,7 @@ export function TabSubastasPanel({
         </ContenedorFormularioPanel>
       )}
 
+      {/* Panel para que un administrador solicite correcciones de datos al vendedor */}
       {subastaACorregir && (
         <ContenedorFormularioPanel
           titulo={`Solicitar revisión · Lote #${subastaACorregir.id}`}
@@ -166,6 +235,7 @@ export function TabSubastasPanel({
         </ContenedorFormularioPanel>
       )}
 
+      {/* Barra de filtros: selector de vista (solo admin), categorías, estado y orden */}
       <div className="rounded-2xl bg-white border border-[#224F10]/10 p-4 space-y-3 shadow-2xs">
         {esAdmin && (
           <FiltrosBotones opciones={VISTAS_SUBASTA_ADMIN} valorActual={vistaAdmin} alElegir={(v) => cambiarFiltro(setVistaAdmin, v)} />
@@ -177,6 +247,7 @@ export function TabSubastasPanel({
         </div>
       </div>
 
+      {/* Listado de tarjetas de subasta o mensaje de estado vacío */}
       {subastasFiltradas.length === 0 ? (
         <EstadoVacioPanel mensaje={textos.vacio} />
       ) : (
@@ -200,6 +271,8 @@ export function TabSubastasPanel({
               );
             })}
           </div>
+
+          {/* Componente de paginación con controles numéricos */}
           <PaginacionCatalogo
             paginaActual={paginaSegura}
             totalPaginas={totalPaginas}

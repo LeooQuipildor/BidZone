@@ -1,8 +1,28 @@
+// ============================================================================
+// ARCHIVO: src/modulos/nucleo/componentes/Navbar.jsx
+// RESPONSABILIDAD: Barra de navegación principal (Desktop y Móvil).
+// ============================================================================
+//
+// ¿QUÉ HACE ESTE COMPONENTE?
+// 1. Muestra el logotipo de BidZone con enlace directo a '/'.
+// 2. Ofrece navegación principal con resaltado activo ('NavLink' con 'isActive').
+// 3. Contiene el buscador global en tiempo real conectado con 'tiendaSubastas'.
+// 4. Si el usuario está conectado:
+//    - Botón rápido "+ Publicar" -> abre el panel en la pestaña subastas con nuevo=1.
+//    - Nombre y rol del usuario -> enlace al Panel.
+//    - Campana de notificaciones con globito de cantidad sin leer ('cantidadSinLeer').
+//    - Botón para cerrar sesión ('alCerrarSesion').
+// 5. Si es visitante:
+//    - Botones de "Ingresar" y "Registro".
+// 6. Subbarra responsiva para teléfonos móviles con scroll horizontal.
+// ============================================================================
+
 import React from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { Bell, LogOut, Plus, Search, User, X } from 'lucide-react';
 import { usarTiendaSubastas } from '../../subastas/estado/tiendaSubastas';
 
+// Enlaces de navegación pública del lado izquierdo
 const ENLACES_IZQUIERDA = [
   { ruta: '/', etiqueta: 'Inicio' },
   { ruta: '/subastas', etiqueta: 'Explorar' },
@@ -10,7 +30,15 @@ const ENLACES_IZQUIERDA = [
   { ruta: '/preguntas-frecuentes', etiqueta: 'Preguntas Frecuentes' },
 ];
 
-// Campo buscador compartido entre la barra superior y el menú móvil
+/**
+ * Componente interno: BuscadorNavbar
+ * Formulario compacto de búsqueda con input controlado, botón de limpiar 'X' y botón de lupa.
+ * 
+ * PROPS:
+ * - 'valor': Texto actual del input (proveniente del estado global 'filtros.busqueda').
+ * - 'alCambiar': Callback que se ejecuta en cada pulsación de tecla ('onChange').
+ * - 'alEnviar': Callback que se ejecuta al presionar Enter o tocar la lupa ('onSubmit').
+ */
 function BuscadorNavbar({ valor, alCambiar, alEnviar, claseExtra = '' }) {
   return (
     <form
@@ -46,9 +74,19 @@ function BuscadorNavbar({ valor, alCambiar, alEnviar, claseExtra = '' }) {
   );
 }
 
-// Barra de navegación superior (desktop y subbarra móvil)
+/**
+ * Componente: Navbar
+ * 
+ * PROPS RECIBIDAS DESDE Layout.jsx:
+ * - 'esInicio': Booleano que indica si estamos en '/' (cambia la barra a posición 'fixed').
+ * - 'usuarioActual': Objeto del usuario logueado o null.
+ * - 'cantidadSinLeer': Número entero de notificaciones pendientes.
+ * - 'alCerrarSesion': Función para cerrar sesión y volver a '/'.
+ */
 export function Navbar({ esInicio, usuarioActual, cantidadSinLeer, alCerrarSesion }) {
   const navegar = useNavigate();
+
+  // Conexión con la tienda de subastas para compartir el término de búsqueda
   const textoBusqueda = usarTiendaSubastas((estado) => estado.filtros.busqueda);
   const actualizarFiltros = usarTiendaSubastas((estado) => estado.actualizarFiltros);
 
@@ -64,12 +102,14 @@ export function Navbar({ esInicio, usuarioActual, cantidadSinLeer, alCerrarSesio
   function manejarBusqueda(evento) {
     evento.preventDefault();
     actualizarFiltros({ busqueda: textoBusqueda.trim() });
-    navegar('/subastas');
+    navegar('/subastas'); // Redirige al catálogo con los resultados
   }
 
   return (
     <div className={`w-full z-40 px-3 sm:px-6 pt-3 sm:pt-4 ${clasePosicionBarra}`}>
       <header className="max-w-[1480px] mx-auto bg-[#0D0D0D]/95 backdrop-blur-md text-[#EAFFD0] rounded-xl px-4 sm:px-7 h-14 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 sm:gap-4 shadow-lg border border-[#224F10]/50">
+        
+        {/* Lado izquierdo: Navegación de escritorio */}
         <div className="justify-self-start min-w-0">
           <nav className="hidden lg:flex items-center gap-3.5 xl:gap-5">
             {ENLACES_IZQUIERDA.map((item) => (
@@ -89,6 +129,7 @@ export function Navbar({ esInicio, usuarioActual, cantidadSinLeer, alCerrarSesio
           </nav>
         </div>
 
+        {/* Centro: Logotipo de la marca */}
         <Link
           to="/"
           className="justify-self-center font-serif-display text-2xl sm:text-3xl font-semibold tracking-tight text-[#EAFFD0] hover:text-[#B0E454] transition-colors select-none"
@@ -96,6 +137,7 @@ export function Navbar({ esInicio, usuarioActual, cantidadSinLeer, alCerrarSesio
           BidZone
         </Link>
 
+        {/* Lado derecho: Buscador y Acciones de usuario */}
         <div className="justify-self-end flex items-center gap-2.5 sm:gap-3.5 min-w-0">
           <BuscadorNavbar
             valor={textoBusqueda}
@@ -163,7 +205,7 @@ export function Navbar({ esInicio, usuarioActual, cantidadSinLeer, alCerrarSesio
         </div>
       </header>
 
-      {/* Subbarra en pantallas pequeñas */}
+      {/* Subbarra para pantallas móviles pequeñas (< lg) */}
       <div className="lg:hidden max-w-[1480px] mx-auto mt-1.5 bg-[#224F10]/95 backdrop-blur-md rounded-xl px-3 py-2 space-y-2 text-xs text-[#EAFFD0]">
         <div className="flex items-center gap-2 overflow-x-auto">
           {enlacesMovil.map((item) => (

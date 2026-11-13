@@ -1,3 +1,35 @@
+/**
+ * ==============================================================================
+ * ARCHIVO: src/modulos/subastas/componentes/VistaListaSubastas.jsx
+ * ==============================================================================
+ *
+ * ¿QUÉ ES ESTE ARCHIVO?
+ * Es el componente de vista principal para el Catálogo General de Subastas de la aplicación (ruta `/subastas`).
+ *
+ * ¿QUÉ HACE ESTE COMPONENTE?
+ * 1. Carga la lista global de subastas y se sincroniza reactivamente con la tienda Zustand `usarTiendaSubastas`.
+ * 2. Ofrece controles de filtrado interactivos:
+ *    - Pestañas tipo pastilla por categoría (`CATEGORIAS_FILTRO_SUBASTA`).
+ *    - Campo de búsqueda por texto en tiempo real (`filtros.busqueda`).
+ *    - Selector de estado de sala: En vivo / Activas, Próximas a cerrar, Finalizadas.
+ *    - Selector de ordenamiento: Más recientes, Menor precio, Mayor precio, etc.
+ * 3. Ejecuta la función de filtrado y ordenamiento en memoria `filtrarYOrdenarSubastas`.
+ * 4. Aplica paginación en el cliente con `paginarLista` (20 subastas por página) y desplaza la vista suavemente
+ *    al cambiar de página (`window.scrollTo({ top: 0, behavior: 'smooth' })`).
+ * 5. Renderiza la cuadrícula de tarjetas (`TarjetaSubasta`) determinando para cada una si el usuario actual es dueño o admin.
+ * 6. Integra el diálogo de moderación para administradores (`PanelSolicitudCorreccion enModal`).
+ *
+ * CONCEPTOS DIDÁCTICOS EXPLICADOS:
+ * - Filtros Reactivos en Memoria:
+ *   Al escribir en el input de búsqueda o cambiar un selector, actualizamos el objeto `filtros` en Zustand.
+ *   Esto dispara una re-evaluación inmediata de `filtrarYOrdenarSubastas` sin necesidad de peticiones HTTP lentas.
+ * - Sincronización de Reloj para Tarjetas:
+ *   `const ahoraMs = useRelojSegundo()` centraliza el tiempo actual para las 20 tarjetas mostradas,
+ *   garantizando que todas las cuentas regresivas se muevan en perfecta sincronía.
+ * - Desplazamiento Suave (`Smooth Scroll`):
+ *   `window.scrollTo({ top: 0, behavior: 'smooth' })` mejora la experiencia de usuario (UX) al cambiar de página.
+ */
+
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PlusCircle } from 'lucide-react';
@@ -21,12 +53,18 @@ import {
   TarjetaCtaCatalogo,
 } from '../../nucleo/diseno/componentesBloques';
 
+// Constante de paginación para el catálogo
 const SUBASTAS_POR_PAGINA = 20;
 
 export function VistaListaSubastas() {
   const navegar = useNavigate();
+
+  // Reloj de cuenta regresiva sincronizado cada segundo
   const ahoraMs = useRelojSegundo();
 
+  /**
+   * Suscripciones al estado global de subastas y autenticación:
+   */
   const subastas = usarTiendaSubastas((estado) => estado.subastas);
   const errorSubastas = usarTiendaSubastas((estado) => estado.error);
   const filtros = usarTiendaSubastas((estado) => estado.filtros);
@@ -37,17 +75,24 @@ export function VistaListaSubastas() {
   const eliminarSubasta = usarTiendaSubastas((estado) => estado.eliminarSubasta);
   const usuarioActual = usarTiendaAutenticacion((estado) => estado.usuarioActual);
 
+  // Estados locales para mensajes de éxito y subasta seleccionada para revisión disciplinaria
   const [aviso, setAviso] = useState(null);
   const [subastaSolicitada, setSubastaSolicitada] = useState(null);
 
+  /**
+   * Hook `useEffect`:
+   * Sincroniza las subastas desde la API al montar la vista.
+   */
   useEffect(() => {
     obtenerSubastas();
   }, [obtenerSubastas]);
 
+  // Asegura que el valor del filtro de estado sea coherente
   const estadoSala = OPCIONES_ESTADO_SALA.some((opcion) => opcion.valor === filtros.estado)
     ? filtros.estado
     : 'activa';
 
+  // Procesamiento y ordenamiento de las subastas según filtros activos
   const subastasFiltradas = filtrarYOrdenarSubastas(
     subastas,
     filtros.busqueda,
@@ -57,19 +102,28 @@ export function VistaListaSubastas() {
     ahoraMs
   );
 
+  // Paginación segura de los resultados filtrados
   const {
     elementosPagina: subastasPaginadas,
     paginaActual: paginaSegura,
     totalPaginas,
   } = paginarLista(subastasFiltradas, paginaCatalogo, SUBASTAS_POR_PAGINA);
 
+  // Permiso de administrador para moderación
   const esAdmin = usuarioActual?.role === 'admin';
 
+  /**
+   * Manejador de cambio de página:
+   * Guarda la página en Zustand y sube la pantalla suavemente.
+   */
   function manejarCambioPagina(nuevaPagina) {
     cambiarPaginaCatalogo(nuevaPagina);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
+  /**
+   * Manejador para eliminar subastas con confirmación previa del navegador.
+   */
   async function manejarEliminacion(subasta) {
     if (!window.confirm(`¿Confirmas la eliminación de la subasta "${subasta.title}"?`)) {
       return;
@@ -85,6 +139,7 @@ export function VistaListaSubastas() {
 
   return (
     <div className="space-y-8">
+      {/* Cabecera con título y botón de publicación directa */}
       <CabeceraPagina
         titulo="Elige tu lote en subasta"
         subtitulo="Explora artículos en vivo, realiza ofertas vinculantes o administra tus publicaciones."
@@ -98,13 +153,14 @@ export function VistaListaSubastas() {
         }
       />
 
+      {/* Alertas de error o éxito */}
       {(aviso || errorSubastas) && (
         <Alert type={aviso?.tipo || 'error'} onClose={() => setAviso(null)}>
           {aviso?.texto || errorSubastas}
         </Alert>
       )}
 
-      {/* Filtros por categoría, búsqueda y ordenamiento */}
+      {/* Barra de filtros por categoría y caja de búsqueda */}
       <div className="space-y-4">
         <FiltrosBotones
           opciones={CATEGORIAS_FILTRO_SUBASTA}
@@ -140,6 +196,7 @@ export function VistaListaSubastas() {
         </Card>
       </div>
 
+      {/* Cuadrícula de tarjetas o estado vacío */}
       {subastasFiltradas.length === 0 ? (
         <Card className="text-center py-12">
           <p className="text-sm text-[#0D0D0D]/65">
@@ -164,6 +221,7 @@ export function VistaListaSubastas() {
               );
             })}
 
+            {/* En la última página mostramos la tarjeta CTA para invitar a publicar */}
             {paginaSegura === totalPaginas && (
               <TarjetaCtaCatalogo
                 titulo="¿Tienes un artículo para subastar?"
@@ -174,6 +232,7 @@ export function VistaListaSubastas() {
             )}
           </div>
 
+          {/* Barra de paginación */}
           <PaginacionCatalogo
             paginaActual={paginaSegura}
             totalPaginas={totalPaginas}
@@ -184,6 +243,7 @@ export function VistaListaSubastas() {
         </div>
       )}
 
+      {/* Modal de moderación disciplinaria para Administradores */}
       <PanelSolicitudCorreccion
         enModal
         subasta={subastaSolicitada}

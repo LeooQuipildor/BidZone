@@ -1,3 +1,41 @@
+/**
+ * ==============================================================================
+ * ARCHIVO: src/modulos/resenas/componentes/FormularioResena.jsx
+ * ==============================================================================
+ *
+ * ¿QUÉ ES ESTE ARCHIVO?
+ * Es el componente de formulario reutilizable para emitir o modificar una calificación
+ * mutua de 1 a 5 estrellas con comentario, regulada por la Regla de Negocio RN07.
+ *
+ * ¿QUÉ HACE ESTE COMPONENTE?
+ * 1. En modo Creación:
+ *    - Verifica si el usuario cuenta con operaciones elegibles (`subastasElegibles.length > 0`).
+ *    - Si no tiene operaciones válidas, muestra una alerta explicativa sobre las condiciones de la RN07.
+ *    - Determina automáticamente la contraparte y el rol (`comprador_a_vendedor` o `vendedor_a_comprador`)
+ *      utilizando `obtenerValoresPorDefectoResena`.
+ *    - Si el usuario fue postor ganador o vendedor de esa subasta (`esParticipante`), bloquea el selector
+ *      de contraparte para asegurar que la calificación vaya dirigida estrictamente a quien corresponde.
+ * 2. En modo Edición:
+ *    - Permite actualizar el puntaje de estrellas (`SelectorEstrellas`) y el comentario explicativo.
+ * 3. Ejecuta la llamada asíncrona correspondiente (`alCrearResena` o `alActualizarResena`) y notifica al padre.
+ *
+ * ¿DE DÓNDE PROVIENEN SUS PROPS?
+ * Son pasadas por `VistaCrearResena.jsx`, `VistaEditarResena.jsx` o modales del panel:
+ * - `resena`: Objeto de reseña existente (o `null`).
+ * - `subastasElegibles`: Lista de subastas cerradas con ganador donde intervino el usuario.
+ * - `otrosUsuarios`: Lista de usuarios del sistema.
+ * - `resenas`: Lista histórica para marcar subastas ya calificadas.
+ * - `idUsuarioActual`: ID del evaluador en sesión.
+ * - `idSubastaInicial`, `idUsuarioCalificadoInicial`: Parámetros de URL opcionales.
+ * - Callbacks: `alCrearResena`, `alActualizarResena`, `alGuardar`, `alCancelar`.
+ *
+ * CONCEPTOS DIDÁCTICOS EXPLICADOS:
+ * - Deducción Automatizada de Roles:
+ *   Al cambiar la subasta seleccionada en el evento `onChange`, el formulario consulta
+ *   `obtenerValoresPorDefectoResena` para deducir de inmediato si soy el comprador calificando al vendedor,
+ *   o el vendedor calificando al comprador ganador.
+ */
+
 import React, { useState } from 'react';
 import { Save, Star } from 'lucide-react';
 import { buscarPorId, mismoId } from '../../nucleo/utilidades/ayudas';
@@ -7,7 +45,6 @@ import { Alert } from '../../nucleo/diseno/uiFeedback';
 import { AccionesFormulario } from '../../nucleo/diseno/componentesBloques';
 import { CamposSeleccionResena, SelectorEstrellas } from './CamposResena';
 
-// Formulario único para crear o editar una calificación (RN07)
 export function FormularioResena({
   resena = null,
   subastasElegibles = [],
@@ -22,6 +59,10 @@ export function FormularioResena({
   alCancelar,
 }) {
   const estaEditando = Boolean(resena);
+
+  /**
+   * Estado de los campos del formulario con inicialización perezosa (Lazy state).
+   */
   const [datosFormulario, setDatosFormulario] = useState(() => ({
     idSubasta: idSubastaInicial,
     idUsuarioCalificado: idUsuarioCalificadoInicial,
@@ -31,6 +72,7 @@ export function FormularioResena({
   }));
   const [mensajeError, setMensajeError] = useState('');
 
+  // Caso límite: El usuario no tiene transacciones concluidas para calificar
   if (!estaEditando && subastasElegibles.length === 0) {
     return (
       <Alert type="info" title="Sin operaciones calificables aún">
@@ -39,20 +81,28 @@ export function FormularioResena({
     );
   }
 
+  // Subasta activa seleccionada para la reseña
   const subastaSeleccionada = !estaEditando
     ? buscarPorId(subastasElegibles, datosFormulario.idSubasta) || subastasElegibles[0] || null
     : null;
+
+  // Cálculo de valores por defecto (contraparte y rol)
   const valoresDefecto = obtenerValoresPorDefectoResena(subastaSeleccionada, idUsuarioActual, otrosUsuarios);
 
   const idSubastaEfectiva = subastaSeleccionada ? String(subastaSeleccionada.id) : '';
   const idCalificadoEfectivo = datosFormulario.idUsuarioCalificado || valoresDefecto.idUsuarioCalificado;
   const rolEfectivo = datosFormulario.contextoRol || valoresDefecto.contextoRol;
+
+  // Booleano que indica si el usuario logueado es parte de la subasta (vendedor o ganador)
   const esParticipante = Boolean(
     subastaSeleccionada &&
       (mismoId(subastaSeleccionada.winnerId, idUsuarioActual) ||
         mismoId(subastaSeleccionada.sellerId, idUsuarioActual))
   );
 
+  /**
+   * Manejador de cambios: Si cambia la subasta, recalcula la contraparte sugerida.
+   */
   function manejarCambio(evento) {
     const { name, value } = evento.target;
     if (name === 'idSubasta') {
@@ -69,6 +119,9 @@ export function FormularioResena({
     setDatosFormulario((previo) => ({ ...previo, [name]: value }));
   }
 
+  /**
+   * Manejador de envío: Valida comentario no vacío y persiste la calificación.
+   */
   async function manejarEnvio(evento) {
     evento.preventDefault();
     setMensajeError('');
@@ -110,6 +163,7 @@ export function FormularioResena({
         <Alert type="error" onClose={() => setMensajeError('')}>{mensajeError}</Alert>
       )}
 
+      {/* Selectores de subasta, contraparte y rol (solo al crear) */}
       {!estaEditando && (
         <CamposSeleccionResena
           subastasElegibles={subastasElegibles}
@@ -124,11 +178,13 @@ export function FormularioResena({
         />
       )}
 
+      {/* Botonera de 1 a 5 estrellas */}
       <SelectorEstrellas
         valorActual={datosFormulario.calificacion}
         alElegir={(valor) => setDatosFormulario((previo) => ({ ...previo, calificacion: valor }))}
       />
 
+      {/* Área de texto para la opinión y detalles del cumplimiento */}
       <Textarea
         id="comentario"
         name="comentario"
@@ -138,6 +194,7 @@ export function FormularioResena({
         onChange={manejarCambio}
       />
 
+      {/* Botones de acción */}
       <AccionesFormulario
         alCancelar={alCancelar}
         textoGuardar={estaEditando ? 'Guardar Cambios' : 'Publicar Reseña'}

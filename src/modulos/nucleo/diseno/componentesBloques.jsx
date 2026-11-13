@@ -1,9 +1,29 @@
+// ============================================================================
+// ARCHIVO: src/modulos/nucleo/diseno/componentesBloques.jsx
+// RESPONSABILIDAD: Estructuras compuestas reutilizables (Moleculas / Organismos UI).
+// ============================================================================
+//
+// ¿QUÉ SON ESTOS COMPONENTES?
+// Son composiciones de segundo nivel que combinan átomos básicos ('ui.jsx' y 'uiFeedback.jsx')
+// para resolver patrones repetidos en múltiples vistas:
+// 1. 'CabeceraPagina': Encabezado con insignia, título grande, subtítulo y botón de acción.
+// 2. 'PaginaFormulario': Envoltorio estándar para pantallas '/new' y '/edit'.
+// 3. 'AccionesFormulario': Botonera uniforme de Guardar / Cancelar en formularios.
+// 4. 'DatosContactoPersona': Tarjeta con teléfono, WhatsApp y correo liberados tras ganar (RN05).
+// 5. 'FiltrosBotones': Barra horizontal de botones tipo píldora (categorías o estados).
+// 6. 'TarjetaCtaCatalogo': Tarjeta promocional que invita al usuario a vender su propio lote.
+// ============================================================================
+
 import React from 'react';
 import { ArrowLeft, ArrowRight, Mail, MapPin, Phone, Sparkles } from 'lucide-react';
 import { Button, Card } from './ui';
 import { ErrorCard, Loading } from './uiFeedback';
 
-// Encabezado estándar para vistas independientes del sistema
+/**
+ * Componente: CabeceraPagina
+ * Título principal con subtítulo y botón opcional alineado a la derecha.
+ * Se utiliza en: 'VistaListaSubastas.jsx', 'PaginaFormulario.jsx', etc.
+ */
 export function CabeceraPagina({ titulo, subtitulo, accion }) {
   return (
     <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-6 mb-8 border-b border-[#224F10]/15">
@@ -22,7 +42,11 @@ export function CabeceraPagina({ titulo, subtitulo, accion }) {
   );
 }
 
-// Contenedor estándar para todas las vistas de Crear y Editar (/new y /edit)
+/**
+ * Componente: PaginaFormulario
+ * Envoltorio que maneja estados de carga, pantalla de error y contenedor centrado para formularios.
+ * Se utiliza en: 'VistaCrearSubasta', 'VistaEditarSubasta', 'VistaCrearPuja', etc.
+ */
 export function PaginaFormulario({
   titulo,
   subtitulo,
@@ -63,7 +87,10 @@ export function PaginaFormulario({
   );
 }
 
-// Botonera inferior compartida entre todos los formularios de carga y edición
+/**
+ * Componente: AccionesFormulario
+ * Fila inferior con botón Cancelar (ghost) y botón Guardar (submit con spinner opcional).
+ */
 export function AccionesFormulario({
   alCancelar,
   textoCancelar = 'Cancelar',
@@ -89,7 +116,11 @@ export function AccionesFormulario({
   );
 }
 
-// Caja reutilizable para mostrar los datos de contacto liberados tras ganar (RN05)
+/**
+ * Componente: DatosContactoPersona
+ * Bloque que muestra nombre, teléfono con WhatsApp, correo y ciudad.
+ * Se utiliza en: 'PanelContactoSubasta.jsx' para la liberación condicional RN05.
+ */
 export function DatosContactoPersona({
   titulo,
   persona,
@@ -126,7 +157,10 @@ export function DatosContactoPersona({
   );
 }
 
-// Fila reutilizable de botones tipo píldora para filtrar listados
+/**
+ * Componente: FiltrosBotones
+ * Botonera horizontal de píldoras. Resalta con fondo verde oscuro la opción seleccionada.
+ */
 export function FiltrosBotones({ opciones, valorActual, alElegir, claseInactivo }) {
   const estiloInactivo = claseInactivo || 'bg-[#F7FBF3] text-[#0D0D0D]/70 hover:bg-[#EAFFD0]';
   return (
@@ -152,7 +186,10 @@ export function FiltrosBotones({ opciones, valorActual, alElegir, claseInactivo 
   );
 }
 
-// Tarjeta verde destacada usada al final de las grillas del Inicio y del Catálogo
+/**
+ * Componente: TarjetaCtaCatalogo
+ * Tarjeta verde destacada (Call to Action) colocada al final de la cuadrícula de subastas.
+ */
 export function TarjetaCtaCatalogo({ titulo, descripcion, textoBoton, alHacerClic }) {
   return (
     <div className="rounded-[28px] bg-[#224F10] text-[#EAFFD0] p-6 sm:p-7 flex flex-col justify-between min-h-[320px] shadow-sm">

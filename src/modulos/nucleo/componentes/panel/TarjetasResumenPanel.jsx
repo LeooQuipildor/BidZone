@@ -1,8 +1,38 @@
+/**
+ * ==============================================================================
+ * ARCHIVO: src/modulos/nucleo/componentes/panel/TarjetasResumenPanel.jsx
+ * ==============================================================================
+ *
+ * ¿QUÉ ES ESTE ARCHIVO?
+ * Contiene tarjetas especializadas para la pestaña de Resumen (`TabResumenPanel`):
+ * 1. `TarjetaProximoCierre`: Muestra en tiempo real el lote más próximo a concluir con su cuenta regresiva.
+ * 2. `TarjetaSubastasRecientes`: Lista compacta con las subastas más recientes (personales o globales).
+ *
+ * ¿QUÉ HACEN ESTOS COMPONENTES?
+ * - `TarjetaProximoCierre`: Crea sentido de urgencia en el usuario mostrando la subasta activa con menor
+ *   tiempo restante y permitiéndole entrar a la sala con un solo clic.
+ * - `TarjetaSubastasRecientes`: Permite una inspección rápida de los lotes recientes sin cambiar de pestaña.
+ *
+ * CONCEPTOS DIDÁCTICOS EXPLICADOS:
+ * - Degradados Estilísticos en Tailwind (`bg-gradient-to-br from-... via-... to-...`):
+ *   Genera un fondo visualmente inmersivo en verde oscuro y negro que destaca esta tarjeta del resto de la interfaz.
+ * - Tabular Nums para Relojes (`tabular-nums`):
+ *   Garantiza que todos los números tengan el mismo ancho tipográfico para que el texto no "baile" o tiemble
+ *   al cambiar los dígitos cada segundo.
+ */
+
 import React from 'react';
 import { Clock, Gavel, Tag } from 'lucide-react';
 import { formatearMoneda } from '../../utilidades/formatos';
 
-// Tarjeta con la próxima subasta activa a cerrar
+/**
+ * Tarjeta destacada con el próximo cierre de subasta en vivo.
+ *
+ * @param {Object} props
+ * @param {Object|null} props.subasta - Objeto de la subasta más próxima a vencer.
+ * @param {string} props.cuentaRegresiva - Texto formateado con el tiempo restante.
+ * @param {Function} props.alAccionar - Callback al hacer clic en el botón de la tarjeta.
+ */
 export function TarjetaProximoCierre({ subasta, cuentaRegresiva, alAccionar }) {
   return (
     <div className="lg:col-span-6 rounded-2xl bg-gradient-to-br from-[#0D0D0D] via-[#132B08] to-[#224F10] text-[#EAFFD0] p-5 flex flex-col justify-between shadow-sm">
@@ -46,7 +76,14 @@ export function TarjetaProximoCierre({ subasta, cuentaRegresiva, alAccionar }) {
   );
 }
 
-// Listado corto de subastas recientes (personales para socio, globales para admin)
+/**
+ * Listado compacto de subastas recientes para el panel.
+ *
+ * @param {Object} props
+ * @param {string} props.titulo - Título del bloque.
+ * @param {Array} props.subastas - Subastas a listar.
+ * @param {Function} props.alAbrirSubasta - Callback al hacer clic en un lote.
+ */
 export function TarjetaSubastasRecientes({ titulo, subastas, alAbrirSubasta }) {
   return (
     <div className="lg:col-span-6 rounded-2xl bg-white border border-[#224F10]/10 p-5 flex flex-col justify-between shadow-2xs">

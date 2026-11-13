@@ -1,3 +1,23 @@
+// ============================================================================
+// ARCHIVO: src/modulos/pujas/estado/tiendaPujas.js
+// RESPONSABILIDAD: Estado global de ofertas vinculantes (Pujas / Bids).
+// ============================================================================
+//
+// ¿QUÉ HACE ESTA TIENDA?
+// Administra el historial de ofertas de la plataforma y conecta con '/api/bids'.
+//
+// REGLA DE NEGOCIO RN04 (Irrevocabilidad de Ofertas):
+// Una oferta registrada representa un compromiso legal y vinculante entre compradores.
+// Por esta razón, la acción 'actualizarPuja' SOLO permite modificar la nota aclaratoria
+// de coordinación, mientras que el importe ofertado ('amount') nunca puede alterarse ni borrarse.
+//
+// SINCRONIZACIÓN ENTRE TIENDAS (Cross-Store):
+// Al registrar una nueva puja exitosa, el precio líder de la subasta aumenta en el backend.
+// Para que toda la interfaz refleje el nuevo precio de inmediato sin recargar la página,
+// esta tienda invoca la función auxiliar 'refrescarSubastaDespuesDePuja', la cual le pide
+// a 'usarTiendaSubastas' que vuelva a sincronizar sus datos.
+// ============================================================================
+
 import { create } from 'zustand';
 import {
   hayTokenSesion,
@@ -7,7 +27,11 @@ import {
 import { mismoId, reemplazarPorId } from '../../nucleo/utilidades/ayudas';
 import { usarTiendaSubastas } from '../../subastas/estado/tiendaSubastas';
 
-// Al crear o editar una puja también se actualiza el precio actual de su subasta
+/**
+ * Función auxiliar de sincronización entre módulos.
+ * Vuelve a pedir las subastas al servidor para que el nuevo precio líder se refleje
+ * tanto en las tarjetas del catálogo como en la pantalla de detalle si está abierta.
+ */
 async function refrescarSubastaDespuesDePuja(idSubasta) {
   const tiendaSubastas = usarTiendaSubastas.getState();
   await tiendaSubastas.obtenerSubastas();
@@ -20,10 +44,15 @@ async function refrescarSubastaDespuesDePuja(idSubasta) {
 
 // Tienda global de pujas u ofertas (conecta con /api/bids)
 export const usarTiendaPujas = create((set) => ({
-  pujas: [],
-  cargando: false,
-  error: null,
+  // ESTADOS REACTIVOS
+  pujas: [],        // Listado de todas las ofertas registradas
+  cargando: false,  // Indicador de llamada en curso
+  error: null,      // Mensaje de error si la petición falla
 
+  /**
+   * Obtiene el listado de ofertas desde el servidor ('GET /api/bids').
+   * Si no hay sesión iniciada, limpia el array local.
+   */
   obtenerPujas: async () => {
     if (!hayTokenSesion()) {
       set({ pujas: [], cargando: false });
@@ -41,6 +70,15 @@ export const usarTiendaPujas = create((set) => ({
     }
   },
 
+  /**
+   * Envía una nueva oferta vinculante al backend ('POST /api/bids').
+   * 
+   * PASOS:
+   * 1. Arma el payload con 'auctionId', 'amount', 'note' y 'commitmentAccepted'.
+   * 2. Envía la llamada con el token JWT.
+   * 3. Inserta la nueva oferta al inicio del array 'pujas' localmente.
+   * 4. Llama a 'refrescarSubastaDespuesDePuja' para actualizar el precio en pantalla.
+   */
   crearPuja: async ({ idSubasta, monto, nota, compromisoAceptado }) => {
     set({ error: null });
     try {
@@ -65,6 +103,10 @@ export const usarTiendaPujas = create((set) => ({
     }
   },
 
+  /**
+   * Actualiza únicamente la nota aclaratoria de una oferta ('PUT /api/bids/:id').
+   * Aplica la regla RN04: el monto monetario no se modifica.
+   */
   actualizarPuja: async (id, cambios) => {
     set({ error: null });
     try {
@@ -87,6 +129,7 @@ export const usarTiendaPujas = create((set) => ({
   },
 }));
 
+// Al cerrar sesión, limpiamos el historial de pujas en memoria
 registrarLimpiezaSesion(() => {
   usarTiendaPujas.setState({ pujas: [], error: null, cargando: false });
 });

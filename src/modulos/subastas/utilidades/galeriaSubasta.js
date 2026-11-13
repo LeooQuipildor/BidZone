@@ -1,6 +1,20 @@
+// ============================================================================
+// ARCHIVO: src/modulos/subastas/utilidades/galeriaSubasta.js
+// RESPONSABILIDAD: Generación y selección de imágenes fotográficas para subastas.
+// ============================================================================
+//
+// ¿QUÉ HACE ESTE ARCHIVO?
+// En la vista de detalle de una subasta ('FichaProductoSubasta.jsx'), se muestra una
+// imagen grande y tres miniaturas para apreciar el producto desde distintos ángulos.
+// Dado que los usuarios a veces solo ingresan una única URL de imagen en el formulario,
+// este archivo proporciona fotos complementarias de alta calidad según el ID de la subasta
+// o según su categoría temática (Tecnología, Gaming, etc.), garantizando que la galería
+// siempre tenga exactamente 4 fotos atractivas y sin URLs duplicadas.
+// ============================================================================
+
 import { IMAGEN_SUBASTA_POR_DEFECTO } from '../../nucleo/utilidades/formatos';
 
-// Galería adicional por ID para las subastas iniciales de demostración
+// Galería complementaria específica para los lotes demo iniciales (IDs 101 a 105).
 const FOTOS_POR_SUBASTA = {
   101: [
     'https://images.unsplash.com/photo-1559085715-23704349e326?auto=format&fit=crop&w=900&q=80',
@@ -29,7 +43,7 @@ const FOTOS_POR_SUBASTA = {
   ],
 };
 
-// Galería adicional según categoría para cualquier subasta publicada
+// Galería complementaria temática según la categoría para publicaciones nuevas del usuario.
 const FOTOS_POR_CATEGORIA = {
   Tecnología: FOTOS_POR_SUBASTA[101],
   Gaming: FOTOS_POR_SUBASTA[102],
@@ -43,6 +57,7 @@ const FOTOS_POR_CATEGORIA = {
   ],
 };
 
+// Fotos de respaldo seguras en caso de que fallen las anteriores.
 const FOTOS_RESPALDO = [
   IMAGEN_SUBASTA_POR_DEFECTO,
   'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=900&q=80',
@@ -50,7 +65,19 @@ const FOTOS_RESPALDO = [
   'https://images.unsplash.com/photo-1505373877841-8d25f7d46678?auto=format&fit=crop&w=900&q=80',
 ];
 
-// Devuelve exactamente 4 URLs únicas para mostrar la foto principal y sus vistas adicionales
+/**
+ * Obtiene un conjunto de exactamente 4 URLs de imagen únicas para una subasta.
+ * 
+ * ALGORITMO:
+ * 1. Toma la foto principal provista en 'subasta.imageUrl'.
+ * 2. Si no tiene foto principal, recurre a 'IMAGEN_SUBASTA_POR_DEFECTO'.
+ * 3. Concatena fotos específicas por ID y fotos temáticas por categoría.
+ * 4. Itera asegurando que no haya URLs repetidas ('!galeria.includes(url)').
+ * 5. Corta el bucle ('break') al alcanzar exactamente 4 imágenes.
+ * 
+ * @param {object} subasta - Registro de la subasta con 'imageUrl', 'id' y 'category'.
+ * @returns {Array<string>} - Array de exactamente 4 URLs de imágenes.
+ */
 export function obtenerFotosSubasta(subasta) {
   const fotoPrincipal = subasta?.imageUrl || IMAGEN_SUBASTA_POR_DEFECTO;
   const extrasEspecificas = FOTOS_POR_SUBASTA[Number(subasta?.id)] || [];

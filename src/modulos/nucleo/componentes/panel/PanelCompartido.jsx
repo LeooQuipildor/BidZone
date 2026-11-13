@@ -1,12 +1,49 @@
-import React from 'react';
-import { AlertCircle, CheckCircle2, X } from 'lucide-react';
+/**
+ * ==============================================================================
+ * ARCHIVO: src/modulos/nucleo/componentes/panel/PanelCompartido.jsx
+ * ==============================================================================
+ *
+ * ¿QUÉ ES ESTE ARCHIVO?
+ * Es una librería de micro-componentes de presentación reutilizados a lo largo de todas
+ * las pestañas del Panel de Control (`TabResumenPanel`, `TabSubastasPanel`, etc.).
+ *
+ * ¿QUÉ COMPONENTES CONTIENE ESTE ARCHIVO?
+ * 1. `CabeceraSeccionPanel`: Título, subtítulo y botón de acción principal de cada pestaña.
+ * 2. `BotonPanel`: Botón redondeado tipo píldora (variantes primaria o secundaria).
+ * 3. `AvisoPanel`: Cartel interactivo descartable para alertas de éxito o error.
+ * 4. `EstadoVacioPanel`: Caja centrada que se muestra cuando una lista o filtro no tiene datos.
+ * 5. `TarjetaEstadisticaPanel` / `GridEstadisticasPanel`: Tarjetas de indicadores clave de rendimiento (KPIs).
+ * 6. `SelectPanel`: Selector desplegable compacto para los filtros de las tablas del panel.
+ * 7. `ContenedorFormularioPanel`: Tarjeta contenedora con botón "X" para incrustar formularios en línea.
+ *
+ * CONCEPTOS DIDÁCTICOS EXPLICADOS:
+ * - Composición Atómica para Consistencia Visual:
+ *   Al usar `CabeceraSeccionPanel` o `AvisoPanel` en todas las pestañas, cualquier ajuste de estilo
+ *   se propaga automáticamente a todo el panel, garantizando una estética uniforme y código DRY.
+ */
 
-// Encabezado común para todas las pestañas del panel (título, descripción y botón principal)
-export function CabeceraSeccionPanel({ titulo, subtitulo, botonPrincipal = null }) {
+import React from "react";
+import { AlertCircle, CheckCircle2, X } from "lucide-react";
+
+/**
+ * Cabecera estándar para cada pestaña del panel.
+ *
+ * @param {Object} props
+ * @param {string} props.titulo - Título principal de la sección.
+ * @param {string} props.subtitulo - Explicación breve de la sección.
+ * @param {React.ReactNode} [props.botonPrincipal=null] - Botón CTA opcional.
+ */
+export function CabeceraSeccionPanel({
+  titulo,
+  subtitulo,
+  botonPrincipal = null,
+}) {
   return (
     <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pt-1">
       <div>
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#0D0D0D]">{titulo}</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#0D0D0D]">
+          {titulo}
+        </h1>
         <p className="text-xs sm:text-sm text-[#0D0D0D]/60 mt-1">{subtitulo}</p>
       </div>
       {botonPrincipal}
@@ -14,12 +51,19 @@ export function CabeceraSeccionPanel({ titulo, subtitulo, botonPrincipal = null 
   );
 }
 
-// Botón redondeado estándar usado en las cabeceras de cada pestaña del panel
-export function BotonPanel({ variante = 'primario', icono = null, alHacerClic, children }) {
+/**
+ * Botón tipo pastilla para acciones en el panel.
+ */
+export function BotonPanel({
+  variante = "primario",
+  icono = null,
+  alHacerClic,
+  children,
+}) {
   const claseColor =
-    variante === 'secundario'
-      ? 'bg-white hover:bg-[#EAFFD0] border border-[#224F10]/20 text-[#0D0D0D]'
-      : 'bg-[#224F10] hover:bg-[#0D0D0D] text-[#EAFFD0] shadow-xs';
+    variante === "secundario"
+      ? "bg-white hover:bg-[#EAFFD0] border border-[#224F10]/20 text-[#0D0D0D]"
+      : "bg-[#224F10] hover:bg-[#0D0D0D] text-[#EAFFD0] shadow-xs";
 
   return (
     <button
@@ -33,29 +77,43 @@ export function BotonPanel({ variante = 'primario', icono = null, alHacerClic, c
   );
 }
 
-// Cartel para mostrar mensajes de éxito o error dentro de las pestañas del panel
+/**
+ * Cartel de notificación descartable (éxito o error).
+ */
 export function AvisoPanel({ aviso, alCerrar }) {
   if (!aviso) return null;
 
-  const esError = aviso.tipo === 'error';
+  const esError = aviso.tipo === "error";
   const clasesColor = esError
-    ? 'bg-red-50 border-red-200 text-red-800'
-    : 'bg-[#EAFFD0] border-[#224F10]/20 text-[#224F10]';
+    ? "bg-red-50 border-red-200 text-red-800"
+    : "bg-[#EAFFD0] border-[#224F10]/20 text-[#224F10]";
 
   return (
-    <div className={`flex items-center justify-between gap-3 rounded-2xl px-4 py-3 text-xs font-medium border ${clasesColor}`}>
+    <div
+      className={`flex items-center justify-between gap-3 rounded-2xl px-4 py-3 text-xs font-medium border ${clasesColor}`}
+    >
       <div className="flex items-center gap-2">
-        {esError ? <AlertCircle className="w-4 h-4 shrink-0" /> : <CheckCircle2 className="w-4 h-4 shrink-0" />}
+        {esError ? (
+          <AlertCircle className="w-4 h-4 shrink-0" />
+        ) : (
+          <CheckCircle2 className="w-4 h-4 shrink-0" />
+        )}
         <span>{aviso.texto}</span>
       </div>
-      <button type="button" onClick={alCerrar} className="p-1 hover:opacity-70 cursor-pointer">
+      <button
+        type="button"
+        onClick={alCerrar}
+        className="p-1 hover:opacity-70 cursor-pointer"
+      >
         <X className="w-3.5 h-3.5" />
       </button>
     </div>
   );
 }
 
-// Mensaje centrado reutilizable cuando una lista del panel no tiene resultados
+/**
+ * Mensaje centrado para listas vacías.
+ */
 export function EstadoVacioPanel({ mensaje }) {
   return (
     <div className="rounded-2xl bg-white border border-[#224F10]/10 p-10 text-center text-xs text-[#0D0D0D]/60">
@@ -64,17 +122,29 @@ export function EstadoVacioPanel({ mensaje }) {
   );
 }
 
-// Tarjeta de métrica (KPI) para el resumen del panel
-function TarjetaEstadisticaPanel({ titulo, valor, subtitulo, destacada = false, accionSuperior = null }) {
+/**
+ * Tarjeta individual de métrica estadística (KPI).
+ */
+function TarjetaEstadisticaPanel({
+  titulo,
+  valor,
+  subtitulo,
+  destacada = false,
+  accionSuperior = null,
+}) {
   const claseCaja = destacada
-    ? 'bg-gradient-to-br from-[#224F10] to-[#122B08] text-[#EAFFD0] shadow-sm'
-    : 'bg-white border border-[#224F10]/10 shadow-2xs';
-  const claseTitulo = destacada ? 'font-medium text-[#EAFFD0]/90' : 'font-semibold text-[#0D0D0D]/80';
-  const claseValor = destacada ? 'text-4xl' : 'text-4xl text-[#0D0D0D]';
-  const claseSub = destacada ? 'text-[#EAFFD0]/75' : 'text-[#0D0D0D]/55';
+    ? "bg-gradient-to-br from-[#224F10] to-[#122B08] text-[#EAFFD0] shadow-sm"
+    : "bg-white border border-[#224F10]/10 shadow-2xs";
+  const claseTitulo = destacada
+    ? "font-medium text-[#EAFFD0]/90"
+    : "font-semibold text-[#0D0D0D]/80";
+  const claseValor = destacada ? "text-4xl" : "text-4xl text-[#0D0D0D]";
+  const claseSub = destacada ? "text-[#EAFFD0]/75" : "text-[#0D0D0D]/55";
 
   return (
-    <div className={`rounded-2xl p-5 flex flex-col justify-between ${claseCaja}`}>
+    <div
+      className={`rounded-2xl p-5 flex flex-col justify-between ${claseCaja}`}
+    >
       <div className="flex items-center justify-between gap-2">
         <span className={`text-xs ${claseTitulo}`}>{titulo}</span>
         {accionSuperior}
@@ -85,7 +155,9 @@ function TarjetaEstadisticaPanel({ titulo, valor, subtitulo, destacada = false, 
   );
 }
 
-// Grilla uniforme de 4 tarjetas KPI en el resumen del panel
+/**
+ * Cuadrícula responsiva de 4 tarjetas estadísticas (KPI).
+ */
 export function GridEstadisticasPanel({ tarjetas }) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
@@ -103,7 +175,9 @@ export function GridEstadisticasPanel({ tarjetas }) {
   );
 }
 
-// Selector compacto reutilizable para filtros dentro de las pestañas del panel
+/**
+ * Selector compacto para filtros de tablas en el panel.
+ */
 export function SelectPanel({ valor, alCambiar, opciones = [] }) {
   return (
     <select
@@ -120,7 +194,9 @@ export function SelectPanel({ valor, alCambiar, opciones = [] }) {
   );
 }
 
-// Contenedor desplegable compartido para mostrar el formulario crear/editar dentro del panel
+/**
+ * Contenedor con botón "X" para desplegar formularios en línea.
+ */
 export function ContenedorFormularioPanel({ titulo, alCerrar, children }) {
   return (
     <div className="rounded-2xl bg-white border border-[#224F10]/20 p-5 sm:p-6 shadow-sm space-y-4">

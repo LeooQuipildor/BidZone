@@ -1,3 +1,17 @@
+// ============================================================================
+// ARCHIVO: src/modulos/subastas/estado/tiendaSubastas.js
+// RESPONSABILIDAD: Estado global del catálogo, publicaciones y filtros de subastas.
+// ============================================================================
+//
+// ¿QUÉ INFORMACIÓN ADMINISTRA ESTA TIENDA?
+// 1. 'subastas': Array con todas las subastas disponibles (descargadas de '/api/auctions').
+// 2. 'detalleSubastaActual': Objeto completo de la subasta que el usuario está viendo
+//    en '/subastas/:id' (incluye lista de postores y contacto si está finalizada).
+// 3. 'filtros': Estado reactivo de los criterios de búsqueda (texto, categoría, estado y orden).
+// 4. 'paginaCatalogo': Número de página actual para la paginación del catálogo.
+// 5. Métodos asíncronos para interactuar con la API REST (CRUD: Create, Read, Update, Delete).
+// ============================================================================
+
 import { create } from 'zustand';
 import { peticionHttp, registrarLimpiezaSesion } from '../../nucleo/servicios/clienteApi';
 import {
@@ -8,7 +22,11 @@ import {
 } from '../../nucleo/utilidades/ayudas';
 import { inputLocalAFechaIso } from '../../nucleo/utilidades/formatos';
 
-// Construye el objeto de actualización de subasta con los nombres que espera el backend
+/**
+ * Función adaptadora para construir el cuerpo de actualización (PUT).
+ * Solo incluye aquellas propiedades que hayan sido efectivamente modificadas
+ * para no sobreescribir datos con 'undefined'.
+ */
 function construirCuerpoActualizacion(cambios) {
   const cuerpo = {};
   if (cambios.titulo !== undefined) cuerpo.title = cambios.titulo;
@@ -30,14 +48,25 @@ function construirCuerpoActualizacion(cambios) {
 
 // Tienda global de subastas (conecta con /api/auctions)
 export const usarTiendaSubastas = create((set, get) => ({
-  subastas: [],
-  detalleSubastaActual: null,
-  cargando: false,
-  cargandoDetalle: false,
-  error: null,
-  filtros: { busqueda: '', categoria: 'Todas', estado: 'activa', ordenarPor: 'proximasACerrar' },
-  paginaCatalogo: 1,
+  // ESTADOS REACTIVOS
+  subastas: [],               // Array de publicaciones
+  detalleSubastaActual: null, // Subasta individual con datos enriquecidos
+  cargando: false,            // Bandera de carga general
+  cargandoDetalle: false,     // Bandera de carga específica para la vista de detalle
+  error: null,                // Mensaje de error si la petición falla
+  filtros: {
+    busqueda: '',
+    categoria: 'Todas',
+    estado: 'activa',
+    ordenarPor: 'proximasACerrar',
+  },
+  paginaCatalogo: 1,          // Página actual en la vista de catálogo
 
+  /**
+   * Actualiza uno o más filtros de búsqueda y resetea automáticamente la página a 1.
+   * Al resetear a la página 1, evita que el usuario quede en una página vacía si los
+   * nuevos filtros producen menos resultados que antes.
+   */
   actualizarFiltros: (nuevosFiltros) => {
     set((estado) => ({
       filtros: { ...estado.filtros, ...nuevosFiltros },
@@ -45,10 +74,16 @@ export const usarTiendaSubastas = create((set, get) => ({
     }));
   },
 
+  /**
+   * Cambia la página actual del catálogo (1, 2, 3...).
+   */
   cambiarPaginaCatalogo: (nuevaPagina) => {
     set({ paginaCatalogo: nuevaPagina });
   },
 
+  /**
+   * Descarga la lista general de subastas desde el servidor ('GET /api/auctions').
+   */
   obtenerSubastas: async () => {
     set({ cargando: true, error: null });
     try {
@@ -61,6 +96,10 @@ export const usarTiendaSubastas = create((set, get) => ({
     }
   },
 
+  /**
+   * Descarga el detalle completo de una subasta específica ('GET /api/auctions/:id').
+   * Actualiza tanto 'detalleSubastaActual' como el elemento correspondiente dentro del array 'subastas'.
+   */
   obtenerSubastaPorId: async (id) => {
     set({ cargandoDetalle: true, error: null });
     try {
@@ -77,6 +116,10 @@ export const usarTiendaSubastas = create((set, get) => ({
     }
   },
 
+  /**
+   * Publica una nueva subasta en el sistema ('POST /api/auctions').
+   * Al crearse con éxito, se inserta al inicio del array 'subastas' localmente.
+   */
   crearSubasta: async (datos) => {
     set({ error: null });
     try {
@@ -101,6 +144,11 @@ export const usarTiendaSubastas = create((set, get) => ({
     }
   },
 
+  /**
+   * Modifica una publicación existente ('PUT /api/auctions/:id').
+   * Si la subasta editada es la que el usuario tiene abierta en pantalla,
+   * recarga sus datos frescos para reflejar los cambios de inmediato.
+   */
   actualizarSubasta: async (id, cambios) => {
     set({ error: null });
     try {
@@ -120,6 +168,10 @@ export const usarTiendaSubastas = create((set, get) => ({
     }
   },
 
+  /**
+   * Elimina o cancela una subasta ('DELETE /api/auctions/:id').
+   * Limpia la publicación de la lista en memoria mediante 'eliminarPorId'.
+   */
   eliminarSubasta: async (id) => {
     set({ error: null });
     try {
@@ -139,6 +191,7 @@ export const usarTiendaSubastas = create((set, get) => ({
   },
 }));
 
+// Al cerrar sesión, limpiamos el detalle de subasta cargado en memoria
 registrarLimpiezaSesion(() => {
   usarTiendaSubastas.setState({ detalleSubastaActual: null, error: null });
 });

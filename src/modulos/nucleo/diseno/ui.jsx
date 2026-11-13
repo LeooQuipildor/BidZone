@@ -1,10 +1,21 @@
+// ============================================================================
+// ARCHIVO: src/modulos/nucleo/diseno/ui.jsx
+// RESPONSABILIDAD: Sistema de componentes visuales atómicos reutilizables (UI Primitives).
+// ============================================================================
+//
+// ¿QUÉ SON LOS COMPONENTES PRESENTACIONALES O "ÁTOMOS"?
+// Son bloques visuales puros (Botón, Input, Select, Textarea, Badge, Card) que:
+// 1. Reciben datos y funciones mediante 'props' (ej: 'label', 'error', 'onClick').
+// 2. Encapsulan las clases de estilo de Tailwind CSS para que toda la app se vea coherente.
+// 3. No contienen lógica de negocio ni hacen llamadas a APIs por su cuenta.
+// 4. Utilizan el operador rest/spread ('...props') para transferir atributos HTML estándar
+//    como 'placeholder', 'disabled', 'required', 'value' o 'onChange' directamente al nodo nativo.
+// ============================================================================
+
 import React from 'react';
 import { ChevronRight } from 'lucide-react';
 
-// ============================================================================
-// Componentes UI básicos reutilizados en toda la aplicación BidZone
-// ============================================================================
-
+// Diccionario de variantes cromáticas para el botón según la jerarquía visual deseada
 const CLASES_VARIANTE_BOTON = {
   primary: 'bg-[#224F10] text-[#EAFFD0] hover:bg-[#0D0D0D] shadow-xs',
   secondary: 'bg-[#B0E454] text-[#0D0D0D] hover:bg-[#224F10] hover:text-[#EAFFD0]',
@@ -14,6 +25,7 @@ const CLASES_VARIANTE_BOTON = {
   ghost: 'bg-transparent text-[#0D0D0D]/75 hover:text-[#224F10] hover:bg-[#224F10]/10',
 };
 
+// Color del circulito decorativo que envuelve la flecha '<ChevronRight />' dentro del botón
 const CLASES_CIRCULO_BOTON = {
   primary: 'bg-[#EAFFD0] text-[#224F10] group-hover:bg-[#B0E454] group-hover:text-[#0D0D0D]',
   secondary: 'bg-[#0D0D0D] text-[#EAFFD0]',
@@ -23,6 +35,17 @@ const CLASES_CIRCULO_BOTON = {
   ghost: 'bg-[#224F10]/10 text-[#224F10]',
 };
 
+/**
+ * Componente: Button
+ * 
+ * PROPS RECIBIDAS:
+ * - 'children': Contenido interno del botón (texto o íconos).
+ * - 'variant': Estilo cromático ('primary', 'secondary', 'dark', 'outline', 'danger', 'ghost').
+ * - 'size': Tamaño ('sm', 'md', 'lg').
+ * - 'withArrow': Booleano que define si muestra la flecha decorativa a la derecha.
+ * - 'disabled': Si es true, atenúa la opacidad y bloquea clics.
+ * - '...props': Permite recibir 'type="submit"', 'onClick={...}', 'aria-label', etc.
+ */
 export function Button({
   children,
   variant = 'primary',
@@ -70,6 +93,10 @@ export function Button({
   );
 }
 
+/**
+ * Componente: Input
+ * Campo de texto tipográfico con etiqueta (<label>), mensaje de error o texto de ayuda.
+ */
 export function Input({
   label,
   error,
@@ -97,6 +124,10 @@ export function Input({
   );
 }
 
+/**
+ * Componente: Select
+ * Menú desplegable con etiqueta (<label>) y mapeo estandarizado de opciones '{ valor, etiqueta }'.
+ */
 export function Select({
   label,
   error,
@@ -129,6 +160,10 @@ export function Select({
   );
 }
 
+/**
+ * Componente: Textarea
+ * Área de texto multilínea para descripciones largas o comentarios.
+ */
 export function Textarea({ label, error, className = '', id, ...props }) {
   const claseBorde = error ? 'border-red-600' : 'border-[#224F10]/20';
   return (
@@ -149,6 +184,10 @@ export function Textarea({ label, error, className = '', id, ...props }) {
   );
 }
 
+/**
+ * Componente: Badge
+ * Pequeña pastilla redondeada para indicar estados (ej: 'Activa', 'Finalizada', 'Admin').
+ */
 export function Badge({ children, variant = 'default', className = '' }) {
   const estilos = {
     default: 'bg-[#224F10]/12 text-[#224F10]',
@@ -168,6 +207,10 @@ export function Badge({ children, variant = 'default', className = '' }) {
   );
 }
 
+/**
+ * Componente: Card
+ * Tarjeta contenedora con fondo blanco translúcido, bordes suaves y sombra sutil.
+ */
 export function Card({ children, className = '', ...props }) {
   return (
     <div

@@ -1,3 +1,26 @@
+/**
+ * ==============================================================================
+ * ARCHIVO: src/modulos/nucleo/componentes/Inicio.jsx
+ * ==============================================================================
+ *
+ * ¿QUÉ ES ESTE ARCHIVO?
+ * Es el componente de la página de inicio (Landing Page) de la aplicación BidZone.
+ * Es la primera vista que ve un visitante al entrar a la ruta raíz "/".
+ *
+ * ¿QUÉ HACE ESTE COMPONENTE?
+ * 1. Presenta la cabecera interactiva (Hero / PortadaInicio) con buscador rápido de subastas.
+ * 2. Muestra tarjetas explicativas de confianza y seguridad basadas en las Reglas de Negocio (RN01, RN05, RN06, RN07).
+ * 3. Muestra una sección con un catálogo previo de subastas activas filtrable por categorías.
+ * 4. Muestra un bloque promocional con los módulos y ventajas de la plataforma (SeccionModulosInicio).
+ *
+ * ¿DE DÓNDE OBTIENE LA INFORMACIÓN?
+ * - Tienda Zustand de subastas (`usarTiendaSubastas`): Obtiene la lista global de subastas, el estado de error,
+ *   la función para sincronizar con la API (`obtenerSubastas`) y el modificador de filtros (`actualizarFiltros`).
+ * - Estado local (`useState`): Gestiona la categoría activa seleccionada para filtrar el catálogo en portada.
+ * - Enrutamiento (`useNavigate` de React Router): Permite redirigir al usuario al catálogo completo (`/subastas`)
+ *   cuando realiza una búsqueda desde el formulario de la portada.
+ */
+
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AlertTriangle, ArrowUpRight, Gavel, PhoneCall, Star } from 'lucide-react';
@@ -6,14 +29,23 @@ import { PortadaInicio } from './PortadaInicio';
 import { SeccionCatalogoInicio } from './SeccionCatalogoInicio';
 import { SeccionModulosInicio } from './SeccionModulosInicio';
 
+/**
+ * Categorías principales sugeridas para los filtros de la página de inicio.
+ * Es un arreglo estático de strings que se pasa tanto a la portada como al catálogo preliminar.
+ */
 const CATEGORIAS_INICIO = ['Todas', 'Tecnología', 'Gaming', 'Hogar y Oficina', 'Fotografía'];
 
+/**
+ * Arreglo con la información didáctica de seguridad del sistema.
+ * Resume visualmente el marco regulatorio de BidZone (RN01, RN05, RN06 y RN07)
+ * para transmitir transparencia y confianza al nuevo usuario.
+ */
 const TARJETAS_SEGURIDAD = [
   {
     titulo: 'Ofertas en vivo auditables',
     texto: 'Cada puja supera el monto actual respetando el incremento mínimo configurado por el dueño (RN01).',
     icono: Gavel,
-    destacada: true,
+    destacada: true, // Se resalta con un fondo verde oscuro principal
   },
   {
     titulo: 'Liberación de datos al ganar',
@@ -33,18 +65,46 @@ const TARJETAS_SEGURIDAD = [
 ];
 
 export function Inicio() {
+  /**
+   * Hook `useNavigate`:
+   * Proporciona la función `navegar` para cambiar de ruta programáticamente
+   * (por ejemplo, después de que el usuario presione el botón de buscar).
+   */
   const navegar = useNavigate();
+
+  /**
+   * Suscripción reactiva al estado global de subastas vía Zustand:
+   * Extraemos únicamente los selectores necesarios para evitar renderizados redundantes.
+   */
   const subastas = usarTiendaSubastas((estado) => estado.subastas);
   const errorSubastas = usarTiendaSubastas((estado) => estado.error);
   const obtenerSubastas = usarTiendaSubastas((estado) => estado.obtenerSubastas);
   const actualizarFiltros = usarTiendaSubastas((estado) => estado.actualizarFiltros);
 
+  /**
+   * Estado local con `useState`:
+   * Almacena el nombre de la categoría actualmente activa en la barra de pestañas del inicio.
+   * Por defecto arranca en 'Todas'.
+   */
   const [categoriaSeleccionada, setCategoriaSeleccionada] = useState('Todas');
 
+  /**
+   * Hook `useEffect`:
+   * Se ejecuta una vez cuando el componente se monta en el navegador.
+   * Llama a `obtenerSubastas()` para asegurar que la tienda tenga la lista fresca
+   * cargada desde el backend o almacenamiento local.
+   */
   useEffect(() => {
     obtenerSubastas();
   }, [obtenerSubastas]);
 
+  /**
+   * Manejador de búsqueda desde la Portada:
+   * Recibe el objeto con los términos de búsqueda que el usuario escribió en `PortadaInicio`,
+   * actualiza los filtros globales en la tienda Zustand y navega a `/subastas`.
+   *
+   * @param {Object} filtrosPortada - Objeto con { busqueda, categoria, etc. }
+   */
   function buscarDesdePortada(filtrosPortada) {
     actualizarFiltros(filtrosPortada);
     navegar('/subastas');
@@ -52,10 +112,11 @@ export function Inicio() {
 
   return (
     <div className="w-full">
+      {/* 1. Portada con llamada a la acción y buscador interactivo */}
       <PortadaInicio categorias={CATEGORIAS_INICIO} alBuscar={buscarDesdePortada} />
 
       <div className="max-w-7xl mx-auto px-3 sm:px-6 space-y-16 py-12 sm:py-16">
-        {/* Tarjetas explicativas sobre seguridad y reglas */}
+        {/* 2. Sección explicativa sobre seguridad, reglas de negocio y transparencia */}
         <section className="space-y-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-end">
             <div className="lg:col-span-6 space-y-2">
@@ -84,8 +145,14 @@ export function Inicio() {
             </div>
           </div>
 
+          {/* Grilla con 4 tarjetas de valor y reglas de negocio */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {TARJETAS_SEGURIDAD.map((tarjeta) => {
+              /**
+               * Asignación de componente a variable en mayúscula:
+               * En JSX, para renderizar un icono dinámicamente guardado como referencia en un objeto,
+               * debemos asignarlo a una constante con mayúscula inicial (`IconoTarjeta`).
+               */
               const IconoTarjeta = tarjeta.icono;
               const claseCaja = tarjeta.destacada
                 ? 'bg-[#224F10] text-[#EAFFD0] shadow-sm'
@@ -113,6 +180,7 @@ export function Inicio() {
           </div>
         </section>
 
+        {/* 3. Catálogo preliminar de subastas en vivo filtrable */}
         <SeccionCatalogoInicio
           categorias={CATEGORIAS_INICIO}
           categoriaSeleccionada={categoriaSeleccionada}
@@ -121,6 +189,7 @@ export function Inicio() {
           errorSubastas={errorSubastas}
         />
 
+        {/* 4. Módulos y funcionalidades destacadas de la plataforma */}
         <SeccionModulosInicio />
       </div>
     </div>
