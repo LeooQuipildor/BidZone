@@ -12,7 +12,7 @@ const ENLACES_PLATAFORMA = [
 const REGLAS_NEGOCIO = [
   'RN01 · Puja superadora',
   'RN02 · Prohibición propia',
-  'RN05 · Liberación de datos',
+  'RN05 · Liberación y plazo de 48 hs',
   'RN06 · Sanción de cuenta',
 ];
 
