@@ -29,41 +29,40 @@ const FOTOS_POR_SUBASTA = {
   ],
 };
 
-// Galería adicional según categoría para cualquier subasta publicada
-const FOTOS_POR_CATEGORIA = {
-  Tecnología: FOTOS_POR_SUBASTA[101],
-  Gaming: FOTOS_POR_SUBASTA[102],
-  'Hogar y Oficina': FOTOS_POR_SUBASTA[103],
-  Deportes: FOTOS_POR_SUBASTA[104],
-  Fotografía: FOTOS_POR_SUBASTA[105],
-  Vehículos: [
-    'https://images.unsplash.com/photo-1662199513774-6c6c1e7e2c3e?auto=format&fit=crop&w=900&q=80',
-    'https://images.unsplash.com/photo-1603799078290-ccc7f07412ca?auto=format&fit=crop&w=900&q=80',
-    'https://images.unsplash.com/photo-1675635465900-1d04390ad872?auto=format&fit=crop&w=900&q=80',
-  ],
-};
-
-const FOTOS_RESPALDO = [
-  IMAGEN_SUBASTA_POR_DEFECTO,
-  'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=900&q=80',
-  'https://images.unsplash.com/photo-1585811514872-ca76aea3bf79?auto=format&fit=crop&w=900&q=80',
-  'https://images.unsplash.com/photo-1505373877841-8d25f7d46678?auto=format&fit=crop&w=900&q=80',
-];
-
-// Devuelve exactamente 4 URLs únicas para mostrar la foto principal y sus vistas adicionales
+// Devuelve exclusivamente las fotos de la subasta ingresadas por el usuario, sin generar imágenes aleatorias
 export function obtenerFotosSubasta(subasta) {
-  const fotoPrincipal = subasta?.imageUrl || IMAGEN_SUBASTA_POR_DEFECTO;
-  const extrasEspecificas = FOTOS_POR_SUBASTA[Number(subasta?.id)] || [];
-  const extrasCategoria = FOTOS_POR_CATEGORIA[subasta?.category] || [];
-  const candidatas = [fotoPrincipal, ...extrasEspecificas, ...extrasCategoria, ...FOTOS_RESPALDO];
+  if (!subasta) return [IMAGEN_SUBASTA_POR_DEFECTO];
 
-  const galeria = [];
-  for (const url of candidatas) {
-    if (url && !galeria.includes(url)) {
-      galeria.push(url);
-    }
-    if (galeria.length === 4) break;
+  // 1. Extraer todas las URLs de imágenes provistas por el usuario
+  let fotosUsuario = [];
+  if (Array.isArray(subasta.images) && subasta.images.length > 0) {
+    fotosUsuario = subasta.images.filter(
+      (url) => typeof url === 'string' && url.trim().length > 0
+    );
+  } else if (typeof subasta.imageUrl === 'string' && subasta.imageUrl.trim().length > 0) {
+    // Si contiene varias URLs separadas por coma o saltos de línea
+    fotosUsuario = subasta.imageUrl
+      .split(/[\n,]+/)
+      .map((url) => url.trim())
+      .filter((url) => url.length > 0);
   }
-  return galeria;
+
+  // 2. Si es una de las subastas iniciales de demo (101 a 105) y no tiene fotos extras personalizadas, usamos las del demo
+  const extrasDemo = FOTOS_POR_SUBASTA[Number(subasta.id)] || [];
+  if (fotosUsuario.length <= 1 && extrasDemo.length > 0) {
+    const principal = fotosUsuario[0] || subasta.imageUrl || IMAGEN_SUBASTA_POR_DEFECTO;
+    const galeriaDemo = [principal];
+    for (const extra of extrasDemo) {
+      if (!galeriaDemo.includes(extra)) galeriaDemo.push(extra);
+    }
+    return galeriaDemo;
+  }
+
+  // 3. Para cualquier otra subasta: retornar EXCLUSIVAMENTE las imágenes provistas por el usuario
+  if (fotosUsuario.length > 0) {
+    return Array.from(new Set(fotosUsuario));
+  }
+
+  return [IMAGEN_SUBASTA_POR_DEFECTO];
 }
 

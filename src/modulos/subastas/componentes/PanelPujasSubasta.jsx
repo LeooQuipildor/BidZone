@@ -22,6 +22,8 @@ export function PanelPujasSubasta({
   usuarioActual,
   ahoraMs,
   esVendedor,
+  esGanador = false,
+  esFinalizada = false,
   alCrearPuja,
   alExito,
   alError,
@@ -33,7 +35,9 @@ export function PanelPujasSubasta({
   const [mostrarConfirmacion, setMostrarConfirmacion] = useState(false);
   const [enviando, setEnviando] = useState(false);
 
-  const esActiva = subasta.status === 'activa';
+  const fechaFinMs = new Date(subasta.endTime).getTime();
+  const tiempoExpirado = !Number.isNaN(fechaFinMs) && fechaFinMs <= ahoraMs;
+  const esActiva = subasta.status === 'activa' && !tiempoExpirado && !esFinalizada;
   const tiempoRestante = subasta.endTime
     ? calcularTiempoRestante(subasta.endTime, ahoraMs)
     : { textoFormateado: '—' };
@@ -116,6 +120,12 @@ export function PanelPujasSubasta({
             </p>
           </div>
         </div>
+
+        {esGanador && (
+          <Badge variant="lime" className="w-full justify-center py-2.5 font-bold text-xs">
+            🏆 ¡Felicidades! Eres el ganador de esta subasta
+          </Badge>
+        )}
 
         {usuarioActual && esActiva && esPostorLider && (
           <Badge variant="lime" className="w-full justify-center py-2">

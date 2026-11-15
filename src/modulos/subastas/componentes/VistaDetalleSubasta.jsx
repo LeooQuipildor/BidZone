@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { AlertTriangle, ArrowLeft, Trash2 } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, Trash2, Trophy } from 'lucide-react';
 import { usarTiendaSubastas } from '../estado/tiendaSubastas';
 import { usarTiendaPujas } from '../../pujas/estado/tiendaPujas';
 import { usarTiendaAutenticacion } from '../../autenticacion/estado/tiendaAutenticacion';
@@ -35,6 +35,14 @@ export function VistaDetalleSubasta() {
 
   useEffect(() => {
     obtenerSubastaPorId(id);
+
+    // Sondeo periódico cada 3 segundos para que si finaliza o hay nuevas pujas
+    // aparezcan los datos en tiempo real sin tener que recargar la página
+    const intervalo = setInterval(() => {
+      obtenerSubastaPorId(id);
+    }, 3000);
+
+    return () => clearInterval(intervalo);
   }, [id, usuarioActual?.id, obtenerSubastaPorId]);
 
   const detalleEncontrado =
@@ -55,14 +63,23 @@ export function VistaDetalleSubasta() {
     );
   }
 
-  const { pujasSubasta, vendedor, ganador, esVendedor, esAdmin, puedeVerContactoDesbloqueado } =
-    prepararDatosDetalleSubasta({
-      subasta,
-      detalleEncontrado,
-      pujas,
-      usuarios,
-      usuarioActual,
-    });
+  const {
+    pujasSubasta,
+    vendedor,
+    ganador,
+    esVendedor,
+    esAdmin,
+    esGanador,
+    esFinalizada,
+    puedeVerContactoDesbloqueado,
+  } = prepararDatosDetalleSubasta({
+    subasta,
+    detalleEncontrado,
+    pujas,
+    usuarios,
+    usuarioActual,
+    ahoraMs,
+  });
 
   async function manejarEliminacionAdmin() {
     if (!window.confirm(`¿Confirmas cancelar y eliminar la subasta "${subasta.title}"?`)) {
@@ -124,6 +141,26 @@ export function VistaDetalleSubasta() {
         <Alert type="success" onClose={() => setMensajeExito('')}>{mensajeExito}</Alert>
       )}
 
+      {/* Banner destacado de felicitación al ganador cuando la subasta finaliza */}
+      {esGanador && esFinalizada && (
+        <div className="rounded-3xl bg-gradient-to-r from-[#224F10] via-[#1a3d0c] to-[#0D0D0D] text-[#EAFFD0] p-6 sm:p-8 border-2 border-[#B0E454] shadow-xl flex flex-col sm:flex-row items-center gap-5">
+          <div className="w-16 h-16 rounded-full bg-[#B0E454] text-[#0D0D0D] flex items-center justify-center shrink-0 shadow-md">
+            <Trophy className="w-8 h-8 text-[#224F10]" />
+          </div>
+          <div className="space-y-1.5 text-center sm:text-left flex-1">
+            <span className="text-[11px] font-bold uppercase tracking-widest text-[#B0E454] bg-[#B0E454]/15 px-3 py-0.5 rounded-full inline-block">
+              ¡Adjudicación Confirmada!
+            </span>
+            <h2 className="font-serif-display text-2xl sm:text-4xl font-bold text-[#EAFFD0]">
+              ¡Felicidades, eres el ganador de la subasta!
+            </h2>
+            <p className="text-xs sm:text-sm text-[#EAFFD0]/90 leading-relaxed max-w-2xl">
+              Has ganado este artículo con la oferta líder. A continuación tienes habilitados los datos de contacto oficiales del vendedor para coordinar el pago y la entrega directa.
+            </p>
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         <div className="lg:col-span-7 space-y-6">
           <FichaProductoSubasta key={subasta.id} subasta={subasta} vendedor={vendedor} />
@@ -133,6 +170,8 @@ export function VistaDetalleSubasta() {
             ganador={ganador}
             puedeVerContactoDesbloqueado={puedeVerContactoDesbloqueado}
             esVendedor={esVendedor}
+            esGanador={esGanador}
+            esFinalizada={esFinalizada}
           />
         </div>
 
@@ -144,6 +183,8 @@ export function VistaDetalleSubasta() {
           usuarioActual={usuarioActual}
           ahoraMs={ahoraMs}
           esVendedor={esVendedor}
+          esGanador={esGanador}
+          esFinalizada={esFinalizada}
           alCrearPuja={crearPuja}
           alExito={setMensajeExito}
           alError={setMensajeError}

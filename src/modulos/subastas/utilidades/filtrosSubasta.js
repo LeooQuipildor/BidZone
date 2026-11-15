@@ -64,6 +64,7 @@ export function prepararDatosDetalleSubasta({
   pujas,
   usuarios,
   usuarioActual,
+  ahoraMs = Date.now(),
 }) {
   const pujasBase = Array.isArray(detalleEncontrado?.bids)
     ? detalleEncontrado.bids
@@ -78,13 +79,35 @@ export function prepararDatosDetalleSubasta({
       id: subasta.sellerId,
       name: subasta.sellerName || 'Vendedor',
       reputation: subasta.sellerReputation || 5.0,
+      phone: subasta.sellerPhone,
+      email: subasta.sellerEmail,
+      city: subasta.sellerCity,
     };
+
+  const fechaFinMs = new Date(subasta.endTime).getTime();
+  const tiempoExpirado = !Number.isNaN(fechaFinMs) && fechaFinMs <= ahoraMs;
+  const esFinalizada = subasta.status === 'finalizada' || tiempoExpirado;
 
   let ganador = detalleEncontrado?.winner || null;
   if (!ganador && subasta.winnerId) {
     ganador = buscarPorId(usuarios, subasta.winnerId) || {
       id: subasta.winnerId,
       name: subasta.winnerName || 'Ganador',
+      phone: subasta.winnerPhone,
+      email: subasta.winnerEmail,
+      city: subasta.winnerCity,
+    };
+  }
+
+  // Si la subasta finalizó (por estado o por tiempo) y tiene pujas, el ganador es el líder de la oferta más alta
+  if (!ganador && esFinalizada && pujasSubasta.length > 0) {
+    const mejorPuja = pujasSubasta[0];
+    ganador = buscarPorId(usuarios, mejorPuja.bidderId) || {
+      id: mejorPuja.bidderId,
+      name: mejorPuja.bidderName || 'Ganador',
+      phone: mejorPuja.bidderPhone,
+      email: mejorPuja.bidderEmail,
+      city: mejorPuja.bidderCity,
     };
   }
 
@@ -92,9 +115,9 @@ export function prepararDatosDetalleSubasta({
   const esAdmin = usuarioActual?.role === 'admin';
   const esGanador = Boolean(usuarioActual && ganador && mismoId(usuarioActual.id, ganador.id));
 
-  const puedeVerContactoDesbloqueado = detalleEncontrado
+  const puedeVerContactoDesbloqueado = detalleEncontrado?.contactUnlocked !== undefined
     ? Boolean(detalleEncontrado.contactUnlocked)
-    : Boolean(subasta.status === 'finalizada' && ganador && (esVendedor || esAdmin || esGanador));
+    : Boolean(esFinalizada && ganador && (esVendedor || esAdmin || esGanador));
 
   return {
     pujasSubasta,
@@ -102,6 +125,8 @@ export function prepararDatosDetalleSubasta({
     ganador,
     esVendedor,
     esAdmin,
+    esGanador,
+    esFinalizada,
     puedeVerContactoDesbloqueado,
   };
 }
