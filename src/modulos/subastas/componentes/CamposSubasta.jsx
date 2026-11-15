@@ -98,8 +98,13 @@ export function CamposSubasta({
           id="fechaFin"
           name="fechaFin"
           type="datetime-local"
-          label="Fecha y Hora de Cierre *"
-          disabled={bloquearCamposFinancieros}
+          label={estaEditando ? 'Fecha y Hora de Cierre (Fijada)' : 'Fecha y Hora de Cierre *'}
+          disabled={estaEditando || bloquearCamposFinancieros}
+          helperText={
+            estaEditando
+              ? 'El tiempo de finalización no se puede modificar una vez creada la subasta.'
+              : undefined
+          }
           value={datosFormulario.fechaFin}
           onChange={alCambiar}
         />

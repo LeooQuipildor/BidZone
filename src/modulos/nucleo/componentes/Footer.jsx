@@ -4,16 +4,16 @@ import { ArrowRight, ShieldCheck } from 'lucide-react';
 
 const ENLACES_PLATAFORMA = [
   { ruta: '/subastas', etiqueta: 'Catálogo de Lotes' },
-  { ruta: '/reglamentos', etiqueta: 'Reglamentos (RN01–RN08)' },
-  { ruta: '/preguntas-frecuentes', etiqueta: 'Preguntas Frecuentes' },
+  { ruta: '/subastas/nueva', etiqueta: 'Publicar Subasta' },
+  { ruta: '/panel', etiqueta: 'Mi Panel de Control' },
   { ruta: '/reportes', etiqueta: 'Centro de Reportes' },
 ];
 
-const REGLAS_NEGOCIO = [
-  'RN01 · Puja superadora',
-  'RN02 · Prohibición propia',
-  'RN05 · Liberación y plazo de 48 hs',
-  'RN06 · Sanción de cuenta',
+const ENLACES_AYUDA_CONTACTO = [
+  { ruta: '/preguntas-frecuentes', etiqueta: 'Preguntas Frecuentes' },
+  { ruta: '/contacto', etiqueta: 'Contactos y Soporte' },
+  { ruta: '/contacto', etiqueta: 'Atención al Cliente' },
+  { ruta: '/reglamentos', etiqueta: 'Reglamentos de Convivencia' },
 ];
 
 const INTEGRANTES_GRUPO = [
@@ -36,16 +36,25 @@ export function Footer() {
               Participa en subastas con trato directo seguro
             </h3>
 
-            <button
-              type="button"
-              onClick={() => navegar('/subastas')}
-              className="inline-flex items-center gap-2.5 rounded-full bg-[#EAFFD0] hover:bg-[#B0E454] text-[#0D0D0D] pl-5 pr-1.5 py-1.5 text-xs font-semibold transition-colors cursor-pointer"
-            >
-              <span>Explorar lotes</span>
-              <span className="w-6 h-6 rounded-full bg-[#224F10] text-[#EAFFD0] flex items-center justify-center">
-                <ArrowRight className="w-3.5 h-3.5" />
-              </span>
-            </button>
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                onClick={() => navegar('/subastas')}
+                className="inline-flex items-center gap-2.5 rounded-full bg-[#EAFFD0] hover:bg-[#B0E454] text-[#0D0D0D] pl-5 pr-1.5 py-1.5 text-xs font-semibold transition-colors cursor-pointer"
+              >
+                <span>Explorar lotes</span>
+                <span className="w-6 h-6 rounded-full bg-[#224F10] text-[#EAFFD0] flex items-center justify-center">
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </span>
+              </button>
+
+              <Link
+                to="/contacto"
+                className="inline-flex items-center gap-2 rounded-full border border-[#EAFFD0]/30 hover:border-[#B0E454] hover:text-[#B0E454] text-[#EAFFD0] px-4 py-2 text-xs font-semibold transition-colors"
+              >
+                <span>Contactos</span>
+              </Link>
+            </div>
           </div>
 
           <div className="lg:col-span-7 grid grid-cols-2 sm:grid-cols-3 gap-6 text-xs">
@@ -55,7 +64,7 @@ export function Footer() {
               </p>
               <ul className="space-y-2 text-[#EAFFD0]/80">
                 {ENLACES_PLATAFORMA.map((item) => (
-                  <li key={item.ruta}>
+                  <li key={item.etiqueta}>
                     <Link to={item.ruta} className="hover:text-[#B0E454]">
                       {item.etiqueta}
                     </Link>
@@ -66,11 +75,15 @@ export function Footer() {
 
             <div className="space-y-2.5">
               <p className="text-[11px] uppercase tracking-wider text-[#B0E454] font-semibold">
-                Reglas de Negocio
+                Ayuda y Contacto
               </p>
               <ul className="space-y-2 text-[#EAFFD0]/80">
-                {REGLAS_NEGOCIO.map((regla) => (
-                  <li key={regla}>{regla}</li>
+                {ENLACES_AYUDA_CONTACTO.map((item) => (
+                  <li key={item.etiqueta}>
+                    <Link to={item.ruta} className="hover:text-[#B0E454]">
+                      {item.etiqueta}
+                    </Link>
+                  </li>
                 ))}
               </ul>
             </div>

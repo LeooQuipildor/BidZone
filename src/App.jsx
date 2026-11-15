@@ -95,6 +95,10 @@ function App() {
           <Route path="/notificaciones" element={<RutaProtegida><VistaPanelControl seccionInicial="notificaciones" /></RutaProtegida>} />
           <Route path="/notifications" element={<Navigate to="/notificaciones" replace />} />
 
+          {/* Contacto / Soporte (página 404) */}
+          <Route path="/contacto" element={<VistaError404 />} />
+          <Route path="/contactos" element={<VistaError404 />} />
+
           {/* 404 */}
           <Route path="/404" element={<VistaError404 />} />
           <Route path="*" element={<VistaError404 />} />
