@@ -143,6 +143,10 @@ function App() {
           <Route path="/notificaciones" element={<RutaProtegida><VistaPanelControl seccionInicial="notificaciones" /></RutaProtegida>} />
           <Route path="/notifications" element={<Navigate to="/notificaciones" replace />} />
 
+          {/* Contacto / Soporte */}
+          <Route path="/contacto" element={<VistaError404 />} />
+          <Route path="/contactos" element={<VistaError404 />} />
+
           {/* =================================================================
               SECCIÓN 3: RUTA POR DEFECTO / ERROR 404
               Si el usuario ingresa una URL que no coincide con ninguna anterior,

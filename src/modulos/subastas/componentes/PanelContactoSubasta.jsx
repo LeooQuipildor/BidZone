@@ -41,7 +41,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { AlertOctagon, Lock, ShieldCheck, Star } from 'lucide-react';
+import { AlertOctagon, Clock, Lock, ShieldCheck, Star } from 'lucide-react';
 import { Button, Badge } from '../../nucleo/diseno/ui';
 import { DatosContactoPersona } from '../../nucleo/diseno/componentesBloques';
 import { formatearMoneda } from '../../nucleo/utilidades/formatos';
@@ -52,9 +52,10 @@ export function PanelContactoSubasta({
   ganador,
   puedeVerContactoDesbloqueado,
   esVendedor,
+  esFinalizada = false,
 }) {
-  // Retorno temprano: Si la subasta sigue abierta en vivo, este panel no debe existir
-  if (subasta.estado !== 'finalizada') return null;
+  const finalizada = subasta.estado === 'finalizada' || esFinalizada;
+  if (!finalizada) return null;
 
   // Identificador de la contraparte para prellenar la denuncia si hubiera problemas (RN06)
   const idContraparte = esVendedor ? ganador?.id : vendedor?.id;
@@ -85,6 +86,19 @@ export function PanelContactoSubasta({
             </strong>{' '}
             para coordinar el pago y la entrega por tu cuenta. Ante cualquier incumplimiento puedes radicar un reporte para sancionar o cerrar la cuenta infractora.
           </p>
+
+          {/* Advertencia obligatoria de 48 hs para contactar */}
+          <div className="p-4 rounded-2xl bg-[#EAFFD0] text-[#0D0D0D] border-2 border-[#B0E454] shadow-sm flex items-start gap-3">
+            <Clock className="w-5 h-5 text-[#224F10] shrink-0 mt-0.5" />
+            <div className="space-y-0.5 text-xs sm:text-sm">
+              <strong className="text-[#224F10] font-bold block text-sm">
+                Plazo obligatorio de contacto (48 hs):
+              </strong>
+              <p className="text-[#0D0D0D]/90 font-medium leading-relaxed">
+                Tienes 48 hs para contactarte con el postor de lo contrario podríamos suspender tu cuenta por incumplimientos de normas.
+              </p>
+            </div>
+          </div>
 
           {/* Bloque con las fichas de contacto privadas de ambas partes */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-[#224F10]/35 p-5 rounded-2xl border border-[#B0E454]/30 text-xs">

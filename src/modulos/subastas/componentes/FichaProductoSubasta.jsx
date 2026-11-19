@@ -81,38 +81,48 @@ export function FichaProductoSubasta({ subasta, vendedor }) {
             <Badge variant="lime">{subasta.categoria}</Badge>
             <Badge variant={etiquetaEstado.variant}>{etiquetaEstado.texto}</Badge>
           </div>
-
-          {/* Indicador de posición de la fotografía (ej: 1 / 4) */}
-          <span className="absolute bottom-3 right-3 px-2.5 py-0.5 rounded-full bg-[#0D0D0D]/75 text-[#EAFFD0] text-[11px] font-semibold">
-            {indiceActivo + 1} / {fotos.length}
-          </span>
+          {fotos.length > 1 && (
+            <span className="absolute bottom-3 right-3 px-2.5 py-0.5 rounded-full bg-[#0D0D0D]/75 text-[#EAFFD0] text-[11px] font-semibold">
+              {indiceActivo + 1} / {fotos.length}
+            </span>
+          )}
         </div>
 
-        {/* Cuadrícula de 4 miniaturas para alternar la foto principal */}
-        <div className="grid grid-cols-4 gap-2.5 sm:gap-3">
-          {fotos.map((urlFoto, indice) => {
-            const estaActiva = indice === indiceActivo;
-            const estiloRecuadro = estaActiva
-              ? 'border-2 border-[#224F10] ring-2 ring-[#B0E454]/60 bg-white'
-              : 'border border-[#224F10]/15 bg-[#F7FBF3] opacity-80 hover:opacity-100 hover:border-[#224F10]/45';
+        {/* Miniaturas de imágenes adicionales si existen */}
+        {fotos.length > 1 && (
+          <div
+            className={`grid gap-2.5 sm:gap-3 ${
+              fotos.length === 2
+                ? 'grid-cols-2'
+                : fotos.length === 3
+                ? 'grid-cols-3'
+                : 'grid-cols-4'
+            }`}
+          >
+            {fotos.map((urlFoto, indice) => {
+              const estaActiva = indice === indiceActivo;
+              const estiloRecuadro = estaActiva
+                ? 'border-2 border-[#224F10] ring-2 ring-[#B0E454]/60 bg-white'
+                : 'border border-[#224F10]/15 bg-[#F7FBF3] opacity-80 hover:opacity-100 hover:border-[#224F10]/45';
 
-            return (
-              <button
-                key={urlFoto}
-                type="button"
-                onClick={() => setFotoSeleccionada(urlFoto)}
-                aria-label={`Ver foto ${indice + 1} de ${subasta.titulo}`}
-                className={`h-16 sm:h-20 w-full rounded-2xl p-1.5 flex items-center justify-center overflow-hidden transition-colors cursor-pointer ${estiloRecuadro}`}
-              >
-                <img
-                  src={urlFoto}
-                  alt={`${subasta.titulo} — vista ${indice + 1}`}
-                  className="max-w-full max-h-full w-auto h-auto object-contain"
-                />
-              </button>
-            );
-          })}
-        </div>
+              return (
+                <button
+                  key={urlFoto}
+                  type="button"
+                  onClick={() => setFotoSeleccionada(urlFoto)}
+                  aria-label={`Ver foto ${indice + 1} de ${subasta.titulo}`}
+                  className={`h-16 sm:h-20 w-full rounded-2xl p-1.5 flex items-center justify-center overflow-hidden transition-colors cursor-pointer ${estiloRecuadro}`}
+                >
+                  <img
+                    src={urlFoto}
+                    alt={`${subasta.titulo} — vista ${indice + 1}`}
+                    className="max-w-full max-h-full w-auto h-auto object-contain"
+                  />
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* 2. Información detallada del artículo */}

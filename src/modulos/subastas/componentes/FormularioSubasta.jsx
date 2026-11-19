@@ -127,7 +127,7 @@ export function FormularioSubasta({
     if (!bloquearCamposFinancieros) {
       datosEnvio.precioInicial = datosFormulario.precioInicial;
       datosEnvio.incrementoMinimo = datosFormulario.incrementoMinimo;
-      if (!estaEditando || (datosFormulario.fechaFin && datosFormulario.fechaFin !== fechaFinInicial)) {
+      if (!estaEditando) {
         datosEnvio.fechaFin = inputLocalAFechaIso(datosFormulario.fechaFin);
       }
     }

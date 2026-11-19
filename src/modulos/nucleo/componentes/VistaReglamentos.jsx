@@ -56,16 +56,16 @@ const REGLAS_PLATAFORMA = [
   },
   {
     codigo: 'RN05',
-    titulo: 'Liberación condicional de contacto',
+    titulo: 'Liberación condicional de contacto y plazo de 48 hs',
     descripcion:
-      'Teléfono, WhatsApp y correo permanecen ocultos al público y solo se habilitan entre vendedor y ganador al cerrar.',
+      'Teléfono, WhatsApp y correo se habilitan entre vendedor y ganador al cerrar. Ambas partes tienen 48 hs para contactarse; de lo contrario, la cuenta podrá ser suspendida por incumplimiento de normas.',
     icono: PhoneCall,
   },
   {
     codigo: 'RN06',
     titulo: 'Reportes, infracciones y sanciones',
     descripcion:
-      'Ante falta de pago, ausencia de entrega o falta de respuesta, la contraparte puede radicar un reporte para suspender o cerrar la cuenta.',
+      'Ante falta de pago, no contactarse dentro de las 48 hs, ausencia de entrega o incumplimiento de normas, la contraparte puede radicar un reporte para suspender o cerrar la cuenta.',
     icono: AlertOctagon,
   },
   {

@@ -40,9 +40,7 @@ function construirCuerpoActualizacion(cambios) {
   if (cambios.incrementoMinimo !== undefined && cambios.incrementoMinimo !== '') {
     cuerpo.incrementoMinimo = Number(cambios.incrementoMinimo);
   }
-  if (cambios.fechaFin !== undefined && cambios.fechaFin !== '') {
-    cuerpo.fechaFin = inputLocalAFechaIso(cambios.fechaFin) || cambios.fechaFin;
-  }
+  // La fecha y hora de cierre (fechaFin) no se puede modificar tras crear la subasta
   return cuerpo;
 }
 

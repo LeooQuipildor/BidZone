@@ -33,6 +33,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowRight, Clock, Layers, ShieldCheck, Tag } from "lucide-react";
 import { OPCIONES_ESTADO_SALA, OPCIONES_ORDEN_SUBASTA } from "../utilidades/formatos";
+import imagenPortada from "../../../assets/images/portada-bidzone.jpg";
 
 /**
  * Componente interno `CajaFiltroPortada`:
@@ -95,9 +96,9 @@ export function PortadaInicio({ categorias, alBuscar }) {
     <section className="relative w-full min-h-[580px] sm:min-h-[660px] bg-[#0D0D0D] flex flex-col justify-between pt-36 md:pt-32 lg:pt-28 pb-8 sm:pb-10 px-4 sm:px-8 lg:px-12 shadow-lg overflow-hidden">
       {/* Imagen de fondo representativa con overlay oscuro en degradado para asegurar contraste de texto */}
       <img
-        src="https://upload.wikimedia.org/wikipedia/commons/3/3a/Velikiy_Novgorod_Detinets_01.jpg"
+        src={imagenPortada}
         alt="Portada BidZone"
-        className="absolute inset-0 w-full h-full object-cover object-[center_35%]"
+        className="absolute inset-0 w-full h-full object-cover object-center"
       />
       <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/45 to-black/15" />
 

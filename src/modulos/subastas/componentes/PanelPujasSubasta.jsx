@@ -61,6 +61,8 @@ export function PanelPujasSubasta({
   usuarioActual,
   ahoraMs,
   esVendedor,
+  esGanador = false,
+  esFinalizada = false,
   alCrearPuja,
   alExito,
   alError,
@@ -76,10 +78,9 @@ export function PanelPujasSubasta({
   const [mostrarConfirmacion, setMostrarConfirmacion] = useState(false);
   const [enviando, setEnviando] = useState(false);
 
-  /**
-   * Datos derivados del estado actual de la subasta:
-   */
-  const esActiva = subasta.estado === 'activa';
+  const fechaFinMs = new Date(subasta.fechaFin).getTime();
+  const tiempoExpirado = !Number.isNaN(fechaFinMs) && fechaFinMs <= ahoraMs;
+  const esActiva = subasta.estado === 'activa' && !tiempoExpirado && !esFinalizada;
   const tiempoRestante = subasta.fechaFin
     ? calcularTiempoRestante(subasta.fechaFin, ahoraMs)
     : { textoFormateado: '—' };
@@ -176,6 +177,11 @@ export function PanelPujasSubasta({
         </div>
 
         {/* Insignias reactivas de estado del postor */}
+        {esGanador && (
+          <Badge variant="lime" className="w-full justify-center py-2.5 font-bold text-xs">
+            🏆 ¡Felicidades! Eres el ganador de esta subasta
+          </Badge>
+        )}
         {usuarioActual && esActiva && esPostorLider && (
           <Badge variant="lime" className="w-full justify-center py-2">
             ★ Eres el postor líder actual en esta subasta
