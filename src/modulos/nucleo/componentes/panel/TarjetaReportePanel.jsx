@@ -28,7 +28,7 @@
  * - `tituloSubasta`: Título del lote asociado obtenido de `subastas`.
  * - `nombreDenunciante`: Nombre del usuario que abrió el ticket.
  * - `nombreDenunciado`: Nombre del usuario reportado.
- * - `estadoDenunciado`: Estado de la cuenta del acusado ('active', 'suspended', 'closed').
+ * - `estadoDenunciado`: Estado de la cuenta del acusado ('activa', 'suspendida', 'cerrada').
  * - `puedeEditarReclamo`: Booleano (solo el autor puede editarlo si sigue 'en_revision').
  * - `esAdmin`: Booleano indicando si la sesión actual tiene permisos de moderación.
  * - `estaAtendiendo`: Booleano que indica si el panel de resolución está desplegado.
@@ -98,8 +98,8 @@ export function TarjetaReportePanel({
   alEliminar,
   panelResolucion = null,
 }) {
-  const insignia = obtenerInsigniaTicket(reporte.status);
-  const textoBotonAdmin = obtenerTextoBotonAdmin(estaAtendiendo, reporte.status);
+  const insignia = obtenerInsigniaTicket(reporte.estado);
+  const textoBotonAdmin = obtenerTextoBotonAdmin(estaAtendiendo, reporte.estado);
 
   return (
     <div className="rounded-2xl bg-white border border-[#224F10]/10 p-5 space-y-4 shadow-2xs">
@@ -116,7 +116,7 @@ export function TarjetaReportePanel({
             Ticket #{reporte.id}
           </span>
           <span className="text-[11px] text-[#0D0D0D]/50">
-            · {formatearFechaHora(reporte.createdAt)}
+            · {formatearFechaHora(reporte.creadoEn)}
           </span>
         </div>
 
@@ -161,11 +161,11 @@ export function TarjetaReportePanel({
 
       {/* Cuerpo del ticket: Motivo principal y Descripción detallada */}
       <div className="space-y-1.5">
-        <h3 className="text-base font-bold text-[#0D0D0D]">{reporte.reason}</h3>
-        <p className="text-xs text-[#0D0D0D]/75 leading-relaxed">{reporte.description}</p>
-        {reporte.evidenceUrl && (
+        <h3 className="text-base font-bold text-[#0D0D0D]">{reporte.motivo}</h3>
+        <p className="text-xs text-[#0D0D0D]/75 leading-relaxed">{reporte.descripcion}</p>
+        {reporte.urlEvidencia && (
           <a
-            href={reporte.evidenceUrl}
+            href={reporte.urlEvidencia}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#224F10] hover:underline"
@@ -183,7 +183,7 @@ export function TarjetaReportePanel({
             Subasta Involucrada
           </span>
           <Link
-            to={`/subastas/${reporte.auctionId}`}
+            to={`/subastas/${reporte.subastaId}`}
             className="font-semibold text-[#224F10] hover:underline"
           >
             {tituloSubasta}
@@ -207,7 +207,7 @@ export function TarjetaReportePanel({
           </span>
           <strong className="text-[#224F10] inline-flex items-center gap-1">
             <ShieldAlert className="w-3.5 h-3.5 shrink-0" />
-            <span>{reporte.sanctionApplied}</span>
+            <span>{reporte.sancionAplicada}</span>
           </strong>
         </div>
       </div>

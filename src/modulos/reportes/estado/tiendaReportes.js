@@ -46,7 +46,7 @@ export const usarTiendaReportes = create((set) => ({
 
     set({ cargando: true, error: null });
     try {
-      const datos = await peticionHttp('/reports');
+      const datos = await peticionHttp('/reportes');
       set({ reportes: datos, cargando: false });
       return datos;
     } catch (error) {
@@ -56,20 +56,20 @@ export const usarTiendaReportes = create((set) => ({
   },
 
   /**
-   * Abre un nuevo ticket de reclamo ('POST /api/reports').
+   * Abre un nuevo ticket de reclamo ('POST /api/reportes').
    */
   crearReporte: async (datos) => {
     set({ error: null });
     try {
       const cuerpo = {
-        auctionId: Number(datos.idSubasta),
-        reportedUserId: Number(datos.idUsuarioReportado),
-        reason: datos.motivo ? datos.motivo.trim() : '',
-        description: datos.descripcion ? datos.descripcion.trim() : '',
-        evidenceUrl: datos.urlEvidencia ? datos.urlEvidencia.trim() : '',
+        subastaId: Number(datos.idSubasta),
+        denunciadoId: Number(datos.idUsuarioReportado),
+        motivo: datos.motivo ? datos.motivo.trim() : '',
+        descripcion: datos.descripcion ? datos.descripcion.trim() : '',
+        urlEvidencia: datos.urlEvidencia ? datos.urlEvidencia.trim() : '',
       };
 
-      const creado = await peticionHttp('/reports', {
+      const creado = await peticionHttp('/reportes', {
         method: 'POST',
         body: JSON.stringify(cuerpo),
       });
@@ -82,22 +82,20 @@ export const usarTiendaReportes = create((set) => ({
   },
 
   /**
-   * Actualiza o resuelve un ticket de mediación ('PATCH /api/reports/:id').
-   * Utiliza el método HTTP PATCH porque solo se envían los campos modificados.
-   * Si el administrador sanciona al usuario, sincroniza las tiendas de usuarios y notificaciones.
+   * Actualiza o resuelve un ticket de mediación ('PATCH /api/reportes/:id').
    */
   actualizarReporte: async (id, cambios) => {
     set({ error: null });
     try {
       const cuerpo = {};
-      if (cambios.motivo !== undefined) cuerpo.reason = cambios.motivo;
-      if (cambios.descripcion !== undefined) cuerpo.description = cambios.descripcion;
-      if (cambios.urlEvidencia !== undefined) cuerpo.evidenceUrl = cambios.urlEvidencia;
-      if (cambios.estado !== undefined) cuerpo.status = cambios.estado;
-      if (cambios.sancionAplicada !== undefined) cuerpo.sanctionApplied = cambios.sancionAplicada;
-      if (cambios.accionCuenta !== undefined) cuerpo.accountAction = cambios.accionCuenta;
+      if (cambios.motivo !== undefined) cuerpo.motivo = cambios.motivo;
+      if (cambios.descripcion !== undefined) cuerpo.descripcion = cambios.descripcion;
+      if (cambios.urlEvidencia !== undefined) cuerpo.urlEvidencia = cambios.urlEvidencia;
+      if (cambios.estado !== undefined) cuerpo.estado = cambios.estado;
+      if (cambios.sancionAplicada !== undefined) cuerpo.sancionAplicada = cambios.sancionAplicada;
+      if (cambios.accionCuenta !== undefined) cuerpo.accionCuenta = cambios.accionCuenta;
 
-      const actualizado = await peticionHttp(`/reports/${id}`, {
+      const actualizado = await peticionHttp(`/reportes/${id}`, {
         method: 'PATCH',
         body: JSON.stringify(cuerpo),
       });
@@ -119,12 +117,12 @@ export const usarTiendaReportes = create((set) => ({
   },
 
   /**
-   * Elimina un ticket de reclamo ('DELETE /api/reports/:id').
+   * Elimina un ticket de reclamo ('DELETE /api/reportes/:id').
    */
   eliminarReporte: async (id) => {
     set({ error: null });
     try {
-      await peticionHttp(`/reports/${id}`, { method: 'DELETE' });
+      await peticionHttp(`/reportes/${id}`, { method: 'DELETE' });
       set((estado) => ({ reportes: eliminarPorId(estado.reportes, id) }));
     } catch (error) {
       set({ error: error.message });

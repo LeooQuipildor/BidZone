@@ -54,7 +54,7 @@ export function PanelContactoSubasta({
   esVendedor,
 }) {
   // Retorno temprano: Si la subasta sigue abierta en vivo, este panel no debe existir
-  if (subasta.status !== 'finalizada') return null;
+  if (subasta.estado !== 'finalizada') return null;
 
   // Identificador de la contraparte para prellenar la denuncia si hubiera problemas (RN06)
   const idContraparte = esVendedor ? ganador?.id : vendedor?.id;
@@ -124,8 +124,8 @@ export function PanelContactoSubasta({
         <div className="flex items-center gap-3 bg-[#224F10]/30 p-4 rounded-2xl border border-[#B0E454]/30 text-xs text-[#EAFFD0]">
           <Lock className="w-5 h-5 text-[#B0E454] shrink-0" />
           <div>
-            Subasta adjudicada a <strong className="text-[#B0E454]">{ganador.name}</strong> por{' '}
-            <strong className="text-[#B0E454]">{formatearMoneda(subasta.currentPrice)}</strong>. Por privacidad (RN05), los teléfonos y correos solo son visibles para el vendedor y el ganador.
+            Subasta adjudicada a <strong className="text-[#B0E454]">{ganador.nombre}</strong> por{' '}
+            <strong className="text-[#B0E454]">{formatearMoneda(subasta.precioActual)}</strong>. Por privacidad (RN05), los teléfonos y correos solo son visibles para el vendedor y el ganador.
           </div>
         </div>
       )}

@@ -87,7 +87,7 @@ export function Layout({ children }) {
 
   // Calcula cuántas notificaciones pertenecen al usuario conectado y están sin leer
   const cantidadSinLeer = usuarioActual
-    ? notificaciones.filter((item) => mismoId(item.userId, usuarioActual.id) && !item.read).length
+    ? notificaciones.filter((item) => mismoId(item.usuarioId, usuarioActual.id) && !item.leida).length
     : 0;
 
   // Ajuste de anchura del contenedor principal según la vista

@@ -79,9 +79,9 @@ export function PanelPujasSubasta({
   /**
    * Datos derivados del estado actual de la subasta:
    */
-  const esActiva = subasta.status === 'activa';
-  const tiempoRestante = subasta.endTime
-    ? calcularTiempoRestante(subasta.endTime, ahoraMs)
+  const esActiva = subasta.estado === 'activa';
+  const tiempoRestante = subasta.fechaFin
+    ? calcularTiempoRestante(subasta.fechaFin, ahoraMs)
     : { textoFormateado: '—' };
   const montoSugerido = obtenerMontoPujaSugerido(subasta);
   const montoMaximoPermitido = obtenerMontoPujaMaximo(subasta);
@@ -89,10 +89,10 @@ export function PanelPujasSubasta({
   // Verificación de liderazgo en las ofertas
   const mejorPuja = pujasSubasta[0] || null;
   const esPostorLider = Boolean(
-    usuarioActual && mejorPuja && mismoId(mejorPuja.bidderId, usuarioActual.id)
+    usuarioActual && mejorPuja && mismoId(mejorPuja.postorId, usuarioActual.id)
   );
   const yaParticipo = Boolean(
-    usuarioActual && pujasSubasta.some((puja) => mismoId(puja.bidderId, usuarioActual.id))
+    usuarioActual && pujasSubasta.some((puja) => mismoId(puja.postorId, usuarioActual.id))
   );
 
   /**
@@ -141,7 +141,7 @@ export function PanelPujasSubasta({
       setMostrarConfirmacion(false);
 
       // Preparamos el siguiente monto sugerido para la próxima puja
-      const siguienteSugerido = Number(montoConfirmado) + Number(subasta.minIncrement);
+      const siguienteSugerido = Number(montoConfirmado) + Number(subasta.incrementoMinimo);
       setMontoIngresado(String(siguienteSugerido));
       setNotaPuja('');
       alExito(
@@ -163,7 +163,7 @@ export function PanelPujasSubasta({
           <div>
             <span className="text-[11px] text-[#0D0D0D]/60 block">Oferta Líder Actual</span>
             <p className="font-serif-display text-4xl font-semibold text-[#224F10]">
-              {formatearMoneda(subasta.currentPrice)}
+              {formatearMoneda(subasta.precioActual)}
             </p>
           </div>
           <div className="text-right">

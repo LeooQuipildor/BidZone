@@ -52,7 +52,7 @@ const ETIQUETAS_ESTADO_BLOQUEADO = {
  */
 function obtenerOpcionesEstadoSubasta(subasta) {
   if (!subasta) return [];
-  return [{ valor: subasta.status, etiqueta: ETIQUETAS_ESTADO_BLOQUEADO[subasta.status] || subasta.status }];
+  return [{ valor: subasta.estado, etiqueta: ETIQUETAS_ESTADO_BLOQUEADO[subasta.estado] || subasta.estado }];
 }
 
 export function CamposSubasta({

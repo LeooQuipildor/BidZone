@@ -78,7 +78,7 @@ export function TabReportesPanel({
   const actualizarReporte = usarTiendaReportes((estado) => estado.actualizarReporte);
   const eliminarReporte = usarTiendaReportes((estado) => estado.eliminarReporte);
 
-  const esAdmin = usuarioActual?.role === 'admin';
+  const esAdmin = usuarioActual?.rol === 'admin';
   const otrosUsuarios = usuarios.filter((usuario) => !mismoId(usuario.id, usuarioActual?.id));
 
   // Estados locales para filtros, alertas y control de modales
@@ -89,20 +89,20 @@ export function TabReportesPanel({
   const [idTicketAtendiendo, setIdTicketAtendiendo] = useState(null);
 
   const reporteEditando = idReporteEditando ? buscarPorId(reportes, idReporteEditando) : null;
-  const cantidadAbiertos = reportes.filter((item) => item.status === 'en_revision').length;
+  const cantidadAbiertos = reportes.filter((item) => item.estado === 'en_revision').length;
 
   // Filtrado de reportes según el estado del ticket y el término de búsqueda ingresado
   const reportesFiltrados = reportes.filter((reporte) => {
-    if (filtroEstado !== 'todos' && reporte.status !== filtroEstado) return false;
-    const denunciado = buscarPorId(usuarios, reporte.reportedUserId);
-    const subasta = buscarPorId(subastas, reporte.auctionId);
+    if (filtroEstado !== 'todos' && reporte.estado !== filtroEstado) return false;
+    const denunciado = buscarPorId(usuarios, reporte.denunciadoId);
+    const subasta = buscarPorId(subastas, reporte.subastaId);
     return coincideConBusqueda(
       [
         `#${reporte.id}`,
-        reporte.reason,
-        reporte.description,
-        denunciado?.name || reporte.reportedUserName,
-        subasta?.title || reporte.auctionTitle,
+        reporte.motivo,
+        reporte.descripcion,
+        denunciado?.nombre || reporte.nombreDenunciado,
+        subasta?.titulo || reporte.tituloSubasta,
       ],
       textoBusqueda
     );
@@ -129,7 +129,7 @@ export function TabReportesPanel({
   function manejarTicketResuelto(reporteResuelto) {
     setAviso({
       tipo: 'exito',
-      texto: `Ticket #${reporteResuelto.id} actualizado: ${reporteResuelto.sanctionApplied}.`,
+      texto: `Ticket #${reporteResuelto.id} actualizado: ${reporteResuelto.sancionAplicada}.`,
     });
     setIdTicketAtendiendo(null);
   }
@@ -206,21 +206,21 @@ export function TabReportesPanel({
       ) : (
         <div className="space-y-4">
           {reportesFiltrados.map((reporte) => {
-            const subasta = buscarPorId(subastas, reporte.auctionId);
-            const denunciante = buscarPorId(usuarios, reporte.reporterId);
-            const denunciado = buscarPorId(usuarios, reporte.reportedUserId);
-            const nombreDenunciado = denunciado?.name || reporte.reportedUserName || 'Usuario';
+            const subasta = buscarPorId(subastas, reporte.subastaId);
+            const denunciante = buscarPorId(usuarios, reporte.denuncianteId);
+            const denunciado = buscarPorId(usuarios, reporte.denunciadoId);
+            const nombreDenunciado = denunciado?.nombre || reporte.nombreDenunciado || 'Usuario';
             const estaAtendiendo = esAdmin && mismoId(idTicketAtendiendo, reporte.id);
 
             return (
               <TarjetaReportePanel
                 key={reporte.id}
                 reporte={reporte}
-                tituloSubasta={subasta?.title || reporte.auctionTitle || `Subasta #${reporte.auctionId}`}
-                nombreDenunciante={denunciante?.name || reporte.reporterName || 'Usuario'}
+                tituloSubasta={subasta?.titulo || reporte.tituloSubasta || `Subasta #${reporte.subastaId}`}
+                nombreDenunciante={denunciante?.nombre || reporte.nombreDenunciante || 'Usuario'}
                 nombreDenunciado={nombreDenunciado}
-                estadoDenunciado={denunciado?.status}
-                puedeEditarReclamo={mismoId(usuarioActual?.id, reporte.reporterId) && reporte.status === 'en_revision'}
+                estadoDenunciado={denunciado?.estado}
+                puedeEditarReclamo={mismoId(usuarioActual?.id, reporte.denuncianteId) && reporte.estado === 'en_revision'}
                 esAdmin={esAdmin}
                 estaAtendiendo={estaAtendiendo}
                 alAtenderTicket={() => {
@@ -240,7 +240,7 @@ export function TabReportesPanel({
                       key={reporte.id}
                       reporte={reporte}
                       nombreDenunciado={nombreDenunciado}
-                      estadoDenunciado={denunciado?.status}
+                      estadoDenunciado={denunciado?.estado}
                       alActualizarReporte={actualizarReporte}
                       alGuardar={manejarTicketResuelto}
                       alCancelar={() => setIdTicketAtendiendo(null)}

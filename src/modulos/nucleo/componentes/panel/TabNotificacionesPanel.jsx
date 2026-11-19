@@ -21,7 +21,7 @@
  *    - "Marcar leída": actualiza individualmente el flag `read: true`.
  *    - "Marcar todas como leídas": actualiza en lote todas las notificaciones pendientes.
  *    - "Eliminar": borra permanentemente la notificación del registro.
- * 4. Navegación directa: Si el aviso está vinculado a una subasta (`item.auctionId`),
+ * 4. Navegación directa: Si el aviso está vinculado a una subasta (`item.subastaId`),
  *    proporciona un enlace directo para abrir el detalle del lote.
  *
  * ¿DE DÓNDE PROVIENEN LAS PROPS?
@@ -51,7 +51,7 @@ import {
  * enlace opcional al lote y botones para marcar como leída o eliminar.
  */
 function FilaNotificacion({ item, alMarcarLeida, alEliminar }) {
-  const sinLeer = !item.read;
+  const sinLeer = !item.leida;
 
   return (
     <div
@@ -71,22 +71,22 @@ function FilaNotificacion({ item, alMarcarLeida, alEliminar }) {
 
         <div className="space-y-1 min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <h3 className="text-sm font-bold text-[#0D0D0D]">{item.title}</h3>
+            <h3 className="text-sm font-bold text-[#0D0D0D]">{item.titulo}</h3>
             {sinLeer && (
               <span className="px-2 py-0.5 rounded-full bg-[#B0E454] text-[#0D0D0D] text-[10px] font-bold">
                 Nueva
               </span>
             )}
           </div>
-          <p className="text-xs text-[#0D0D0D]/75">{item.message}</p>
+          <p className="text-xs text-[#0D0D0D]/75">{item.mensaje}</p>
           <div className="flex flex-wrap items-center gap-3 text-[11px] text-[#0D0D0D]/45">
-            <span>{formatearFechaHora(item.createdAt)}</span>
-            {item.auctionId && (
+            <span>{formatearFechaHora(item.creadoEn)}</span>
+            {item.subastaId && (
               <Link
-                to={`/subastas/${item.auctionId}`}
+                to={`/subastas/${item.subastaId}`}
                 className="inline-flex items-center gap-1 font-semibold text-[#224F10] hover:underline"
               >
-                <span>Ver subasta #{item.auctionId}</span>
+                <span>Ver subasta #{item.subastaId}</span>
                 <ExternalLink className="w-3 h-3" />
               </Link>
             )}
@@ -134,12 +134,12 @@ export function TabNotificacionesPanel({ usuarioActual, notificaciones, textoBus
 
   // Filtrado estricto por usuario y por texto de búsqueda
   const misNotificaciones = notificaciones.filter((item) =>
-    mismoId(item.userId, usuarioActual?.id)
+    mismoId(item.usuarioId, usuarioActual?.id)
   );
   const filtradas = misNotificaciones.filter((item) =>
-    coincideConBusqueda([item.title, item.message], textoBusqueda)
+    coincideConBusqueda([item.titulo, item.mensaje], textoBusqueda)
   );
-  const cantidadSinLeer = misNotificaciones.filter((item) => !item.read).length;
+  const cantidadSinLeer = misNotificaciones.filter((item) => !item.leida).length;
 
   /** Ejecuta una acción asíncrona de notificación capturando posibles errores */
   async function ejecutarAccion(accion) {

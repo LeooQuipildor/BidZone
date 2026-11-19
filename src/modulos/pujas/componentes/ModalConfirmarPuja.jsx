@@ -52,7 +52,7 @@ export function ModalConfirmarPuja({
 }) {
   // Cálculo de cuánto dinero extra sobre el precio actual representa esta oferta
   const diferenciaVsActual = subasta
-    ? Number(montoPuja) - Number(subasta.currentPrice)
+    ? Number(montoPuja) - Number(subasta.precioActual)
     : 0;
 
   return (
@@ -85,7 +85,7 @@ export function ModalConfirmarPuja({
                   Artículo / Subasta
                 </span>
                 <span className="text-sm font-semibold text-[#0D0D0D] line-clamp-2">
-                  {subasta.title}
+                  {subasta.titulo}
                 </span>
               </div>
 
@@ -93,13 +93,13 @@ export function ModalConfirmarPuja({
                 <div>
                   <span className="text-[11px] text-[#0D0D0D]/55 block">Oferta líder actual</span>
                   <strong className="text-sm font-semibold text-[#0D0D0D]">
-                    {formatearMoneda(subasta.currentPrice)}
+                    {formatearMoneda(subasta.precioActual)}
                   </strong>
                 </div>
                 <div>
                   <span className="text-[11px] text-[#0D0D0D]/55 block">Incremento mínimo</span>
                   <strong className="text-sm font-semibold text-[#224F10]">
-                    +{formatearMoneda(subasta.minIncrement)}
+                    +{formatearMoneda(subasta.incrementoMinimo)}
                   </strong>
                 </div>
               </div>

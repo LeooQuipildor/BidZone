@@ -76,12 +76,12 @@ function FormularioSolicitudCorreccion({ subasta, alExito, alCancelar }) {
   const enviarNotificacion = usarTiendaNotificaciones((estado) => estado.enviarNotificacion);
 
   // Identificación del vendedor receptor de la notificación
-  const vendedor = buscarPorId(usuarios, subasta.sellerId);
-  const nombreVendedor = vendedor?.name || subasta.sellerName || 'Vendedor';
+  const vendedor = buscarPorId(usuarios, subasta.vendedorId);
+  const nombreVendedor = vendedor?.nombre || subasta.nombreVendedor || 'Vendedor';
 
   // Estados locales del formulario
   const [motivoClave, setMotivoClave] = useState(MOTIVOS_CORRECCION[0].valor);
-  const [tituloAviso, setTituloAviso] = useState(`Revisión requerida en "${subasta.title}"`);
+  const [tituloAviso, setTituloAviso] = useState(`Revisión requerida en "${subasta.titulo}"`);
   const [mensaje, setMensaje] = useState(MOTIVOS_CORRECCION[0].sugerencia);
   const [mensajeError, setMensajeError] = useState('');
   const [enviando, setEnviando] = useState(false);
@@ -111,7 +111,7 @@ function FormularioSolicitudCorreccion({ subasta, alExito, alCancelar }) {
     setEnviando(true);
     try {
       await enviarNotificacion({
-        idUsuario: subasta.sellerId,
+        idUsuario: subasta.vendedorId,
         idSubasta: subasta.id,
         titulo: tituloAviso.trim(),
         mensaje: mensaje.trim(),

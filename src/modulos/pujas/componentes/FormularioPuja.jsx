@@ -9,7 +9,7 @@
  *
  * ¿QUÉ HACE ESTE COMPONENTE?
  * 1. En modo Creación:
- *    - Filtra únicamente subastas activas (`subastas.filter(s => s.status === 'activa')`).
+ *    - Filtra únicamente subastas activas (`subastas.filter(s => s.estado === 'activa')`).
  *    - Permite al usuario elegir un lote desde un `<Select>`.
  *    - Sugiere el importe mínimo válido con `obtenerMontoPujaSugerido` (RN01).
  *    - Exige tildar la casilla de aceptación vinculante `CasillaCompromisoPuja`.
@@ -63,12 +63,12 @@ export function FormularioPuja({
   const estaEditando = Boolean(puja);
 
   // Subastas que admiten ofertas actualmente
-  const subastasActivas = subastas.filter((subasta) => subasta.status === 'activa');
+  const subastasActivas = subastas.filter((subasta) => subasta.estado === 'activa');
 
   // Identificador de la subasta seleccionada en el formulario
-  const [idSubastaElegida, setIdSubastaElegida] = useState(puja ? String(puja.auctionId) : '');
+  const [idSubastaElegida, setIdSubastaElegida] = useState(puja ? String(puja.subastaId) : '');
   const idSubastaEfectiva = estaEditando
-    ? String(puja.auctionId)
+    ? String(puja.subastaId)
     : elegirIdValido(subastasActivas, idSubastaElegida);
 
   // Subasta activa en el formulario
@@ -80,8 +80,8 @@ export function FormularioPuja({
   const maximoPermitido = obtenerMontoPujaMaximo(subastaSeleccionada);
 
   // Estados locales para los campos
-  const [monto, setMonto] = useState(() => (puja ? String(puja.amount ?? '') : montoSugerido));
-  const [nota, setNota] = useState(puja?.note || '');
+  const [monto, setMonto] = useState(() => (puja ? String(puja.monto ?? '') : montoSugerido));
+  const [nota, setNota] = useState(puja?.nota || '');
   const [compromisoAceptado, setCompromisoAceptado] = useState(true);
   const [mensajeError, setMensajeError] = useState('');
   const [mostrarConfirmacion, setMostrarConfirmacion] = useState(false);
@@ -161,7 +161,7 @@ export function FormularioPuja({
   // Mapeo de subastas a opciones para el componente Select
   const opcionesSubastas = (estaEditando ? subastas : subastasActivas).map((subasta) => ({
     valor: String(subasta.id),
-    etiqueta: `${subasta.title} (Actual: ${formatearMoneda(subasta.currentPrice)})`,
+    etiqueta: `${subasta.titulo} (Actual: ${formatearMoneda(subasta.precioActual)})`,
   }));
 
   // Texto explicativo del monto según el modo

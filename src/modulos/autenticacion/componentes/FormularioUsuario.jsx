@@ -29,7 +29,7 @@
  *   Al pasar una función a `useState(() => ({ ... }))`, React solo ejecuta esa función en el montaje
  *   inicial, evitando evaluar expresiones complejas u objetos repetidamente en cada render.
  * - Encadenamiento Opcional (`Optional Chaining ?.`) y Operador Nullish/OR (`||`):
- *   `usuario?.name || ''` evita que JavaScript lance un error si `usuario` es `null`, devolviendo
+ *   `usuario?.nombre || ''` evita que JavaScript lance un error si `usuario` es `null`, devolviendo
  *   un string vacío por defecto de forma segura.
  * - Conversión a Booleano: `const estaEditando = Boolean(usuario)` convierte la presencia del objeto en `true` o `false`.
  */
@@ -44,7 +44,7 @@ import { AccionesFormulario } from '../../nucleo/diseno/componentesBloques';
  * Opciones para el selector de roles del sistema.
  */
 const OPCIONES_ROL = [
-  { valor: 'user', etiqueta: 'Usuario Estándar' },
+  { valor: 'usuario', etiqueta: 'Usuario Estándar' },
   { valor: 'admin', etiqueta: 'Administrador' },
 ];
 
@@ -52,9 +52,9 @@ const OPCIONES_ROL = [
  * Opciones de estado de cuenta según las reglas de moderación (RN06).
  */
 const OPCIONES_ESTADO = [
-  { valor: 'active', etiqueta: 'Activa (Habilitada)' },
-  { valor: 'suspended', etiqueta: 'Suspendida (Infracción temporal)' },
-  { valor: 'closed', etiqueta: 'Cerrada (Inhabilitación definitiva)' },
+  { valor: 'activa', etiqueta: 'Activa (Habilitada)' },
+  { valor: 'suspendida', etiqueta: 'Suspendida (Infracción temporal)' },
+  { valor: 'cerrada', etiqueta: 'Cerrada (Inhabilitación definitiva)' },
 ];
 
 export function FormularioUsuario({
@@ -74,13 +74,13 @@ export function FormularioUsuario({
    * y las mapea a nombres descriptivos en español dentro del formulario.
    */
   const [datosFormulario, setDatosFormulario] = useState(() => ({
-    nombre: usuario?.name || '',
-    correo: usuario?.email || '',
+    nombre: usuario?.nombre || '',
+    correo: usuario?.correo || '',
     contrasena: '',
-    telefono: usuario?.phone || '',
-    ciudad: usuario?.city || '',
-    rol: usuario?.role || 'user',
-    estado: usuario?.status || 'active',
+    telefono: usuario?.telefono || '',
+    ciudad: usuario?.ciudad || '',
+    rol: usuario?.rol || 'usuario',
+    estado: usuario?.estado || 'activa',
   }));
 
   // Estado para capturar y mostrar mensajes de error de validación o del backend

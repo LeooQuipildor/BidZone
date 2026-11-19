@@ -89,22 +89,22 @@ export function TabResenasPanel({
 
   // Filtrado de calificaciones donde el usuario actual fue el autor o el evaluado
   const misResenas = resenas.filter(
-    (r) => mismoId(r.reviewerId, usuarioActual?.id) || mismoId(r.targetUserId, usuarioActual?.id)
+    (r) => mismoId(r.autorId, usuarioActual?.id) || mismoId(r.calificadoId, usuarioActual?.id)
   );
 
   // Filtro compuesto por dirección (recibidas/emitidas) y por texto de búsqueda
   const resenasFiltradas = misResenas.filter((resena) => {
-    if (filtroDireccion === 'recibidas' && !mismoId(resena.targetUserId, usuarioActual?.id)) return false;
-    if (filtroDireccion === 'emitidas' && !mismoId(resena.reviewerId, usuarioActual?.id)) return false;
-    const calificado = buscarPorId(usuarios, resena.targetUserId);
-    const autor = buscarPorId(usuarios, resena.reviewerId);
-    const subasta = buscarPorId(subastas, resena.auctionId);
+    if (filtroDireccion === 'recibidas' && !mismoId(resena.calificadoId, usuarioActual?.id)) return false;
+    if (filtroDireccion === 'emitidas' && !mismoId(resena.autorId, usuarioActual?.id)) return false;
+    const calificado = buscarPorId(usuarios, resena.calificadoId);
+    const autor = buscarPorId(usuarios, resena.autorId);
+    const subasta = buscarPorId(subastas, resena.subastaId);
     return coincideConBusqueda(
       [
-        resena.comment,
-        calificado?.name || resena.targetUserName,
-        autor?.name || resena.reviewerName,
-        subasta?.title || resena.auctionTitle,
+        resena.comentario,
+        calificado?.nombre || resena.nombreCalificado,
+        autor?.nombre || resena.nombreAutor,
+        subasta?.titulo || resena.tituloSubasta,
       ],
       textoBusqueda
     );
@@ -143,7 +143,7 @@ export function TabResenasPanel({
       {/* Cabecera con reputación promedio y botón de emisión si hay operaciones pendientes */}
       <CabeceraSeccionPanel
         titulo="Mis Reseñas"
-        subtitulo={`Tu reputación: ${usuarioActual?.reputation || '5.0'} ★ · ${subastasPendientes.length} operaciones pendientes de calificar.`}
+        subtitulo={`Tu reputación: ${usuarioActual?.reputacion || '5.0'} ★ · ${subastasPendientes.length} operaciones pendientes de calificar.`}
         botonPrincipal={
           subastasPendientes.length > 0 && (
             <BotonPanel
@@ -197,17 +197,17 @@ export function TabResenasPanel({
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {resenasFiltradas.map((resena) => {
-            const subasta = buscarPorId(subastas, resena.auctionId);
-            const autor = buscarPorId(usuarios, resena.reviewerId);
-            const calificado = buscarPorId(usuarios, resena.targetUserId);
+            const subasta = buscarPorId(subastas, resena.subastaId);
+            const autor = buscarPorId(usuarios, resena.autorId);
+            const calificado = buscarPorId(usuarios, resena.calificadoId);
             return (
               <TarjetaResenaPanel
                 key={resena.id}
                 resena={resena}
-                tituloSubasta={subasta?.title || resena.auctionTitle || `Subasta #${resena.auctionId}`}
-                nombreAutor={autor?.name || resena.reviewerName || `Usuario #${resena.reviewerId}`}
-                nombreCalificado={calificado?.name || resena.targetUserName || `Usuario #${resena.targetUserId}`}
-                puedeEditar={mismoId(usuarioActual?.id, resena.reviewerId)}
+                tituloSubasta={subasta?.titulo || resena.tituloSubasta || `Subasta #${resena.subastaId}`}
+                nombreAutor={autor?.nombre || resena.nombreAutor || `Usuario #${resena.autorId}`}
+                nombreCalificado={calificado?.nombre || resena.nombreCalificado || `Usuario #${resena.calificadoId}`}
+                puedeEditar={mismoId(usuarioActual?.id, resena.autorId)}
                 alEditar={() => {
                   setIdResenaEditando(resena.id);
                   setFormularioAbierto(true);

@@ -106,11 +106,11 @@ export function CamposSeleccionResena({
   // Mapeo de subastas con indicación de si ya fue calificada por este usuario
   const opcionesSubastas = subastasElegibles.map((subasta) => {
     const yaCalificada = resenas.some(
-      (item) => mismoId(item.auctionId, subasta.id) && mismoId(item.reviewerId, idUsuarioActual)
+      (item) => mismoId(item.subastaId, subasta.id) && mismoId(item.autorId, idUsuarioActual)
     );
     return {
       valor: String(subasta.id),
-      etiqueta: `#${subasta.id} — ${subasta.title}${yaCalificada ? ' (Ya calificada)' : ''}`,
+      etiqueta: `#${subasta.id} — ${subasta.titulo}${yaCalificada ? ' (Ya calificada)' : ''}`,
     };
   });
 
@@ -119,7 +119,7 @@ export function CamposSeleccionResena({
     otrosUsuarios.length > 0
       ? otrosUsuarios.map((usuario) => ({
           valor: String(usuario.id),
-          etiqueta: usuario.email ? `${usuario.name} (${usuario.email})` : usuario.name,
+          etiqueta: usuario.correo ? `${usuario.nombre} (${usuario.correo})` : usuario.nombre,
         }))
       : [{ valor: '', etiqueta: 'Sin contraparte disponible' }];
 

@@ -69,7 +69,7 @@ const FOTOS_RESPALDO = [
  * Obtiene un conjunto de exactamente 4 URLs de imagen únicas para una subasta.
  * 
  * ALGORITMO:
- * 1. Toma la foto principal provista en 'subasta.imageUrl'.
+ * 1. Toma la foto principal provista en 'subasta.urlImagen'.
  * 2. Si no tiene foto principal, recurre a 'IMAGEN_SUBASTA_POR_DEFECTO'.
  * 3. Concatena fotos específicas por ID y fotos temáticas por categoría.
  * 4. Itera asegurando que no haya URLs repetidas ('!galeria.includes(url)').
@@ -79,9 +79,9 @@ const FOTOS_RESPALDO = [
  * @returns {Array<string>} - Array de exactamente 4 URLs de imágenes.
  */
 export function obtenerFotosSubasta(subasta) {
-  const fotoPrincipal = subasta?.imageUrl || IMAGEN_SUBASTA_POR_DEFECTO;
+  const fotoPrincipal = subasta?.urlImagen || IMAGEN_SUBASTA_POR_DEFECTO;
   const extrasEspecificas = FOTOS_POR_SUBASTA[Number(subasta?.id)] || [];
-  const extrasCategoria = FOTOS_POR_CATEGORIA[subasta?.category] || [];
+  const extrasCategoria = FOTOS_POR_CATEGORIA[subasta?.categoria] || [];
   const candidatas = [fotoPrincipal, ...extrasEspecificas, ...extrasCategoria, ...FOTOS_RESPALDO];
 
   const galeria = [];

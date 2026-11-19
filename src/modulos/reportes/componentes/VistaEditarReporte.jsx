@@ -12,7 +12,7 @@
  * 2. Carga los reportes y los perfiles de usuarios desde las tiendas Zustand.
  * 3. Valida permisos de seguridad:
  *    - Un Administrador siempre tiene acceso para intervenir y dictaminar la sanción.
- *    - Un usuario regular solo puede ingresar si es el denunciante original (`reporte.reporterId`).
+ *    - Un usuario regular solo puede ingresar si es el denunciante original (`reporte.denuncianteId`).
  *    - Si no cumple los permisos, se muestra una tarjeta de error descriptiva.
  * 4. Bifurca la interfaz de forma adaptativa según el rol:
  *    - Si es Administrador (`esAdmin`): Muestra el resumen de la denuncia junto con el
@@ -59,7 +59,7 @@ export function VistaEditarReporte() {
 
   // Búsqueda del reporte objetivo
   const reporte = buscarPorId(reportes, id);
-  const esAdmin = usuarioActual?.role === 'admin';
+  const esAdmin = usuarioActual?.rol === 'admin';
 
   // Verificación estricta de permisos de acceso
   let errorTitulo = '';
@@ -67,17 +67,17 @@ export function VistaEditarReporte() {
   if (!reporte) {
     errorTitulo = 'Reporte no encontrado';
     errorMensaje = 'El expediente solicitado no existe o no tienes acceso para consultarlo.';
-  } else if (!esAdmin && !mismoId(usuarioActual?.id, reporte.reporterId)) {
+  } else if (!esAdmin && !mismoId(usuarioActual?.id, reporte.denuncianteId)) {
     errorTitulo = 'Sin permisos de edición';
     errorMensaje = 'Solo el denunciante original o un administrador puede modificar este reporte.';
   }
 
   // Identificación del usuario acusado y su estado actual
-  const usuarioReportado = reporte ? buscarPorId(usuarios, reporte.reportedUserId) : null;
+  const usuarioReportado = reporte ? buscarPorId(usuarios, reporte.denunciadoId) : null;
   const nombreReportado =
-    usuarioReportado?.name || reporte?.reportedUserName || `#${reporte?.reportedUserId}`;
-  const estadoReportado = usuarioReportado?.status
-    ? `Estado actual: ${usuarioReportado.status}`
+    usuarioReportado?.nombre || reporte?.nombreDenunciado || `#${reporte?.denunciadoId}`;
+  const estadoReportado = usuarioReportado?.estado
+    ? `Estado actual: ${usuarioReportado.estado}`
     : 'En evaluación';
 
   return (
@@ -95,14 +95,14 @@ export function VistaEditarReporte() {
       {reporte && esAdmin && (
         <div className="space-y-4">
           <div className="rounded-xl bg-[#F7FBF3] border border-[#224F10]/10 p-4 space-y-1.5 text-xs">
-            <h3 className="text-sm font-bold text-[#0D0D0D]">{reporte.reason}</h3>
-            <p className="text-[#0D0D0D]/75">{reporte.description}</p>
+            <h3 className="text-sm font-bold text-[#0D0D0D]">{reporte.motivo}</h3>
+            <p className="text-[#0D0D0D]/75">{reporte.descripcion}</p>
           </div>
           <PanelResolucionTicket
             key={reporte.id}
             reporte={reporte}
             nombreDenunciado={nombreReportado}
-            estadoDenunciado={usuarioReportado?.status}
+            estadoDenunciado={usuarioReportado?.estado}
             alActualizarReporte={actualizarReporte}
             alGuardar={() => navegar('/reportes')}
             alCancelar={() => navegar('/reportes')}

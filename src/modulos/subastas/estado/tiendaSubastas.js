@@ -29,24 +29,24 @@ import { inputLocalAFechaIso } from '../../nucleo/utilidades/formatos';
  */
 function construirCuerpoActualizacion(cambios) {
   const cuerpo = {};
-  if (cambios.titulo !== undefined) cuerpo.title = cambios.titulo;
-  if (cambios.descripcion !== undefined) cuerpo.description = cambios.descripcion;
-  if (cambios.categoria !== undefined) cuerpo.category = cambios.categoria;
-  if (cambios.urlImagen !== undefined) cuerpo.imageUrl = cambios.urlImagen;
-  if (cambios.estado !== undefined) cuerpo.status = cambios.estado;
+  if (cambios.titulo !== undefined) cuerpo.titulo = cambios.titulo;
+  if (cambios.descripcion !== undefined) cuerpo.descripcion = cambios.descripcion;
+  if (cambios.categoria !== undefined) cuerpo.categoria = cambios.categoria;
+  if (cambios.urlImagen !== undefined) cuerpo.urlImagen = cambios.urlImagen;
+  if (cambios.estado !== undefined) cuerpo.estado = cambios.estado;
   if (cambios.precioInicial !== undefined && cambios.precioInicial !== '') {
-    cuerpo.basePrice = Number(cambios.precioInicial);
+    cuerpo.precioBase = Number(cambios.precioInicial);
   }
   if (cambios.incrementoMinimo !== undefined && cambios.incrementoMinimo !== '') {
-    cuerpo.minIncrement = Number(cambios.incrementoMinimo);
+    cuerpo.incrementoMinimo = Number(cambios.incrementoMinimo);
   }
   if (cambios.fechaFin !== undefined && cambios.fechaFin !== '') {
-    cuerpo.endTime = inputLocalAFechaIso(cambios.fechaFin) || cambios.fechaFin;
+    cuerpo.fechaFin = inputLocalAFechaIso(cambios.fechaFin) || cambios.fechaFin;
   }
   return cuerpo;
 }
 
-// Tienda global de subastas (conecta con /api/auctions)
+// Tienda global de subastas (conecta con /api/subastas)
 export const usarTiendaSubastas = create((set, get) => ({
   // ESTADOS REACTIVOS
   subastas: [],               // Array de publicaciones
@@ -82,12 +82,12 @@ export const usarTiendaSubastas = create((set, get) => ({
   },
 
   /**
-   * Descarga la lista general de subastas desde el servidor ('GET /api/auctions').
+   * Descarga la lista general de subastas desde el servidor ('GET /api/subastas').
    */
   obtenerSubastas: async () => {
     set({ cargando: true, error: null });
     try {
-      const datos = await peticionHttp('/auctions');
+      const datos = await peticionHttp('/subastas');
       set({ subastas: datos, cargando: false });
       return datos;
     } catch (error) {
@@ -97,13 +97,13 @@ export const usarTiendaSubastas = create((set, get) => ({
   },
 
   /**
-   * Descarga el detalle completo de una subasta específica ('GET /api/auctions/:id').
+   * Descarga el detalle completo de una subasta específica ('GET /api/subastas/:id').
    * Actualiza tanto 'detalleSubastaActual' como el elemento correspondiente dentro del array 'subastas'.
    */
   obtenerSubastaPorId: async (id) => {
     set({ cargandoDetalle: true, error: null });
     try {
-      const datos = await peticionHttp(`/auctions/${id}`);
+      const datos = await peticionHttp(`/subastas/${id}`);
       set((estado) => ({
         detalleSubastaActual: datos,
         cargandoDetalle: false,
@@ -117,22 +117,22 @@ export const usarTiendaSubastas = create((set, get) => ({
   },
 
   /**
-   * Publica una nueva subasta en el sistema ('POST /api/auctions').
+   * Publica una nueva subasta en el sistema ('POST /api/subastas').
    * Al crearse con éxito, se inserta al inicio del array 'subastas' localmente.
    */
   crearSubasta: async (datos) => {
     set({ error: null });
     try {
       const cuerpo = {
-        title: datos.titulo,
-        description: datos.descripcion || '',
-        category: datos.categoria || 'Tecnología',
-        imageUrl: datos.urlImagen ? datos.urlImagen.trim() : '',
-        basePrice: Number(datos.precioInicial),
-        minIncrement: Number(datos.incrementoMinimo),
-        endTime: inputLocalAFechaIso(datos.fechaFin) || datos.fechaFin,
+        titulo: datos.titulo,
+        descripcion: datos.descripcion || '',
+        categoria: datos.categoria || 'Tecnología',
+        urlImagen: datos.urlImagen ? datos.urlImagen.trim() : '',
+        precioBase: Number(datos.precioInicial),
+        incrementoMinimo: Number(datos.incrementoMinimo),
+        fechaFin: inputLocalAFechaIso(datos.fechaFin) || datos.fechaFin,
       };
-      const creada = await peticionHttp('/auctions', {
+      const creada = await peticionHttp('/subastas', {
         method: 'POST',
         body: JSON.stringify(cuerpo),
       });
@@ -145,7 +145,7 @@ export const usarTiendaSubastas = create((set, get) => ({
   },
 
   /**
-   * Modifica una publicación existente ('PUT /api/auctions/:id').
+   * Modifica una publicación existente ('PUT /api/subastas/:id').
    * Si la subasta editada es la que el usuario tiene abierta en pantalla,
    * recarga sus datos frescos para reflejar los cambios de inmediato.
    */
@@ -153,7 +153,7 @@ export const usarTiendaSubastas = create((set, get) => ({
     set({ error: null });
     try {
       const cuerpo = construirCuerpoActualizacion(cambios);
-      const actualizada = await peticionHttp(`/auctions/${id}`, {
+      const actualizada = await peticionHttp(`/subastas/${id}`, {
         method: 'PUT',
         body: JSON.stringify(cuerpo),
       });
@@ -169,13 +169,13 @@ export const usarTiendaSubastas = create((set, get) => ({
   },
 
   /**
-   * Elimina o cancela una subasta ('DELETE /api/auctions/:id').
+   * Elimina o cancela una subasta ('DELETE /api/subastas/:id').
    * Limpia la publicación de la lista en memoria mediante 'eliminarPorId'.
    */
   eliminarSubasta: async (id) => {
     set({ error: null });
     try {
-      await peticionHttp(`/auctions/${id}`, { method: 'DELETE' });
+      await peticionHttp(`/subastas/${id}`, { method: 'DELETE' });
       set((estado) => {
         const estabaViendoEsa =
           estado.detalleSubastaActual && mismoId(estado.detalleSubastaActual.id, id);

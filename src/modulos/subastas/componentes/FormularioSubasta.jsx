@@ -59,19 +59,19 @@ export function FormularioSubasta({
   const estaEditando = Boolean(subasta);
 
   // Formateo inicial de fecha local para el input HTML
-  const fechaFinInicial = fechaParaInputLocal(subasta?.endTime);
+  const fechaFinInicial = fechaParaInputLocal(subasta?.fechaFin);
 
   /**
    * Estado de los campos del formulario con inicialización perezosa (Lazy state).
    */
   const [datosFormulario, setDatosFormulario] = useState(() => ({
-    titulo: subasta?.title || '',
-    descripcion: subasta?.description || '',
-    categoria: subasta?.category || 'Tecnología',
-    urlImagen: subasta?.imageUrl || '',
-    precioInicial: subasta ? String(subasta.basePrice ?? '') : '',
-    incrementoMinimo: subasta ? String(subasta.minIncrement ?? '') : '',
-    estado: subasta?.status || 'activa',
+    titulo: subasta?.titulo || '',
+    descripcion: subasta?.descripcion || '',
+    categoria: subasta?.categoria || 'Tecnología',
+    urlImagen: subasta?.urlImagen || '',
+    precioInicial: subasta ? String(subasta.precioBase ?? '') : '',
+    incrementoMinimo: subasta ? String(subasta.incrementoMinimo ?? '') : '',
+    estado: subasta?.estado || 'activa',
     fechaFin: fechaFinInicial,
   }));
 
@@ -133,7 +133,7 @@ export function FormularioSubasta({
     }
 
     // Si cambió el estado en modo edición, se envía la actualización
-    if (estaEditando && datosFormulario.estado !== subasta.status) {
+    if (estaEditando && datosFormulario.estado !== subasta.estado) {
       datosEnvio.estado = datosFormulario.estado;
     }
 

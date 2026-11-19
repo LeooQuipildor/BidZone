@@ -57,9 +57,9 @@ export function HistorialPujasSubasta({ pujas, usuarios }) {
         <div className="space-y-2.5 max-h-80 overflow-y-auto pr-1">
           {pujas.map((puja, indice) => {
             // Resolución del nombre del usuario que emitió la puja
-            const usuarioPostor = buscarPorId(usuarios, puja.bidderId);
+            const usuarioPostor = buscarPorId(usuarios, puja.postorId);
             const nombrePostor =
-              puja.bidderName || usuarioPostor?.name || `Usuario #${puja.bidderId}`;
+              puja.nombrePostor || usuarioPostor?.nombre || `Usuario #${puja.postorId}`;
             const esOfertaLider = indice === 0;
 
             return (
@@ -81,9 +81,9 @@ export function HistorialPujasSubasta({ pujas, usuarios }) {
                     )}
                   </div>
                   {/* Nota o comentario opcional del postor */}
-                  <p className="text-[11px] opacity-75 mt-0.5">{puja.note}</p>
+                  <p className="text-[11px] opacity-75 mt-0.5">{puja.nota}</p>
                   <span className="text-[10px] opacity-60">
-                    {formatearFechaHora(puja.createdAt)}
+                    {formatearFechaHora(puja.creadoEn)}
                   </span>
                 </div>
 
@@ -93,7 +93,7 @@ export function HistorialPujasSubasta({ pujas, usuarios }) {
                     esOfertaLider ? 'text-[#B0E454]' : 'text-[#224F10]'
                   }`}
                 >
-                  {formatearMoneda(puja.amount)}
+                  {formatearMoneda(puja.monto)}
                 </span>
               </div>
             );

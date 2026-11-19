@@ -205,13 +205,13 @@ export function formatearRolUsuario(rol, versionCorta = false) {
 
 /**
  * Traduce el estado disciplinario de una cuenta de usuario a una etiqueta comprensible.
- * Estados: 'active' (Activa), 'suspended' (Suspendida por RN06), 'closed' (Cerrada definitiva).
+ * Estados: 'activa' (Activa), 'suspendida' (Suspendida por RN06), 'cerrada' (Cerrada definitiva).
  * 
  * @param {string} estado - Código de estado en la base de datos.
  * @returns {string}
  */
 export function formatearEstadoCuenta(estado) {
-  if (estado === 'suspended') return 'Suspendida';
-  if (estado === 'closed') return 'Cerrada';
+  if (estado === 'suspendida') return 'Suspendida';
+  if (estado === 'cerrada') return 'Cerrada';
   return 'Activa';
 }

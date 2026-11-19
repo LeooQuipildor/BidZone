@@ -10,7 +10,7 @@
  * ¿POR QUÉ EXISTE Y CUÁL ES SU PROPÓSITO?
  * Permite a los administradores de la plataforma supervisar las cuentas registradas,
  * su reputación acumulada, su estado disciplinario según las sanciones de la Regla RN06
- * ('active', 'suspended', 'closed') y ejecutar acciones administrativas como editar
+ * ('activa', 'suspendida', 'cerrada') y ejecutar acciones administrativas como editar
  * los datos o dar de baja una cuenta.
  *
  * Además, respeta la Regla RN05: si un usuario tiene la privacidad de contacto activa
@@ -46,7 +46,7 @@ const COLORES_AVATAR = [
  * cuenta está activa o ha sido suspendida/cerrada por mediación RN06.
  */
 function obtenerClaseEstadoCuenta(estado) {
-  if (estado === 'active') return 'bg-[#F7FBF3] text-[#224F10] border-[#224F10]/15';
+  if (estado === 'activa') return 'bg-[#F7FBF3] text-[#224F10] border-[#224F10]/15';
   return 'bg-red-50 text-red-700 border-red-200';
 }
 
@@ -64,13 +64,13 @@ export function TarjetaUsuarioPanel({
   alEditar,
   alEliminar,
 }) {
-  const etiquetaEstado = formatearEstadoCuenta(usuario.status);
-  const claseEstado = obtenerClaseEstadoCuenta(usuario.status);
+  const etiquetaEstado = formatearEstadoCuenta(usuario.estado);
+  const claseEstado = obtenerClaseEstadoCuenta(usuario.estado);
 
   // Determinación de visibilidad del teléfono según la regla de contacto RN05
   let telefonoVisible = 'Sin teléfono';
-  if (usuario.phone) telefonoVisible = usuario.phone;
-  else if (usuario.contactLocked) telefonoVisible = 'Privado (RN05)';
+  if (usuario.telefono) telefonoVisible = usuario.telefono;
+  else if (usuario.contactoBloqueado) telefonoVisible = 'Privado (RN05)';
 
   // Selección rotativa de color para el avatar usando el operador módulo (%)
   const claseAvatar = COLORES_AVATAR[indiceColor % COLORES_AVATAR.length];
@@ -85,12 +85,12 @@ export function TarjetaUsuarioPanel({
             <span
               className={`w-10 h-10 rounded-full font-bold text-xs flex items-center justify-center shrink-0 ${claseAvatar}`}
             >
-              {obtenerIniciales(usuario.name)}
+              {obtenerIniciales(usuario.nombre)}
             </span>
             <div className="min-w-0">
-              <h3 className="text-sm font-bold text-[#0D0D0D] truncate">{usuario.name}</h3>
+              <h3 className="text-sm font-bold text-[#0D0D0D] truncate">{usuario.nombre}</h3>
               <p className="text-[11px] text-[#0D0D0D]/55 truncate">
-                {usuario.email || 'Privado hasta el cierre (RN05)'}
+                {usuario.correo || 'Privado hasta el cierre (RN05)'}
               </p>
             </div>
           </div>
@@ -99,13 +99,13 @@ export function TarjetaUsuarioPanel({
           <div className="flex flex-col items-end gap-1 shrink-0">
             <span
               className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                usuario.role === 'admin'
+                usuario.rol === 'admin'
                   ? 'bg-[#B0E454] text-[#0D0D0D]'
                   : 'bg-[#EAFFD0] text-[#224F10]'
               }`}
             >
               <Shield className="w-2.5 h-2.5" />
-              {usuario.role.toUpperCase()}
+              {usuario.rol.toUpperCase()}
             </span>
             <span
               className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border ${claseEstado}`}
@@ -123,11 +123,11 @@ export function TarjetaUsuarioPanel({
           </p>
           <p className="flex items-center gap-2">
             <MapPin className="w-3.5 h-3.5 text-[#224F10] shrink-0" />
-            <span className="truncate">{usuario.city || 'Sin ciudad'}</span>
+            <span className="truncate">{usuario.ciudad || 'Sin ciudad'}</span>
           </p>
           <p className="flex items-center gap-2 font-semibold text-[#0D0D0D]">
             <Star className="w-3.5 h-3.5 text-[#224F10] fill-[#B0E454] shrink-0" />
-            <span>Reputación: {usuario.reputation || '5.0'} / 5.0</span>
+            <span>Reputación: {usuario.reputacion || '5.0'} / 5.0</span>
           </p>
         </div>
       </div>

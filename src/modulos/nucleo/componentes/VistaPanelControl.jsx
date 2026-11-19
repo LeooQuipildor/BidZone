@@ -113,7 +113,7 @@ export function VistaPanelControl({ seccionInicial = 'resumen' }) {
     obtenerNotificaciones();
   }, [obtenerUsuarios, obtenerSubastas, obtenerPujas, obtenerReportes, obtenerResenas, obtenerNotificaciones]);
 
-  const esAdmin = usuarioActual?.role === 'admin';
+  const esAdmin = usuarioActual?.rol === 'admin';
 
   // Resolución de la pestaña activa leyendo query params
   const tabUrlRaw = parametrosUrl.get('tab');
@@ -218,7 +218,7 @@ export function VistaPanelControl({ seccionInicial = 'resumen' }) {
       {/* Barra lateral de navegación con insignias numéricas */}
       <Sidebar
         seccionActiva={seccionActiva}
-        etiquetaRol={formatearRolUsuario(usuarioActual?.role, true)}
+        etiquetaRol={formatearRolUsuario(usuarioActual?.rol, true)}
         seccionesMenu={seccionesMenu}
         seccionesCuenta={seccionesCuenta}
         alElegirSeccion={elegirSeccion}

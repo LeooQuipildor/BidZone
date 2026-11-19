@@ -20,7 +20,7 @@
  *    o iniciar un ticket de reporte ante un incumplimiento (RN06).
  *
  * ¿DE DÓNDE PROVIENEN LOS DATOS?
- * - `cierres`: Array de subastas adjudicadas (`status === 'closed'` con ganador). Proviene
+ * - `cierres`: Array de subastas adjudicadas (`status === 'cerrada'` con ganador). Proviene
  *   del filtrado de la tienda de subastas (`tiendaSubastas.js`).
  * - `usuarios`: Lista de usuarios en memoria cargada desde `tiendaAutenticacion.js`.
  *   Se usa para buscar la ficha completa de contacto del vendedor y del ganador.
@@ -51,8 +51,8 @@ import { EstadoVacioPanel } from './PanelCompartido';
  * @returns {string} Mensaje representativo ('Ganaste esta subasta', 'Artículo vendido' u 'Operación finalizada').
  */
 function obtenerRolEnCierre(cierre, idUsuarioActual) {
-  if (mismoId(idUsuarioActual, cierre.winnerId)) return 'Ganaste esta subasta';
-  if (mismoId(idUsuarioActual, cierre.sellerId)) return 'Artículo vendido';
+  if (mismoId(idUsuarioActual, cierre.ganadorId)) return 'Ganaste esta subasta';
+  if (mismoId(idUsuarioActual, cierre.vendedorId)) return 'Artículo vendido';
   return 'Operación finalizada';
 }
 
@@ -94,20 +94,20 @@ export function CierresAdjudicadosPanel({
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
           {cierres.map((cierre) => {
             // Buscamos las entidades de usuario completas para extraer teléfono y ciudad
-            const vendedor = buscarPorId(usuarios, cierre.sellerId);
-            const ganador = buscarPorId(usuarios, cierre.winnerId);
+            const vendedor = buscarPorId(usuarios, cierre.vendedorId);
+            const ganador = buscarPorId(usuarios, cierre.ganadorId);
 
             // Verificamos si el usuario conectado es una de las partes legítimas
-            const esVendedor = mismoId(idUsuarioActual, cierre.sellerId);
-            const esGanador = mismoId(idUsuarioActual, cierre.winnerId);
+            const esVendedor = mismoId(idUsuarioActual, cierre.vendedorId);
+            const esGanador = mismoId(idUsuarioActual, cierre.ganadorId);
             const participa = esVendedor || esGanador;
 
             // Identificamos quién es la contraparte a la que se puede calificar o reportar
-            const idContraparte = esGanador ? cierre.sellerId : cierre.winnerId;
+            const idContraparte = esGanador ? cierre.vendedorId : cierre.ganadorId;
 
             // Verificamos si ya existe una calificación emitida por el usuario actual para este lote
             const yaCalificada = resenas.some(
-              (item) => mismoId(item.auctionId, cierre.id) && mismoId(item.reviewerId, idUsuarioActual)
+              (item) => mismoId(item.subastaId, cierre.id) && mismoId(item.autorId, idUsuarioActual)
             );
 
             return (
@@ -121,11 +121,11 @@ export function CierresAdjudicadosPanel({
                     <span className="inline-block px-2.5 py-0.5 rounded-full bg-[#EAFFD0] text-[#224F10] border border-[#224F10]/15 text-[10px] font-bold mb-1.5">
                       {obtenerRolEnCierre(cierre, idUsuarioActual)}
                     </span>
-                    <h3 className="text-base font-bold text-[#0D0D0D]">{cierre.title}</h3>
+                    <h3 className="text-base font-bold text-[#0D0D0D]">{cierre.titulo}</h3>
                     <p className="text-xs text-[#0D0D0D]/60 mt-0.5">
                       Monto final:{' '}
                       <strong className="text-[#224F10]">
-                        {formatearMoneda(cierre.currentPrice)}
+                        {formatearMoneda(cierre.precioActual)}
                       </strong>
                     </p>
                   </div>
@@ -144,12 +144,12 @@ export function CierresAdjudicadosPanel({
                   <DatosContactoPersona
                     titulo="Vendedor"
                     persona={vendedor}
-                    nombrePorDefecto={cierre.sellerName || 'Vendedor'}
+                    nombrePorDefecto={cierre.nombreVendedor || 'Vendedor'}
                   />
                   <DatosContactoPersona
                     titulo="Ganador"
                     persona={ganador}
-                    nombrePorDefecto={cierre.winnerName || 'Comprador'}
+                    nombrePorDefecto={cierre.nombreGanador || 'Comprador'}
                     conSeparador
                   />
                 </div>

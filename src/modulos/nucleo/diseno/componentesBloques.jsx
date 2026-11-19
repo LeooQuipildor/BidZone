@@ -140,18 +140,18 @@ export function DatosContactoPersona({
   return (
     <div className={`space-y-1 ${claseBorde}`}>
       <p className={`text-[10px] font-bold uppercase tracking-wider ${colorTitulo}`}>{titulo}</p>
-      <p className={colorNombre}>{persona?.name || nombrePorDefecto}</p>
+      <p className={colorNombre}>{persona?.nombre || nombrePorDefecto}</p>
       <p className={`flex items-center gap-1.5 ${colorDato}`}>
         <Phone className={`w-3.5 h-3.5 shrink-0 ${colorIcono}`} />
-        {persona?.phone || 'Sin teléfono'}
+        {persona?.telefono || 'Sin teléfono'}
       </p>
       <p className={`flex items-center gap-1.5 truncate ${colorDato}`}>
         <Mail className={`w-3.5 h-3.5 shrink-0 ${colorIcono}`} />
-        {persona?.email || 'Privado (RN05)'}
+        {persona?.correo || 'Privado (RN05)'}
       </p>
       <p className={`flex items-center gap-1.5 ${colorDato}`}>
         <MapPin className={`w-3.5 h-3.5 shrink-0 ${colorIcono}`} />
-        {persona?.city || 'Argentina'}
+        {persona?.ciudad || 'Argentina'}
       </p>
     </div>
   );

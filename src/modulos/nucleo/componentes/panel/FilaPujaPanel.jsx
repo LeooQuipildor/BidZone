@@ -11,8 +11,8 @@
  * Cumple con la Regla de Negocio RN04: "Ofertas Vinculantes e Irrevocables".
  * En una subasta en línea, cuando un postor realiza una oferta, asume un compromiso
  * formal de compra. Por lo tanto:
- * 1. El monto ofertado (`puja.amount`) NO puede cancelarse ni reducirse unilateralmente.
- * 2. Lo único que el postor puede actualizar es la "nota de coordinación" (`puja.note`),
+ * 1. El monto ofertado (`puja.monto`) NO puede cancelarse ni reducirse unilateralmente.
+ * 2. Lo único que el postor puede actualizar es la "nota de coordinación" (`puja.nota`),
  *    utilizada para indicar detalles de disponibilidad horaria o retiro al vendedor.
  * 3. Permite identificar visualmente de un vistazo si la puja es la "Oferta Líder"
  *    actual (la más alta que actualmente va ganando el lote).
@@ -22,7 +22,7 @@
  *   proveniente del store `tiendaPujas.js`.
  * - `tituloSubasta`: Nombre de la subasta vinculada, resuelto mediante `buscarPorId` en `subastas`.
  * - `nombrePostor`: Nombre del usuario logueado para generar sus iniciales gráficas.
- * - `esOfertaLider`: Booleano calculado comparando `Number(subasta.currentPrice) === Number(puja.amount)`.
+ * - `esOfertaLider`: Booleano calculado comparando `Number(subasta.precioActual) === Number(puja.monto)`.
  * - `alEditar`: Función callback que abre el formulario para editar la nota de coordinación.
  * ==============================================================================
  */
@@ -68,7 +68,7 @@ export function FilaPujaPanel({
               {esOfertaLider ? 'Oferta Líder' : `Puja #${puja.id}`}
             </span>
             <Link
-              to={`/subastas/${puja.auctionId}`}
+              to={`/subastas/${puja.subastaId}`}
               className="text-sm font-bold text-[#0D0D0D] hover:text-[#224F10] inline-flex items-center gap-1 truncate"
             >
               <Gavel className="w-3.5 h-3.5 text-[#224F10] shrink-0" />
@@ -79,12 +79,12 @@ export function FilaPujaPanel({
 
           {/* Nota de coordinación ingresada por el postor */}
           <p className="text-xs text-[#0D0D0D]/70">
-            Nota: &ldquo;{puja.note || 'Sin nota adicional'}&rdquo;
+            Nota: &ldquo;{puja.nota || 'Sin nota adicional'}&rdquo;
           </p>
 
           {/* Fecha y recordatorio de compromiso legal RN04 */}
           <p className="text-[11px] text-[#0D0D0D]/50">
-            {formatearFechaHora(puja.createdAt)} · Compromiso RN04 aceptado
+            {formatearFechaHora(puja.creadoEn)} · Compromiso RN04 aceptado
           </p>
         </div>
       </div>
@@ -96,7 +96,7 @@ export function FilaPujaPanel({
             Ofertado
           </span>
           <span className="text-xl font-bold text-[#224F10] tabular-nums">
-            {formatearMoneda(puja.amount)}
+            {formatearMoneda(puja.monto)}
           </span>
         </div>
 

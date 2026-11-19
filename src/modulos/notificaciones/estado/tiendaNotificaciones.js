@@ -39,7 +39,7 @@ export const usarTiendaNotificaciones = create((set) => ({
 
     set({ cargando: true, error: null });
     try {
-      const datos = await peticionHttp('/notifications');
+      const datos = await peticionHttp('/notificaciones');
       set({ notificaciones: datos, cargando: false });
       return datos;
     } catch (error) {
@@ -49,19 +49,18 @@ export const usarTiendaNotificaciones = create((set) => ({
   },
 
   /**
-   * Marca una notificación individual como leída ('PATCH /api/notifications/:id/read').
-   * Actualiza inmutablemente la propiedad 'read: true' en el estado local.
+   * Marca una notificación individual como leída ('PATCH /api/notificaciones/:id/leida').
    */
   marcarComoLeida: async (id) => {
     set({ error: null });
     try {
-      const actualizada = await peticionHttp(`/notifications/${id}/read`, {
+      const actualizada = await peticionHttp(`/notificaciones/${id}/leida`, {
         method: 'PATCH',
       });
       set((estado) => ({
         notificaciones: estado.notificaciones.map((notificacion) =>
           mismoId(notificacion.id, id)
-            ? { ...notificacion, ...actualizada, read: true }
+            ? { ...notificacion, ...actualizada, leida: true }
             : notificacion
         ),
       }));
@@ -73,16 +72,16 @@ export const usarTiendaNotificaciones = create((set) => ({
   },
 
   /**
-   * Marca todas las notificaciones de la bandeja como leídas ('PATCH /api/notifications/read-all').
+   * Marca todas las notificaciones de la bandeja como leídas ('PATCH /api/notificaciones/leer-todas').
    */
   marcarTodasComoLeidas: async () => {
     set({ error: null });
     try {
-      await peticionHttp('/notifications/read-all', { method: 'PATCH' });
+      await peticionHttp('/notificaciones/leer-todas', { method: 'PATCH' });
       set((estado) => ({
         notificaciones: estado.notificaciones.map((notificacion) => ({
           ...notificacion,
-          read: true,
+          leida: true,
         })),
       }));
     } catch (error) {
@@ -92,12 +91,12 @@ export const usarTiendaNotificaciones = create((set) => ({
   },
 
   /**
-   * Elimina una notificación de la bandeja ('DELETE /api/notifications/:id').
+   * Elimina una notificación de la bandeja ('DELETE /api/notificaciones/:id').
    */
   eliminarNotificacion: async (id) => {
     set({ error: null });
     try {
-      await peticionHttp(`/notifications/${id}`, { method: 'DELETE' });
+      await peticionHttp(`/notificaciones/${id}`, { method: 'DELETE' });
       set((estado) => ({
         notificaciones: eliminarPorId(estado.notificaciones, id),
       }));
@@ -108,21 +107,19 @@ export const usarTiendaNotificaciones = create((set) => ({
   },
 
   /**
-   * Envía un aviso directo al buzón de un usuario específico ('POST /api/notifications').
-   * Se utiliza en 'PanelSolicitudCorreccion' para que un admin o comprador solicite
-   * al vendedor corregir fotos, descripciones o datos de su subasta.
+   * Envía un aviso directo al buzón de un usuario específico ('POST /api/notificaciones').
    */
-  enviarNotificacion: async ({ idUsuario, idSubasta = null, titulo, mensaje, tipo = 'system' }) => {
+  enviarNotificacion: async ({ idUsuario, idSubasta = null, titulo, mensaje, tipo = 'sistema' }) => {
     set({ error: null });
     try {
       const cuerpo = {
-        userId: Number(idUsuario),
-        auctionId: idSubasta ? Number(idSubasta) : null,
-        title: String(titulo || '').trim(),
-        message: String(mensaje || '').trim(),
-        type: tipo,
+        usuarioId: Number(idUsuario),
+        subastaId: idSubasta ? Number(idSubasta) : null,
+        titulo: String(titulo || '').trim(),
+        mensaje: String(mensaje || '').trim(),
+        tipo,
       };
-      return await peticionHttp('/notifications', {
+      return await peticionHttp('/notificaciones', {
         method: 'POST',
         body: JSON.stringify(cuerpo),
       });

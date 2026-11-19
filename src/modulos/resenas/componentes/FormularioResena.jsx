@@ -66,9 +66,9 @@ export function FormularioResena({
   const [datosFormulario, setDatosFormulario] = useState(() => ({
     idSubasta: idSubastaInicial,
     idUsuarioCalificado: idUsuarioCalificadoInicial,
-    calificacion: resena ? String(resena.rating ?? '5') : '5',
-    contextoRol: resena?.roleContext || '',
-    comentario: resena?.comment || '',
+    calificacion: resena ? String(resena.puntaje ?? '5') : '5',
+    contextoRol: resena?.contextoRol || '',
+    comentario: resena?.comentario || '',
   }));
   const [mensajeError, setMensajeError] = useState('');
 
@@ -96,8 +96,8 @@ export function FormularioResena({
   // Booleano que indica si el usuario logueado es parte de la subasta (vendedor o ganador)
   const esParticipante = Boolean(
     subastaSeleccionada &&
-      (mismoId(subastaSeleccionada.winnerId, idUsuarioActual) ||
-        mismoId(subastaSeleccionada.sellerId, idUsuarioActual))
+      (mismoId(subastaSeleccionada.ganadorId, idUsuarioActual) ||
+        mismoId(subastaSeleccionada.vendedorId, idUsuarioActual))
   );
 
   /**

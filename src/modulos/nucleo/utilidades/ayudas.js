@@ -170,7 +170,7 @@ export function coincideConBusqueda(campos, textoBuscado) {
  */
 export function obtenerMontoPujaSugerido(subasta) {
   if (!subasta) return '';
-  const minimo = Number(subasta.currentPrice) + Number(subasta.minIncrement);
+  const minimo = Number(subasta.precioActual) + Number(subasta.incrementoMinimo);
   return String(minimo);
 }
 
@@ -183,7 +183,7 @@ export function obtenerMontoPujaSugerido(subasta) {
  */
 export function obtenerMontoPujaMaximo(subasta) {
   if (!subasta) return undefined;
-  const precioInicial = Number(subasta.basePrice || subasta.currentPrice);
+  const precioInicial = Number(subasta.precioBase || subasta.precioActual);
   return precioInicial * 10;
 }
 
@@ -213,7 +213,7 @@ export function validarDatosPuja({
     return 'Por favor ingresa un monto numérico válido para ofertar.';
   }
 
-  const minimoPermitido = Number(subasta.currentPrice) + Number(subasta.minIncrement);
+  const minimoPermitido = Number(subasta.precioActual) + Number(subasta.incrementoMinimo);
   if (montoNumerico < minimoPermitido) {
     return `RN01: La oferta debe ser de al menos ${formatearMoneda(minimoPermitido)} (Precio actual + incremento mínimo).`;
   }

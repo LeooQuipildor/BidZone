@@ -20,7 +20,7 @@
  *
  * CONCEPTOS DIDÁCTICOS EXPLICADOS:
  * - Detección exhaustiva de pujas:
- *   Inspecciona tres fuentes (`subasta.bidCount`, `subasta.bids` y `pujas.some(...)`) para asegurar que,
+ *   Inspecciona tres fuentes (`subasta.cantidadPujas`, `subasta.pujas` y `pujas.some(...)`) para asegurar que,
  *   sin importar cómo responda el backend, ninguna subasta con ofertas quede desprotegida contra ediciones indebidas.
  * - Validación de autoría en el cliente:
  *   Aunque el backend siempre debe proteger sus endpoints, verificar la autoría en el cliente evita
@@ -67,8 +67,8 @@ export function VistaEditarSubasta() {
       ? detalleSubastaActual
       : buscarPorId(subastas, id);
 
-  const esAdmin = usuarioActual?.role === 'admin';
-  const esDueno = Boolean(subasta && mismoId(usuarioActual?.id, subasta.sellerId));
+  const esAdmin = usuarioActual?.rol === 'admin';
+  const esDueno = Boolean(subasta && mismoId(usuarioActual?.id, subasta.vendedorId));
 
   // Control de errores de acceso y existencia
   let errorTitulo = '';
@@ -87,9 +87,9 @@ export function VistaEditarSubasta() {
   // Verificación de si la subasta ya recibió pujas para aplicar la RN08
   const tienePujas = Boolean(
     subasta &&
-      (Number(subasta.bidCount || 0) > 0 ||
-        (Array.isArray(subasta.bids) && subasta.bids.length > 0) ||
-        pujas.some((puja) => mismoId(puja.auctionId, id)))
+      (Number(subasta.cantidadPujas || 0) > 0 ||
+        (Array.isArray(subasta.pujas) && subasta.pujas.length > 0) ||
+        pujas.some((puja) => mismoId(puja.subastaId, id)))
   );
 
   /**

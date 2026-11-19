@@ -70,7 +70,7 @@ export function VistaEditarUsuario() {
    * Búsqueda y cálculo de permisos:
    */
   const usuarioObjetivo = buscarPorId(usuarios, id);
-  const esAdmin = usuarioActual?.role === 'admin';
+  const esAdmin = usuarioActual?.rol === 'admin';
   const rutaRetorno = esAdmin ? '/usuarios' : '/panel?tab=perfil';
 
   /**
@@ -89,7 +89,7 @@ export function VistaEditarUsuario() {
 
   return (
     <PaginaFormulario
-      titulo={usuarioObjetivo ? `Editar Usuario: ${usuarioObjetivo.name}` : 'Editar Usuario'}
+      titulo={usuarioObjetivo ? `Editar Usuario: ${usuarioObjetivo.nombre}` : 'Editar Usuario'}
       subtitulo="Modificación de datos de contacto, rol de acceso y estado disciplinario de la cuenta."
       textoVolver="Volver"
       alVolver={() => navegar(rutaRetorno)}

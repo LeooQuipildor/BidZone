@@ -126,7 +126,7 @@ function obtenerTarjetasResumen({ esAdmin, usuarioActual, totales, alElegirSecci
     },
     {
       titulo: 'Mi Reputación',
-      valor: `${usuarioActual?.reputation || '5.0'} ★`,
+      valor: `${usuarioActual?.reputacion || '5.0'} ★`,
       subtitulo: `${totales.reportesAbiertos} reportes en revisión`,
       accionSuperior: <BotonFlecha titulo="Ver mis reportes" alHacerClic={() => alElegirSeccion('reportes')} />,
     },
@@ -151,41 +151,41 @@ export function TabResumenPanel({
   alElegirSeccion,
 }) {
   const navegar = useNavigate();
-  const esAdmin = usuarioActual?.role === 'admin';
+  const esAdmin = usuarioActual?.rol === 'admin';
 
   // Segmentación de datos personales vs globales
-  const misSubastas = subastas.filter((s) => mismoId(s.sellerId, usuarioActual?.id));
-  const misSubastasActivas = misSubastas.filter((s) => s.status === 'activa');
-  const misPujas = pujas.filter((p) => mismoId(p.bidderId, usuarioActual?.id));
-  const subastasActivas = subastas.filter((s) => s.status === 'activa');
-  const subastasAdjudicadas = subastas.filter((s) => s.status === 'finalizada' && s.winnerId);
-  const reportesAbiertos = reportes.filter((r) => r.status === 'en_revision');
+  const misSubastas = subastas.filter((s) => mismoId(s.vendedorId, usuarioActual?.id));
+  const misSubastasActivas = misSubastas.filter((s) => s.estado === 'activa');
+  const misPujas = pujas.filter((p) => mismoId(p.postorId, usuarioActual?.id));
+  const subastasActivas = subastas.filter((s) => s.estado === 'activa');
+  const subastasAdjudicadas = subastas.filter((s) => s.estado === 'finalizada' && s.ganadorId);
+  const reportesAbiertos = reportes.filter((r) => r.estado === 'en_revision');
 
   // Solo mostramos contactos liberados (RN05) en operaciones propias del usuario actual
   const misCierres = subastasAdjudicadas.filter(
-    (s) => mismoId(s.winnerId, usuarioActual?.id) || mismoId(s.sellerId, usuarioActual?.id)
+    (s) => mismoId(s.ganadorId, usuarioActual?.id) || mismoId(s.vendedorId, usuarioActual?.id)
   );
 
   // Subasta más próxima a cerrar para alimentar el reloj regresivo destacado
   const fuenteProximo = !esAdmin && misSubastasActivas.length > 0 ? misSubastasActivas : subastasActivas;
   const subastaProximaACerrar =
-    [...fuenteProximo].sort((a, b) => new Date(a.endTime).getTime() - new Date(b.endTime).getTime())[0] ||
+    [...fuenteProximo].sort((a, b) => new Date(a.fechaFin).getTime() - new Date(b.fechaFin).getTime())[0] ||
     null;
   const cuentaRegresiva = subastaProximaACerrar
-    ? calcularTiempoRestante(subastaProximaACerrar.endTime, ahoraMs).textoFormateado
+    ? calcularTiempoRestante(subastaProximaACerrar.fechaFin, ahoraMs).textoFormateado
     : '00:00:00';
 
   // Lista de publicaciones recientes filtrada por el buscador
   const listaRecientes = (esAdmin ? subastas : misSubastas)
-    .filter((s) => coincideConBusqueda([s.title, s.category], textoBusqueda))
+    .filter((s) => coincideConBusqueda([s.titulo, s.categoria], textoBusqueda))
     .slice(0, 5);
 
   // Cierres adjudicados filtrados por búsqueda
   const cierresFiltrados = misCierres.filter((cierre) => {
-    const vendedor = buscarPorId(usuarios, cierre.sellerId);
-    const ganador = buscarPorId(usuarios, cierre.winnerId);
+    const vendedor = buscarPorId(usuarios, cierre.vendedorId);
+    const ganador = buscarPorId(usuarios, cierre.ganadorId);
     return coincideConBusqueda(
-      [cierre.title, vendedor?.name || cierre.sellerName, ganador?.name || cierre.winnerName],
+      [cierre.titulo, vendedor?.nombre || cierre.nombreVendedor, ganador?.nombre || cierre.nombreGanador],
       textoBusqueda
     );
   });

@@ -10,9 +10,9 @@
  * ¿QUÉ HACE ESTE COMPONENTE?
  * 1. Presenta 4 tarjetas de resolución rápida (`OPCIONES_DECISION`):
  *    - Solucionar sin sanción (desestima el ticket sin penalidad).
- *    - Suspender infractor (marca el ticket con sanción y pasa la cuenta del denunciado a 'suspended').
- *    - Cerrar cuenta (inhabilitación permanente y estado de cuenta 'closed').
- *    - Rehabilitar cuenta (restituye la cuenta sancionada previamente a estado 'active').
+ *    - Suspender infractor (marca el ticket con sanción y pasa la cuenta del denunciado a 'suspendida').
+ *    - Cerrar cuenta (inhabilitación permanente y estado de cuenta 'cerrada').
+ *    - Rehabilitar cuenta (restituye la cuenta sancionada previamente a estado 'activa').
  * 2. Si el administrador elige una tarjeta, autocompleta el campo de dictamen con un texto sugerido
  *    a menos que el administrador ya haya editado manualmente el texto (`editadoManual`).
  * 3. Ejecuta la actualización atómica en el backend a través de `alActualizarReporte`.
@@ -30,7 +30,7 @@
  *   Al cambiar entre opciones, el texto sugerido solo se sobreescribe si el usuario no ha tipeado
  *   un texto personalizado propio, respetando el trabajo del operador humano.
  * - Sanción en Cascada:
- *   Al resolver el reporte con `accionCuenta: 'suspend'`, la tienda de reportes no solo actualiza el ticket,
+ *   Al resolver el reporte con `accionCuenta: 'suspender'`, la tienda de reportes no solo actualiza el ticket,
  *   sino que actualiza el estado del usuario en la tienda de autenticación y notifica al infractor.
  */
 
@@ -50,7 +50,7 @@ const OPCIONES_DECISION = [
     titulo: 'Solucionar sin sanción',
     detalle: 'Cierra el ticket sin sancionar cuentas.',
     estado: 'desestimado',
-    accionCuenta: 'none',
+    accionCuenta: 'ninguna',
     sugerencia: 'Caso solucionado entre las partes sin sanción disciplinaria.',
   },
   {
@@ -58,7 +58,7 @@ const OPCIONES_DECISION = [
     titulo: 'Suspender infractor',
     detalle: 'Suspende la cuenta reportada y le envía aviso.',
     estado: 'resuelto_sancion',
-    accionCuenta: 'suspend',
+    accionCuenta: 'suspender',
     sugerencia: 'Suspensión temporal de cuenta por incumplimiento RN06.',
   },
   {
@@ -66,7 +66,7 @@ const OPCIONES_DECISION = [
     titulo: 'Cerrar cuenta',
     detalle: 'Bloqueo definitivo de la cuenta infractora.',
     estado: 'resuelto_sancion',
-    accionCuenta: 'close',
+    accionCuenta: 'cerrar',
     sugerencia: 'Cierre definitivo de cuenta por falta grave RN06.',
   },
   {
@@ -74,7 +74,7 @@ const OPCIONES_DECISION = [
     titulo: 'Rehabilitar cuenta',
     detalle: 'Restituye la cuenta a estado activo y cierra el ticket.',
     estado: 'desestimado',
-    accionCuenta: 'activate',
+    accionCuenta: 'activar',
     sugerencia: 'Cuenta rehabilitada tras regularización del expediente.',
   },
 ];
@@ -88,10 +88,10 @@ export function PanelResolucionTicket({
   alCancelar,
 }) {
   // Determinación de la opción inicial según el estado previo del ticket
-  const claveInicial = reporte.status === 'resuelto_sancion' ? 'suspender' : 'solucionar';
+  const claveInicial = reporte.estado === 'resuelto_sancion' ? 'suspender' : 'solucionar';
   const opcionInicial = OPCIONES_DECISION.find((op) => op.clave === claveInicial);
-  const textoGuardado = reporte.sanctionApplied && reporte.sanctionApplied !== 'Pendiente de evaluación'
-    ? reporte.sanctionApplied
+  const textoGuardado = reporte.sancionAplicada && reporte.sancionAplicada !== 'Pendiente de evaluación'
+    ? reporte.sancionAplicada
     : opcionInicial.sugerencia;
 
   // Estados locales para la decisión, el dictamen y las alertas

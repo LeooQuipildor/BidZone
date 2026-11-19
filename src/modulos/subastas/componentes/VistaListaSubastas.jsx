@@ -110,7 +110,7 @@ export function VistaListaSubastas() {
   } = paginarLista(subastasFiltradas, paginaCatalogo, SUBASTAS_POR_PAGINA);
 
   // Permiso de administrador para moderación
-  const esAdmin = usuarioActual?.role === 'admin';
+  const esAdmin = usuarioActual?.rol === 'admin';
 
   /**
    * Manejador de cambio de página:
@@ -125,13 +125,13 @@ export function VistaListaSubastas() {
    * Manejador para eliminar subastas con confirmación previa del navegador.
    */
   async function manejarEliminacion(subasta) {
-    if (!window.confirm(`¿Confirmas la eliminación de la subasta "${subasta.title}"?`)) {
+    if (!window.confirm(`¿Confirmas la eliminación de la subasta "${subasta.titulo}"?`)) {
       return;
     }
     setAviso(null);
     try {
       await eliminarSubasta(subasta.id);
-      setAviso({ tipo: 'success', texto: `Subasta "${subasta.title}" eliminada exitosamente.` });
+      setAviso({ tipo: 'success', texto: `Subasta "${subasta.titulo}" eliminada exitosamente.` });
     } catch (error) {
       setAviso({ tipo: 'error', texto: error.message });
     }
@@ -207,7 +207,7 @@ export function VistaListaSubastas() {
         <div className="space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {subastasPaginadas.map((subasta) => {
-              const esVendedor = mismoId(usuarioActual?.id, subasta.sellerId);
+              const esVendedor = mismoId(usuarioActual?.id, subasta.vendedorId);
               return (
                 <TarjetaSubasta
                   key={subasta.id}

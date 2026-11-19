@@ -68,10 +68,10 @@ export function ResumenOfertaSubasta({ subasta, montoSugerido }) {
   return (
     <div className="p-3.5 rounded-2xl bg-[#F7FBF3] border border-[#224F10]/15 text-xs flex flex-wrap gap-x-6 gap-y-1">
       <span>
-        Precio actual: <strong className="text-[#224F10]">{formatearMoneda(subasta.currentPrice)}</strong>
+        Precio actual: <strong className="text-[#224F10]">{formatearMoneda(subasta.precioActual)}</strong>
       </span>
       <span>
-        Incremento RN01: <strong>+{formatearMoneda(subasta.minIncrement)}</strong>
+        Incremento RN01: <strong>+{formatearMoneda(subasta.incrementoMinimo)}</strong>
       </span>
       <span>
         Mínimo sugerido: <strong className="text-[#224F10]">{formatearMoneda(montoSugerido)}</strong>

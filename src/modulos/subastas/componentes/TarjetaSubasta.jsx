@@ -20,9 +20,9 @@
  * Son pasadas por el contenedor que renderice la lista de tarjetas (ej: `SeccionCatalogoInicio`, `VistaListaSubastas`, `TabSubastasPanel`):
  * - `subasta`: Objeto con las propiedades del lote (`id`, `title`, `currentPrice`, `endTime`, `imageUrl`, etc.).
  * - `vendedor`: Objeto con los datos del usuario creador (opcional).
- * - `cantidadOfertas`: Conteo de pujas acumuladas (opcional, si no se pasa usa `subasta.bidCount`).
+ * - `cantidadOfertas`: Conteo de pujas acumuladas (opcional, si no se pasa usa `subasta.cantidadPujas`).
  * - `ahoraMs`: Timestamp en milisegundos provisto por el hook `useRelojSegundo`.
- * - `esPropietario`: Booleano calculado comparando `usuarioActual?.id === subasta.sellerId`.
+ * - `esPropietario`: Booleano calculado comparando `usuarioActual?.id === subasta.vendedorId`.
  * - `esAdmin`: Booleano que indica si el usuario logueado es administrador.
  * - Callbacks opcionales: `alEditar`, `alSolicitarRevision`, `alEliminar`.
  *
@@ -66,22 +66,22 @@ export function TarjetaSubasta({
 
   /**
    * Cálculo reactivo del tiempo restante:
-   * Evalúa la fecha límite (`subasta.endTime`) contra el reloj sincronizado (`ahoraMs`).
+   * Evalúa la fecha límite (`subasta.fechaFin`) contra el reloj sincronizado (`ahoraMs`).
    */
-  const tiempoRestante = calcularTiempoRestante(subasta.endTime, ahoraMs);
+  const tiempoRestante = calcularTiempoRestante(subasta.fechaFin, ahoraMs);
 
   /**
    * Estado derivado: Una subasta está "en vivo" si su estado es 'activa' y el tiempo no expiró.
    */
-  const estaEnVivo = subasta.status === 'activa' && !tiempoRestante.vencida;
+  const estaEnVivo = subasta.estado === 'activa' && !tiempoRestante.vencida;
 
   /**
    * Formateo de ofertas y vendedor:
    */
   const totalOfertas =
-    cantidadOfertas !== undefined ? Number(cantidadOfertas) : Number(subasta.bidCount ?? 0);
+    cantidadOfertas !== undefined ? Number(cantidadOfertas) : Number(subasta.cantidadPujas ?? 0);
   const palabraOfertas = totalOfertas === 1 ? 'oferta' : 'ofertas';
-  const nombreVendedor = esPropietario ? 'Tú' : vendedor?.name || subasta.sellerName;
+  const nombreVendedor = esPropietario ? 'Tú' : vendedor?.nombre || subasta.nombreVendedor;
 
   /**
    * Redirige al detalle de la subasta seleccionada.
@@ -99,8 +99,8 @@ export function TarjetaSubasta({
         {/* Contenedor de la fotografía con proporción fija 4:3 y badges flotantes */}
         <div className="relative w-full aspect-[4/3] rounded-[20px] overflow-hidden bg-neutral-100">
           <img
-            src={subasta.imageUrl || IMAGEN_SUBASTA_POR_DEFECTO}
-            alt={subasta.title}
+            src={subasta.urlImagen || IMAGEN_SUBASTA_POR_DEFECTO}
+            alt={subasta.titulo}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             loading="lazy"
           />
@@ -108,7 +108,7 @@ export function TarjetaSubasta({
           {/* Insignias sobre la foto: Categoría y Reloj de cuenta regresiva */}
           <div className="absolute top-2 inset-x-2 flex items-center justify-between z-10 pointer-events-none">
             <span className="px-2.5 py-1 rounded-full bg-black/45 backdrop-blur-md text-white text-[11px] font-medium tracking-wide shadow-xs border border-white/20">
-              {subasta.category}
+              {subasta.categoria}
             </span>
 
             <div className="px-2.5 py-1 rounded-full bg-black/45 backdrop-blur-md text-white text-[11px] font-semibold tracking-wide shadow-xs border border-white/20 flex items-center gap-1.5 shrink-0">
@@ -124,7 +124,7 @@ export function TarjetaSubasta({
         <div className="mt-3 px-1.5 space-y-1">
           <div className="flex items-center justify-between gap-2">
             <h3 className="text-base font-bold text-[#0D0D0D] tracking-tight truncate group-hover:text-[#224F10] transition-colors">
-              {subasta.title}
+              {subasta.titulo}
             </h3>
 
             {/* Badge de estado en subasta / finalizada */}
@@ -149,7 +149,7 @@ export function TarjetaSubasta({
       {/* Barra de precio actual y botón de acción directa */}
       <div className="mt-3.5 px-1 pt-1 flex items-center justify-between gap-2">
         <div className="px-3.5 py-1.5 sm:py-2 rounded-full bg-neutral-100 text-[#0D0D0D] font-bold text-sm sm:text-base tracking-tight shrink-0">
-          {formatearMoneda(subasta.currentPrice)}
+          {formatearMoneda(subasta.precioActual)}
         </div>
 
         <button

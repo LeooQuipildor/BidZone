@@ -61,7 +61,7 @@ export const usarTiendaPujas = create((set) => ({
 
     set({ cargando: true, error: null });
     try {
-      const datos = await peticionHttp('/bids');
+      const datos = await peticionHttp('/pujas');
       set({ pujas: datos, cargando: false });
       return datos;
     } catch (error) {
@@ -71,25 +71,19 @@ export const usarTiendaPujas = create((set) => ({
   },
 
   /**
-   * Envía una nueva oferta vinculante al backend ('POST /api/bids').
-   * 
-   * PASOS:
-   * 1. Arma el payload con 'auctionId', 'amount', 'note' y 'commitmentAccepted'.
-   * 2. Envía la llamada con el token JWT.
-   * 3. Inserta la nueva oferta al inicio del array 'pujas' localmente.
-   * 4. Llama a 'refrescarSubastaDespuesDePuja' para actualizar el precio en pantalla.
+   * Envía una nueva oferta vinculante al backend ('POST /api/pujas').
    */
   crearPuja: async ({ idSubasta, monto, nota, compromisoAceptado }) => {
     set({ error: null });
     try {
       const cuerpo = {
-        auctionId: Number(idSubasta),
-        amount: Number(monto),
-        note: nota ? nota.trim() : '',
-        commitmentAccepted: Boolean(compromisoAceptado),
+        subastaId: Number(idSubasta),
+        monto: Number(monto),
+        nota: nota ? nota.trim() : '',
+        compromisoAceptado: Boolean(compromisoAceptado),
       };
 
-      const creada = await peticionHttp('/bids', {
+      const creada = await peticionHttp('/pujas', {
         method: 'POST',
         body: JSON.stringify(cuerpo),
       });
@@ -104,23 +98,23 @@ export const usarTiendaPujas = create((set) => ({
   },
 
   /**
-   * Actualiza únicamente la nota aclaratoria de una oferta ('PUT /api/bids/:id').
+   * Actualiza únicamente la nota aclaratoria de una oferta ('PUT /api/pujas/:id').
    * Aplica la regla RN04: el monto monetario no se modifica.
    */
   actualizarPuja: async (id, cambios) => {
     set({ error: null });
     try {
       const cuerpo = {
-        note: String(cambios.nota || '').trim(),
+        nota: String(cambios.nota || '').trim(),
       };
 
-      const actualizada = await peticionHttp(`/bids/${id}`, {
+      const actualizada = await peticionHttp(`/pujas/${id}`, {
         method: 'PUT',
         body: JSON.stringify(cuerpo),
       });
       set((estado) => ({ pujas: reemplazarPorId(estado.pujas, id, actualizada) }));
 
-      await refrescarSubastaDespuesDePuja(actualizada.auctionId);
+      await refrescarSubastaDespuesDePuja(actualizada.subastaId);
       return actualizada;
     } catch (error) {
       set({ error: error.message });

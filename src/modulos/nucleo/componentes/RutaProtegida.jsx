@@ -13,7 +13,7 @@
 //    - Guarda la ubicación previa en 'state: { from: ubicacion }' para que tras
 //      iniciar sesión, el sistema lo devuelva a la página que intentaba visitar.
 // 3. Si hay sesión, pero la ruta exige un rol específico (ej: 'admin'):
-//    - Verifica si 'rolesPermitidos.includes(usuarioActual.role)'.
+//    - Verifica si 'rolesPermitidos.includes(usuarioActual.rol)'.
 //    - Si no tiene permisos, muestra una pantalla de bloqueo con opción "Volver atrás" ('navegar(-1)').
 // 4. Si todo está en orden, renderiza los 'children' normalmente.
 // ============================================================================
@@ -43,7 +43,7 @@ export function RutaProtegida({ children, rolesPermitidos = [] }) {
 
   // 2. Verificamos si la ruta exige roles privilegiados
   const requiereRolEspecifico = rolesPermitidos.length > 0;
-  const tienePermiso = rolesPermitidos.includes(usuarioActual.role);
+  const tienePermiso = rolesPermitidos.includes(usuarioActual.rol);
 
   // 3. Si no tiene el rol requerido, mostramos la tarjeta de advertencia
   if (requiereRolEspecifico && !tienePermiso) {
@@ -58,7 +58,7 @@ export function RutaProtegida({ children, rolesPermitidos = [] }) {
           </h2>
           <p className="text-xs text-[#0D0D0D]/75 mb-6">
             Tu cuenta tiene rol{' '}
-            <strong className="text-[#224F10] uppercase font-bold">{usuarioActual.role}</strong> y esta vista requiere permisos de{' '}
+            <strong className="text-[#224F10] uppercase font-bold">{usuarioActual.rol}</strong> y esta vista requiere permisos de{' '}
             <strong className="text-[#224F10] uppercase font-bold">
               {rolesPermitidos.join(' o ')}
             </strong>

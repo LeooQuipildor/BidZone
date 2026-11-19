@@ -85,17 +85,17 @@ export function construirMenuPanel({
   notificaciones,
 }) {
   // Filtros de colecciones personales
-  const misSubastas = subastas.filter((item) => mismoId(item.sellerId, usuarioActual?.id));
-  const misPujas = pujas.filter((item) => mismoId(item.bidderId, usuarioActual?.id));
+  const misSubastas = subastas.filter((item) => mismoId(item.vendedorId, usuarioActual?.id));
+  const misPujas = pujas.filter((item) => mismoId(item.postorId, usuarioActual?.id));
   const misResenas = resenas.filter(
     (item) =>
-      mismoId(item.reviewerId, usuarioActual?.id) || mismoId(item.targetUserId, usuarioActual?.id)
+      mismoId(item.autorId, usuarioActual?.id) || mismoId(item.calificadoId, usuarioActual?.id)
   );
 
   // Conteo de elementos pendientes que requieren atención urgente
-  const reportesAbiertos = reportes.filter((item) => item.status === 'en_revision').length;
+  const reportesAbiertos = reportes.filter((item) => item.estado === 'en_revision').length;
   const notificacionesSinLeer = notificaciones.filter(
-    (item) => mismoId(item.userId, usuarioActual?.id) && !item.read
+    (item) => mismoId(item.usuarioId, usuarioActual?.id) && !item.leida
   ).length;
 
   // Bloque principal de navegación funcional

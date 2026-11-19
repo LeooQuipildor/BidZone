@@ -23,7 +23,7 @@
  *
  * CONCEPTOS DIDÁCTICOS EXPLICADOS:
  * - Temporizador Condicional para Ahorro de Recursos:
- *   `useRelojSegundo(Boolean(subasta?.endTime && subasta?.status === 'activa'))`
+ *   `useRelojSegundo(Boolean(subasta?.fechaFin && subasta?.estado === 'activa'))`
  *   Si la subasta ya está finalizada, el hook detiene el intervalo `setInterval`, evitando consumo
  *   innecesario de CPU y batería en el dispositivo del cliente.
  * - Desestructuración de Objetos con Roles y Reglas de Negocio:
@@ -94,7 +94,7 @@ export function VistaDetalleSubasta() {
   /**
    * Custom hook de tiempo: Solo corre mientras la subasta esté abierta y en vivo
    */
-  const ahoraMs = useRelojSegundo(Boolean(subasta?.endTime && subasta?.status === 'activa'));
+  const ahoraMs = useRelojSegundo(Boolean(subasta?.fechaFin && subasta?.estado === 'activa'));
 
   // Estado de carga inicial
   if (cargandoDetalle && !subasta) return <Loading text="Cargando subasta..." />;
@@ -128,7 +128,7 @@ export function VistaDetalleSubasta() {
    * Manejador de cancelación o eliminación de la subasta por parte de un Administrador.
    */
   async function manejarEliminacionAdmin() {
-    if (!window.confirm(`¿Confirmas cancelar y eliminar la subasta "${subasta.title}"?`)) {
+    if (!window.confirm(`¿Confirmas cancelar y eliminar la subasta "${subasta.titulo}"?`)) {
       return;
     }
     setMensajeError('');

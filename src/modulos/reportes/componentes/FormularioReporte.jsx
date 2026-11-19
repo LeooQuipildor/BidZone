@@ -30,7 +30,7 @@
  *   Al venir desde el botón "Informar Incumplimiento" de `PanelContactoSubasta`, la URL ya trae
  *   `?subasta=1&reportado=2`, precargando los selectores sin obligar al usuario a buscarlos manualmente.
  * - Bloqueo de Formularios Resueltos:
- *   `const bloqueado = Boolean(estaEditando && reporte.status !== 'en_revision')` garantiza la inmutabilidad
+ *   `const bloqueado = Boolean(estaEditando && reporte.estado !== 'en_revision')` garantiza la inmutabilidad
  *   del reclamo una vez que la administración emitió una sentencia.
  */
 
@@ -65,17 +65,17 @@ export function FormularioReporte({
   const estaEditando = Boolean(reporte);
 
   // Si el ticket ya fue dictaminado por moderación, queda congelado para edición
-  const bloqueado = Boolean(estaEditando && reporte.status !== 'en_revision');
+  const bloqueado = Boolean(estaEditando && reporte.estado !== 'en_revision');
 
   /**
    * Estado de los campos del formulario con inicialización perezosa (lazy initial state).
    */
   const [datosFormulario, setDatosFormulario] = useState(() => ({
-    idSubasta: reporte ? String(reporte.auctionId) : idSubastaInicial,
-    idUsuarioReportado: reporte ? String(reporte.reportedUserId) : idUsuarioReportadoInicial,
-    motivo: reporte ? reporte.reason || '' : 'Incumplimiento de pago en plazo acordado',
-    descripcion: reporte?.description || '',
-    urlEvidencia: reporte?.evidenceUrl || '',
+    idSubasta: reporte ? String(reporte.subastaId) : idSubastaInicial,
+    idUsuarioReportado: reporte ? String(reporte.denunciadoId) : idUsuarioReportadoInicial,
+    motivo: reporte ? reporte.motivo || '' : 'Incumplimiento de pago en plazo acordado',
+    descripcion: reporte?.descripcion || '',
+    urlEvidencia: reporte?.urlEvidencia || '',
   }));
   const [mensajeError, setMensajeError] = useState('');
 
@@ -137,7 +137,7 @@ export function FormularioReporte({
   // Opciones de subastas para el componente Select
   const opcionesSubastas =
     subastas.length > 0
-      ? subastas.map((subasta) => ({ valor: String(subasta.id), etiqueta: `#${subasta.id} — ${subasta.title}` }))
+      ? subastas.map((subasta) => ({ valor: String(subasta.id), etiqueta: `#${subasta.id} — ${subasta.titulo}` }))
       : [{ valor: '', etiqueta: 'Sin subastas registradas' }];
 
   // Opciones de usuarios para el componente Select
@@ -145,7 +145,7 @@ export function FormularioReporte({
     otrosUsuarios.length > 0
       ? otrosUsuarios.map((usuario) => ({
           valor: String(usuario.id),
-          etiqueta: usuario.email ? `${usuario.name} (${usuario.email})` : `${usuario.name} (${usuario.city || 'Socio BidZone'})`,
+          etiqueta: usuario.correo ? `${usuario.nombre} (${usuario.correo})` : `${usuario.nombre} (${usuario.ciudad || 'Socio BidZone'})`,
         }))
       : [{ valor: '', etiqueta: 'Sin usuarios disponibles' }];
 

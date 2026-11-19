@@ -11,7 +11,7 @@
  * 1. Obtiene el parámetro dinámico `id` de la puja desde la URL con `useParams()`.
  * 2. Carga en memoria las ofertas y las subastas mediante sus respectivos stores Zustand.
  * 3. Valida la titularidad de la oferta:
- *    - Comprueba con `mismoId` si el usuario autenticado es el autor de la puja (`puja.bidderId`).
+ *    - Comprueba con `mismoId` si el usuario autenticado es el autor de la puja (`puja.postorId`).
  *    - Si no es el titular, deniega el acceso explicando la regla de privacidad y autoría.
  * 4. Pasa la información a `FormularioPuja` asegurando que el importe económico permanezca
  *    congelado de acuerdo con la Regla de Negocio RN04.
@@ -64,14 +64,14 @@ export function VistaEditarPuja() {
   if (!puja) {
     errorTitulo = 'Puja no encontrada';
     errorMensaje = 'El registro de oferta solicitado no existe.';
-  } else if (!mismoId(usuarioActual?.id, puja.bidderId)) {
+  } else if (!mismoId(usuarioActual?.id, puja.postorId)) {
     errorTitulo = 'Sin permisos de edición';
     errorMensaje = 'RN04: Solo el postor titular puede editar su nota de coordinación; los montos ofertados no se editan.';
   }
 
   // Identificación de la subasta vinculada
-  const subasta = puja ? buscarPorId(subastas, puja.auctionId) : null;
-  const tituloSubasta = subasta?.title || puja?.auctionTitle || `#${puja?.auctionId}`;
+  const subasta = puja ? buscarPorId(subastas, puja.subastaId) : null;
+  const tituloSubasta = subasta?.titulo || puja?.tituloSubasta || `#${puja?.subastaId}`;
 
   return (
     <PaginaFormulario

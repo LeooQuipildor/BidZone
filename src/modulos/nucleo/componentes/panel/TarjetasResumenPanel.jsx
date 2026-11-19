@@ -45,14 +45,14 @@ export function TarjetaProximoCierre({ subasta, cuentaRegresiva, alAccionar }) {
 
       {subasta ? (
         <div className="my-4 space-y-2">
-          <p className="text-lg font-bold text-white leading-snug line-clamp-2">{subasta.title}</p>
+          <p className="text-lg font-bold text-white leading-snug line-clamp-2">{subasta.titulo}</p>
           <p className="text-xl font-bold tracking-wider tabular-nums text-[#B0E454] flex items-center gap-2">
             <Clock className="w-4 h-4 shrink-0" />
             <span>{cuentaRegresiva}</span>
           </p>
           <p className="text-xs text-[#EAFFD0]/80">
             Oferta líder:{' '}
-            <strong className="text-white">{formatearMoneda(subasta.currentPrice)}</strong>
+            <strong className="text-white">{formatearMoneda(subasta.precioActual)}</strong>
           </p>
         </div>
       ) : (
@@ -99,7 +99,7 @@ export function TarjetaSubastasRecientes({ titulo, subastas, alAbrirSubasta }) {
           </p>
         ) : (
           subastas.map((subasta) => {
-            const estadoTexto = subasta.status === 'activa' ? 'En subasta' : 'Finalizada';
+            const estadoTexto = subasta.estado === 'activa' ? 'En subasta' : 'Finalizada';
             return (
               <button
                 key={subasta.id}
@@ -111,9 +111,9 @@ export function TarjetaSubastasRecientes({ titulo, subastas, alAbrirSubasta }) {
                   <Tag className="w-3.5 h-3.5" />
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs font-semibold text-[#0D0D0D] truncate">{subasta.title}</p>
+                  <p className="text-xs font-semibold text-[#0D0D0D] truncate">{subasta.titulo}</p>
                   <p className="text-[10px] text-[#0D0D0D]/55 truncate">
-                    {formatearMoneda(subasta.currentPrice)} · {estadoTexto}
+                    {formatearMoneda(subasta.precioActual)} · {estadoTexto}
                   </p>
                 </div>
               </button>

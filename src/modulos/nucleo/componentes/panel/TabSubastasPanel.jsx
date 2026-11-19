@@ -95,7 +95,7 @@ export function TabSubastasPanel({
   const eliminarSubasta = usarTiendaSubastas((estado) => estado.eliminarSubasta);
 
   // Estados locales de filtrado y control de formularios
-  const esAdmin = usuarioActual?.role === 'admin';
+  const esAdmin = usuarioActual?.rol === 'admin';
   const [vistaAdmin, setVistaAdmin] = useState('todas');
   const [categoria, setCategoria] = useState('Todas');
   const [filtroEstado, setFiltroEstado] = useState('todas');
@@ -106,7 +106,7 @@ export function TabSubastasPanel({
   const [idSubastaCorrigiendo, setIdSubastaCorrigiendo] = useState(null);
 
   // Filtrado por propiedad: socio solo ve las suyas; admin puede ver todas o las suyas
-  const misSubastas = subastas.filter((s) => mismoId(s.sellerId, usuarioActual?.id));
+  const misSubastas = subastas.filter((s) => mismoId(s.vendedorId, usuarioActual?.id));
   const subastasVisibles = esAdmin && vistaAdmin === 'todas' ? subastas : misSubastas;
 
   // Aplicación de búsqueda, categoría, estado y ordenamiento
@@ -135,8 +135,8 @@ export function TabSubastasPanel({
   // Verificación de existencia de pujas activas para aplicar restricciones de edición (RN03)
   const subastaEditandoTienePujas = Boolean(
     subastaEditando &&
-      (Number(subastaEditando.bidCount ?? 0) > 0 ||
-        pujas.some((p) => mismoId(p.auctionId, subastaEditando.id)))
+      (Number(subastaEditando.cantidadPujas ?? 0) > 0 ||
+        pujas.some((p) => mismoId(p.subastaId, subastaEditando.id)))
   );
 
   /** Cambia un criterio de filtro y reinicia la paginación a la primera página */
@@ -166,17 +166,17 @@ export function TabSubastasPanel({
       setAviso({ tipo: 'exito', texto: `Subasta #${subastaEditando.id} actualizada.` });
     } else {
       const creada = await crearSubasta(datosEnvio);
-      setAviso({ tipo: 'exito', texto: `Subasta "${creada.title}" publicada correctamente.` });
+      setAviso({ tipo: 'exito', texto: `Subasta "${creada.titulo}" publicada correctamente.` });
     }
     cerrarPaneles();
   }
 
   /** Maneja la eliminación de una subasta previa confirmación del usuario */
   async function manejarEliminacion(subasta) {
-    if (!window.confirm(`¿Confirmas eliminar la subasta "${subasta.title}"?`)) return;
+    if (!window.confirm(`¿Confirmas eliminar la subasta "${subasta.titulo}"?`)) return;
     try {
       await eliminarSubasta(subasta.id);
-      setAviso({ tipo: 'exito', texto: `Subasta "${subasta.title}" eliminada.` });
+      setAviso({ tipo: 'exito', texto: `Subasta "${subasta.titulo}" eliminada.` });
     } catch (error) {
       setAviso({ tipo: 'error', texto: error.message });
     }
@@ -254,15 +254,15 @@ export function TabSubastasPanel({
         <div className="space-y-5">
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
             {subastasPagina.map((subasta) => {
-              const conteoLocal = pujas.filter((p) => mismoId(p.auctionId, subasta.id)).length;
+              const conteoLocal = pujas.filter((p) => mismoId(p.subastaId, subasta.id)).length;
               return (
                 <TarjetaSubasta
                   key={subasta.id}
                   subasta={subasta}
-                  vendedor={buscarPorId(usuarios, subasta.sellerId) || { name: subasta.sellerName }}
-                  cantidadOfertas={Number(subasta.bidCount ?? conteoLocal)}
+                  vendedor={buscarPorId(usuarios, subasta.vendedorId) || { nombre: subasta.nombreVendedor  }}
+                  cantidadOfertas={Number(subasta.cantidadPujas ?? conteoLocal)}
                   ahoraMs={ahoraMs}
-                  esPropietario={mismoId(usuarioActual?.id, subasta.sellerId)}
+                  esPropietario={mismoId(usuarioActual?.id, subasta.vendedorId)}
                   esAdmin={esAdmin}
                   alEditar={(s) => { cerrarPaneles(); setIdSubastaEditando(s.id); setFormularioAbierto(true); setAviso(null); }}
                   alSolicitarRevision={(s) => { cerrarPaneles(); setIdSubastaCorrigiendo(s.id); setAviso(null); }}

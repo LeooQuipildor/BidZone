@@ -158,11 +158,11 @@ export function Navbar({ esInicio, usuarioActual, cantidadSinLeer, alCerrarSesio
               <Link
                 to="/panel"
                 className="inline-flex items-center gap-1.5 text-xs text-[#EAFFD0] hover:text-[#B0E454] whitespace-nowrap"
-                title={`${usuarioActual.name} (${usuarioActual.role}) — Ir al Panel`}
+                title={`${usuarioActual.nombre} (${usuarioActual.rol}) — Ir al Panel`}
               >
                 <User className="w-4 h-4" />
                 <span className="hidden xl:inline font-medium">
-                  {usuarioActual.name.split(' ')[0]}
+                  {usuarioActual.nombre.split(' ')[0]}
                 </span>
               </Link>
               <Link

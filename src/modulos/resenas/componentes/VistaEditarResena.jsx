@@ -11,7 +11,7 @@
  * 1. Obtiene el parámetro dinámico `id` de la reseña desde la URL con `useParams()`.
  * 2. Carga las reseñas en memoria con `obtenerResenas()` al montar la vista.
  * 3. Valida la titularidad de la reseña:
- *    - Comprueba con `mismoId` que el usuario en sesión sea el evaluador original (`resena.reviewerId`).
+ *    - Comprueba con `mismoId` que el usuario en sesión sea el evaluador original (`resena.autorId`).
  *    - Si no es el autor, deniega el acceso y muestra un error amigable.
  * 4. Pasa la reseña a `FormularioResena` para permitir modificar estrellas y texto.
  * 5. Al guardar, actualiza el backend y redirige a `/resenas`.
@@ -59,7 +59,7 @@ export function VistaEditarResena() {
   if (!resena) {
     errorTitulo = 'Calificación no encontrada';
     errorMensaje = 'El registro solicitado no existe.';
-  } else if (!mismoId(usuarioActual?.id, resena.reviewerId)) {
+  } else if (!mismoId(usuarioActual?.id, resena.autorId)) {
     errorTitulo = 'Sin permisos de edición';
     errorMensaje = 'Solo el autor de la reseña puede modificarla.';
   }

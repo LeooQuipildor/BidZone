@@ -150,7 +150,8 @@ export async function peticionHttp(ruta, opciones = {}) {
   // 6. Si el código HTTP no está en el rango de éxito 200-299:
   if (!respuesta.ok) {
     const esRutaAutenticacion =
-      ruta.startsWith('/auth/login') || ruta.startsWith('/auth/register');
+      ruta.startsWith('/autenticacion/iniciar-sesion') ||
+      ruta.startsWith('/autenticacion/registrar');
 
     // Si recibimos 401 (No autorizado) en una ruta que requiere token válido,
     // significa que el token venció o fue revocado; disparamos el cierre de sesión automático.
@@ -161,7 +162,7 @@ export async function peticionHttp(ruta, opciones = {}) {
     }
 
     // Lanzamos el error con el mensaje devuelto por el backend o el código HTTP
-    throw new Error(datos.message || `Error HTTP ${respuesta.status}`);
+    throw new Error(datos.mensaje || datos.message || `Error HTTP ${respuesta.status}`);
   }
 
   // 7. Retornamos los datos limpios para que la tienda los almacene

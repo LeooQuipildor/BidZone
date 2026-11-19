@@ -60,12 +60,12 @@ export function SeccionCatalogoInicio({
   /**
    * Derivación de datos en tiempo de renderizado:
    * Si la categoría elegida es 'Todas', mostramos la lista completa.
-   * Si es una categoría específica, usamos `filter` para comparar con `subasta.category`.
+   * Si es una categoría específica, usamos `filter` para comparar con `subasta.categoria`.
    */
   const catalogoFiltrado =
     categoriaSeleccionada === 'Todas'
       ? subastas
-      : subastas.filter((subasta) => subasta.category === categoriaSeleccionada);
+      : subastas.filter((subasta) => subasta.categoria === categoriaSeleccionada);
 
   return (
     <section className="space-y-7">
