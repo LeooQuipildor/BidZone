@@ -29,6 +29,7 @@ export function VistaDetalleSubasta() {
   const usuarioActual = usarTiendaAutenticacion((estado) => estado.usuarioActual);
   const usuarios = usarTiendaAutenticacion((estado) => estado.usuarios);
 
+  // Estados locales para mensajes y modal de moderación
   const [mensajeError, setMensajeError] = useState('');
   const [mensajeExito, setMensajeExito] = useState('');
   const [solicitandoEdicion, setSolicitandoEdicion] = useState(false);
@@ -45,13 +46,17 @@ export function VistaDetalleSubasta() {
     return () => clearInterval(intervalo);
   }, [id, usuarioActual?.id, obtenerSubastaPorId]);
 
+  // Resolución de la subasta a partir del caché o del detalle cargado
   const detalleEncontrado =
     detalleSubastaActual && mismoId(detalleSubastaActual.id, id) ? detalleSubastaActual : null;
   const subasta = detalleEncontrado || buscarPorId(subastas, id);
-  const ahoraMs = useRelojSegundo(Boolean(subasta?.endTime && subasta?.status === 'activa'));
 
+  const ahoraMs = useRelojSegundo(Boolean(subasta?.fechaFin && subasta?.estado === 'activa'));
+
+  // Estado de carga inicial
   if (cargandoDetalle && !subasta) return <Loading text="Cargando subasta..." />;
 
+  // Estado de error si el ID no corresponde a ninguna subasta existente
   if (!subasta) {
     return (
       <ErrorCard
@@ -82,7 +87,7 @@ export function VistaDetalleSubasta() {
   });
 
   async function manejarEliminacionAdmin() {
-    if (!window.confirm(`¿Confirmas cancelar y eliminar la subasta "${subasta.title}"?`)) {
+    if (!window.confirm(`¿Confirmas cancelar y eliminar la subasta "${subasta.titulo}"?`)) {
       return;
     }
     setMensajeError('');
@@ -96,12 +101,14 @@ export function VistaDetalleSubasta() {
 
   return (
     <div className="space-y-8">
+      {/* Barra superior de navegación y acciones rápidas según el rol */}
       <div className="flex flex-wrap items-center justify-between gap-3 pb-2">
         <Button variant="outline" size="sm" onClick={() => navegar('/subastas')}>
           <ArrowLeft className="w-4 h-4" />
           Volver al Catálogo
         </Button>
 
+        {/* Acciones de Propietario o Administrador */}
         {(esVendedor || esAdmin) && (
           <div className="flex items-center gap-2">
             {esVendedor ? (
@@ -124,6 +131,7 @@ export function VistaDetalleSubasta() {
         )}
       </div>
 
+      {/* Modal de moderación disciplinaria si el administrador solicita revisión */}
       <PanelSolicitudCorreccion
         enModal
         subasta={solicitandoEdicion ? subasta : null}
@@ -134,6 +142,7 @@ export function VistaDetalleSubasta() {
         alCancelar={() => setSolicitandoEdicion(false)}
       />
 
+      {/* Alertas de error o éxito en pantalla */}
       {mensajeError && (
         <Alert type="error" onClose={() => setMensajeError('')}>{mensajeError}</Alert>
       )}
@@ -161,7 +170,9 @@ export function VistaDetalleSubasta() {
         </div>
       )}
 
+      {/* Cuadrícula de 12 columnas: 7 para producto/contacto y 5 para pujas */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        {/* Columna Izquierda: Ficha del Producto y Panel de Contacto Directo RN05 */}
         <div className="lg:col-span-7 space-y-6">
           <FichaProductoSubasta key={subasta.id} subasta={subasta} vendedor={vendedor} />
           <PanelContactoSubasta
@@ -175,6 +186,7 @@ export function VistaDetalleSubasta() {
           />
         </div>
 
+        {/* Columna Derecha: Consola de Ofertas e Historial Auditable de Pujas */}
         <PanelPujasSubasta
           key={subasta.id}
           subasta={subasta}

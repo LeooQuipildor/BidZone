@@ -9,6 +9,7 @@ import { PaginaFormulario } from '../../nucleo/diseno/componentesBloques';
 
 export function VistaCrearReporte() {
   const navegar = useNavigate();
+
   const [parametrosUrl] = useSearchParams();
   const idSubastaInicial = parametrosUrl.get('subasta') || parametrosUrl.get('auctionId') || '';
   const idUsuarioReportadoInicial =
@@ -26,6 +27,7 @@ export function VistaCrearReporte() {
     obtenerUsuarios();
   }, [obtenerSubastas, obtenerUsuarios]);
 
+  // Lista de usuarios descartando al propio usuario en sesión
   const otrosUsuarios = usuarios.filter((usuario) => !mismoId(usuario.id, usuarioActual?.id));
 
   return (

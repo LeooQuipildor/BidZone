@@ -31,13 +31,17 @@ const MOTIVOS_CORRECCION = [
 ];
 
 function FormularioSolicitudCorreccion({ subasta, alExito, alCancelar }) {
+  // Suscripción a tiendas de autenticación y notificaciones
   const usuarios = usarTiendaAutenticacion((estado) => estado.usuarios);
   const enviarNotificacion = usarTiendaNotificaciones((estado) => estado.enviarNotificacion);
-  const vendedor = buscarPorId(usuarios, subasta.sellerId);
-  const nombreVendedor = vendedor?.name || subasta.sellerName || 'Vendedor';
 
+  // Identificación del vendedor receptor de la notificación
+  const vendedor = buscarPorId(usuarios, subasta.vendedorId);
+  const nombreVendedor = vendedor?.nombre || subasta.nombreVendedor || 'Vendedor';
+
+  // Estados locales del formulario
   const [motivoClave, setMotivoClave] = useState(MOTIVOS_CORRECCION[0].valor);
-  const [tituloAviso, setTituloAviso] = useState(`Revisión requerida en "${subasta.title}"`);
+  const [tituloAviso, setTituloAviso] = useState(`Revisión requerida en "${subasta.titulo}"`);
   const [mensaje, setMensaje] = useState(MOTIVOS_CORRECCION[0].sugerencia);
   const [mensajeError, setMensajeError] = useState('');
   const [enviando, setEnviando] = useState(false);
@@ -61,7 +65,7 @@ function FormularioSolicitudCorreccion({ subasta, alExito, alCancelar }) {
     setEnviando(true);
     try {
       await enviarNotificacion({
-        idUsuario: subasta.sellerId,
+        idUsuario: subasta.vendedorId,
         idSubasta: subasta.id,
         titulo: tituloAviso.trim(),
         mensaje: mensaje.trim(),
@@ -77,6 +81,7 @@ function FormularioSolicitudCorreccion({ subasta, alExito, alCancelar }) {
 
   return (
     <form onSubmit={manejarEnvio} className="space-y-4">
+      {/* Resumen del destinatario y recordatorio de moderación ética */}
       <div className="rounded-xl bg-[#F7FBF3] border border-[#224F10]/12 p-3.5 text-xs flex flex-wrap items-center justify-between gap-2">
         <div>
           <span className="text-[10px] uppercase tracking-wider text-[#0D0D0D]/55 block">
@@ -94,6 +99,7 @@ function FormularioSolicitudCorreccion({ subasta, alExito, alCancelar }) {
         <Alert type="error" onClose={() => setMensajeError('')}>{mensajeError}</Alert>
       )}
 
+      {/* Select de motivo y campo de asunto */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Select
           id="motivoCorreccion"
@@ -110,6 +116,7 @@ function FormularioSolicitudCorreccion({ subasta, alExito, alCancelar }) {
         />
       </div>
 
+      {/* Área de texto con el detalle de lo solicitado */}
       <Textarea
         id="mensajeCorreccion"
         label="Detalle de la revisión solicitada *"
@@ -118,6 +125,7 @@ function FormularioSolicitudCorreccion({ subasta, alExito, alCancelar }) {
         onChange={(evento) => setMensaje(evento.target.value)}
       />
 
+      {/* Botones de acción */}
       <AccionesFormulario
         alCancelar={alCancelar}
         enviando={enviando}
@@ -128,7 +136,6 @@ function FormularioSolicitudCorreccion({ subasta, alExito, alCancelar }) {
   );
 }
 
-// Panel único reutilizado en Panel Admin, Explorar y Detalle para solicitar revisión al vendedor
 export function PanelSolicitudCorreccion({ subasta, enModal = false, alExito, alCancelar }) {
   if (!subasta) return null;
 
@@ -141,6 +148,7 @@ export function PanelSolicitudCorreccion({ subasta, enModal = false, alExito, al
     />
   );
 
+  // Renderizado condicional en ventana emergente o en bloque directo
   if (enModal) {
     return (
       <Modal isOpen onClose={alCancelar} title={`Solicitar revisión · Lote #${subasta.id}`}>

@@ -1,10 +1,7 @@
 import React from 'react';
 import { ChevronRight } from 'lucide-react';
 
-// ============================================================================
-// Componentes UI básicos reutilizados en toda la aplicación BidZone
-// ============================================================================
-
+// Diccionario de variantes cromáticas para el botón según la jerarquía visual deseada
 const CLASES_VARIANTE_BOTON = {
   primary: 'bg-[#224F10] text-[#EAFFD0] hover:bg-[#0D0D0D] shadow-xs',
   secondary: 'bg-[#B0E454] text-[#0D0D0D] hover:bg-[#224F10] hover:text-[#EAFFD0]',
@@ -14,6 +11,7 @@ const CLASES_VARIANTE_BOTON = {
   ghost: 'bg-transparent text-[#0D0D0D]/75 hover:text-[#224F10] hover:bg-[#224F10]/10',
 };
 
+// Color del circulito decorativo que envuelve la flecha '<ChevronRight />' dentro del botón
 const CLASES_CIRCULO_BOTON = {
   primary: 'bg-[#EAFFD0] text-[#224F10] group-hover:bg-[#B0E454] group-hover:text-[#0D0D0D]',
   secondary: 'bg-[#0D0D0D] text-[#EAFFD0]',

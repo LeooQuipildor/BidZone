@@ -20,7 +20,6 @@ import { TabUsuariosPanel } from './panel/TabUsuariosPanel';
 import { TabNotificacionesPanel } from './panel/TabNotificacionesPanel';
 import { TabPerfilPanel } from './panel/TabPerfilPanel';
 
-// Permite aceptar nombres de pestaña previos por URL sin romper enlaces
 const ALIAS_SECCION_URL = {
   overview: 'resumen',
   auctions: 'subastas',
@@ -36,6 +35,8 @@ export function VistaPanelControl({ seccionInicial = 'resumen' }) {
   const navegar = useNavigate();
   const ubicacion = useLocation();
   const [parametrosUrl, setParametrosUrl] = useSearchParams();
+
+  // Reloj de cuenta regresiva sincronizado para los componentes del panel
   const ahoraMs = useRelojSegundo();
 
   const usuarioActual = usarTiendaAutenticacion((estado) => estado.usuarioActual);
@@ -52,11 +53,11 @@ export function VistaPanelControl({ seccionInicial = 'resumen' }) {
   const notificaciones = usarTiendaNotificaciones((estado) => estado.notificaciones);
   const obtenerNotificaciones = usarTiendaNotificaciones((estado) => estado.obtenerNotificaciones);
 
+  // Estados locales para la barra de búsqueda y paginación interna
   const [textoBusqueda, setTextoBusqueda] = useState('');
   const [paginaSubastas, setPaginaSubastas] = useState(1);
   const [datosInicialesSeccion, setDatosInicialesSeccion] = useState(null);
 
-  // Al entrar al panel cargamos los datos de cada módulo
   useEffect(() => {
     obtenerUsuarios();
     obtenerSubastas();
@@ -66,11 +67,15 @@ export function VistaPanelControl({ seccionInicial = 'resumen' }) {
     obtenerNotificaciones();
   }, [obtenerUsuarios, obtenerSubastas, obtenerPujas, obtenerReportes, obtenerResenas, obtenerNotificaciones]);
 
-  const esAdmin = usuarioActual?.role === 'admin';
+  const esAdmin = usuarioActual?.rol === 'admin';
+
+  // Resolución de la pestaña activa leyendo query params
   const tabUrlRaw = parametrosUrl.get('tab');
   const tabDesdeUrl = tabUrlRaw ? ALIAS_SECCION_URL[tabUrlRaw] || tabUrlRaw : '';
   const abrirNuevoDesdeUrl = parametrosUrl.get('nuevo') === '1' || parametrosUrl.get('new') === '1';
   const seccionSolicitada = tabDesdeUrl || seccionInicial || 'resumen';
+
+  // Seguridad: Si un usuario regular intenta entrar a la pestaña de usuarios, se le redirige al resumen
   const seccionActiva = !esAdmin && seccionSolicitada === 'usuarios' ? 'resumen' : seccionSolicitada;
 
   function manejarCambioBusqueda(nuevoTexto) {
@@ -101,6 +106,7 @@ export function VistaPanelControl({ seccionInicial = 'resumen' }) {
     }
   }
 
+  // Generación de elementos de menú con contadores reactivos (insignias numéricas)
   const { seccionesMenu, seccionesCuenta } = construirMenuPanel({
     esAdmin,
     usuarioActual,
@@ -151,14 +157,16 @@ export function VistaPanelControl({ seccionInicial = 'resumen' }) {
 
   return (
     <div className="rounded-[28px] bg-[#F7FBF3] border border-[#224F10]/12 shadow-sm overflow-hidden flex flex-col lg:flex-row">
+      {/* Barra lateral de navegación con insignias numéricas */}
       <Sidebar
         seccionActiva={seccionActiva}
-        etiquetaRol={formatearRolUsuario(usuarioActual?.role, true)}
+        etiquetaRol={formatearRolUsuario(usuarioActual?.rol, true)}
         seccionesMenu={seccionesMenu}
         seccionesCuenta={seccionesCuenta}
         alElegirSeccion={elegirSeccion}
       />
 
+      {/* Área de contenido dinámico */}
       <div className="flex-1 p-5 sm:p-7 space-y-6 min-w-0">
         <Header
           seccionActiva={seccionActiva}
@@ -167,6 +175,7 @@ export function VistaPanelControl({ seccionInicial = 'resumen' }) {
           usuarioActual={usuarioActual}
         />
 
+        {/* Renderizado de la pestaña activa o resumen por defecto */}
         {contenidoPorSeccion[seccionActiva] || contenidoPorSeccion.resumen}
       </div>
     </div>

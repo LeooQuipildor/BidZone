@@ -8,33 +8,38 @@ import {
 } from '../../nucleo/utilidades/ayudas';
 import { inputLocalAFechaIso } from '../../nucleo/utilidades/formatos';
 
-// Construye el objeto de actualización de subasta con los nombres que espera el backend
 function construirCuerpoActualizacion(cambios) {
   const cuerpo = {};
-  if (cambios.titulo !== undefined) cuerpo.title = cambios.titulo;
-  if (cambios.descripcion !== undefined) cuerpo.description = cambios.descripcion;
-  if (cambios.categoria !== undefined) cuerpo.category = cambios.categoria;
-  if (cambios.urlImagen !== undefined) cuerpo.imageUrl = cambios.urlImagen;
-  if (cambios.estado !== undefined) cuerpo.status = cambios.estado;
+  if (cambios.titulo !== undefined) cuerpo.titulo = cambios.titulo;
+  if (cambios.descripcion !== undefined) cuerpo.descripcion = cambios.descripcion;
+  if (cambios.categoria !== undefined) cuerpo.categoria = cambios.categoria;
+  if (cambios.urlImagen !== undefined) cuerpo.urlImagen = cambios.urlImagen;
+  if (cambios.estado !== undefined) cuerpo.estado = cambios.estado;
   if (cambios.precioInicial !== undefined && cambios.precioInicial !== '') {
-    cuerpo.basePrice = Number(cambios.precioInicial);
+    cuerpo.precioBase = Number(cambios.precioInicial);
   }
   if (cambios.incrementoMinimo !== undefined && cambios.incrementoMinimo !== '') {
-    cuerpo.minIncrement = Number(cambios.incrementoMinimo);
+    cuerpo.incrementoMinimo = Number(cambios.incrementoMinimo);
   }
-  // La fecha y hora de cierre (endTime) no se puede modificar tras crear la subasta
+  // La fecha y hora de cierre (fechaFin) no se puede modificar tras crear la subasta
   return cuerpo;
 }
 
-// Tienda global de subastas (conecta con /api/auctions)
+// Tienda global de subastas (conecta con /api/subastas)
 export const usarTiendaSubastas = create((set, get) => ({
-  subastas: [],
-  detalleSubastaActual: null,
-  cargando: false,
-  cargandoDetalle: false,
-  error: null,
-  filtros: { busqueda: '', categoria: 'Todas', estado: 'activa', ordenarPor: 'proximasACerrar' },
-  paginaCatalogo: 1,
+  // ESTADOS REACTIVOS
+  subastas: [],               // Array de publicaciones
+  detalleSubastaActual: null, // Subasta individual con datos enriquecidos
+  cargando: false,            // Bandera de carga general
+  cargandoDetalle: false,     // Bandera de carga específica para la vista de detalle
+  error: null,                // Mensaje de error si la petición falla
+  filtros: {
+    busqueda: '',
+    categoria: 'Todas',
+    estado: 'activa',
+    ordenarPor: 'proximasACerrar',
+  },
+  paginaCatalogo: 1,          // Página actual en la vista de catálogo
 
   actualizarFiltros: (nuevosFiltros) => {
     set((estado) => ({
@@ -50,7 +55,7 @@ export const usarTiendaSubastas = create((set, get) => ({
   obtenerSubastas: async () => {
     set({ cargando: true, error: null });
     try {
-      const datos = await peticionHttp('/auctions');
+      const datos = await peticionHttp('/subastas');
       set({ subastas: datos, cargando: false });
       return datos;
     } catch (error) {
@@ -62,7 +67,7 @@ export const usarTiendaSubastas = create((set, get) => ({
   obtenerSubastaPorId: async (id) => {
     set({ cargandoDetalle: true, error: null });
     try {
-      const datos = await peticionHttp(`/auctions/${id}`);
+      const datos = await peticionHttp(`/subastas/${id}`);
       set((estado) => ({
         detalleSubastaActual: datos,
         cargandoDetalle: false,
@@ -79,15 +84,15 @@ export const usarTiendaSubastas = create((set, get) => ({
     set({ error: null });
     try {
       const cuerpo = {
-        title: datos.titulo,
-        description: datos.descripcion || '',
-        category: datos.categoria || 'Tecnología',
-        imageUrl: datos.urlImagen ? datos.urlImagen.trim() : '',
-        basePrice: Number(datos.precioInicial),
-        minIncrement: Number(datos.incrementoMinimo),
-        endTime: inputLocalAFechaIso(datos.fechaFin) || datos.fechaFin,
+        titulo: datos.titulo,
+        descripcion: datos.descripcion || '',
+        categoria: datos.categoria || 'Tecnología',
+        urlImagen: datos.urlImagen ? datos.urlImagen.trim() : '',
+        precioBase: Number(datos.precioInicial),
+        incrementoMinimo: Number(datos.incrementoMinimo),
+        fechaFin: inputLocalAFechaIso(datos.fechaFin) || datos.fechaFin,
       };
-      const creada = await peticionHttp('/auctions', {
+      const creada = await peticionHttp('/subastas', {
         method: 'POST',
         body: JSON.stringify(cuerpo),
       });
@@ -103,7 +108,7 @@ export const usarTiendaSubastas = create((set, get) => ({
     set({ error: null });
     try {
       const cuerpo = construirCuerpoActualizacion(cambios);
-      const actualizada = await peticionHttp(`/auctions/${id}`, {
+      const actualizada = await peticionHttp(`/subastas/${id}`, {
         method: 'PUT',
         body: JSON.stringify(cuerpo),
       });
@@ -121,7 +126,7 @@ export const usarTiendaSubastas = create((set, get) => ({
   eliminarSubasta: async (id) => {
     set({ error: null });
     try {
-      await peticionHttp(`/auctions/${id}`, { method: 'DELETE' });
+      await peticionHttp(`/subastas/${id}`, { method: 'DELETE' });
       set((estado) => {
         const estabaViendoEsa =
           estado.detalleSubastaActual && mismoId(estado.detalleSubastaActual.id, id);
@@ -137,6 +142,7 @@ export const usarTiendaSubastas = create((set, get) => ({
   },
 }));
 
+// Al cerrar sesión, limpiamos el detalle de subasta cargado en memoria
 registrarLimpiezaSesion(() => {
   usarTiendaSubastas.setState({ detalleSubastaActual: null, error: null });
 });

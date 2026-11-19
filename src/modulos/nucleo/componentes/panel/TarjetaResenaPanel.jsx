@@ -5,7 +5,6 @@ import { formatearFechaHora } from '../../utilidades/formatos';
 
 const ESTRELLAS = [1, 2, 3, 4, 5];
 
-// Tarjeta de una reseña emitida tras finalizar una subasta (RN07)
 export function TarjetaResenaPanel({
   resena,
   tituloSubasta,
@@ -18,31 +17,37 @@ export function TarjetaResenaPanel({
   return (
     <div className="rounded-2xl bg-white border border-[#224F10]/10 p-5 flex flex-col justify-between gap-4 shadow-2xs">
       <div className="space-y-3">
+        {/* Fila superior: Estrellas de puntuación e Insignia de contexto de rol */}
         <div className="flex items-center justify-between gap-2">
+          {/* Mapeo de las 5 estrellas: si el índice es menor o igual al rating, se pinta de color */}
           <div className="flex items-center gap-1">
             {ESTRELLAS.map((numeroEstrella) => (
               <Star
                 key={numeroEstrella}
                 className={`w-4 h-4 ${
-                  numeroEstrella <= Number(resena.rating)
+                  numeroEstrella <= Number(resena.puntaje)
                     ? 'text-[#224F10] fill-[#B0E454]'
                     : 'text-[#0D0D0D]/15'
                 }`}
               />
             ))}
-            <span className="ml-1.5 text-xs font-bold text-[#224F10]">{resena.rating}.0</span>
+            <span className="ml-1.5 text-xs font-bold text-[#224F10]">{resena.puntaje}.0</span>
           </div>
+
+          {/* Insignia que describe la dirección de la interacción */}
           <span className="px-2.5 py-0.5 rounded-full bg-[#EAFFD0] text-[#224F10] border border-[#224F10]/15 text-[10px] font-bold">
-            {resena.roleContext === 'comprador_a_vendedor'
+            {resena.contextoRol === 'comprador_a_vendedor'
               ? 'Comprador → Vendedor'
               : 'Vendedor → Comprador'}
           </span>
         </div>
 
+        {/* Comentario y opinión textual dejada por el usuario */}
         <p className="text-sm font-medium text-[#0D0D0D] leading-relaxed">
-          &ldquo;{resena.comment}&rdquo;
+          &ldquo;{resena.comentario}&rdquo;
         </p>
 
+        {/* Bloque informativo de contexto: Participantes y Subasta vinculada */}
         <div className="text-xs text-[#0D0D0D]/75 space-y-1 bg-[#F7FBF3] p-3.5 rounded-xl border border-[#224F10]/10">
           <p>
             Calificado: <strong className="text-[#224F10]">{nombreCalificado}</strong>
@@ -53,7 +58,7 @@ export function TarjetaResenaPanel({
           <p className="truncate">
             Operación:{' '}
             <Link
-              to={`/subastas/${resena.auctionId}`}
+              to={`/subastas/${resena.subastaId}`}
               className="font-semibold text-[#224F10] hover:underline"
             >
               {tituloSubasta}
@@ -62,8 +67,11 @@ export function TarjetaResenaPanel({
         </div>
       </div>
 
+      {/* Pie de la tarjeta: Fecha de emisión y botones de acción (si es autor) */}
       <div className="flex items-center justify-between pt-3 border-t border-[#224F10]/8 text-[11px] text-[#0D0D0D]/55">
-        <span>{formatearFechaHora(resena.createdAt)}</span>
+        <span>{formatearFechaHora(resena.creadoEn)}</span>
+
+        {/* Botones de edición y borrado: solo visibles si `puedeEditar` es true */}
         {puedeEditar && (
           <div className="flex items-center gap-1.5">
             <button

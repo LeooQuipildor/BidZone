@@ -10,6 +10,8 @@ import { PaginaFormulario } from '../../nucleo/diseno/componentesBloques';
 
 export function VistaCrearResena() {
   const navegar = useNavigate();
+
+  // Lectura de parámetros query string opcionales
   const [parametrosUrl] = useSearchParams();
   const idSubastaInicial = parametrosUrl.get('subasta') || parametrosUrl.get('auctionId') || '';
 
@@ -29,7 +31,10 @@ export function VistaCrearResena() {
     obtenerResenas();
   }, [obtenerSubastas, obtenerUsuarios, obtenerResenas]);
 
+  // Subastas cerradas donde el usuario participó y tiene pendiente emitir su reseña
   const subastasElegibles = obtenerSubastasPendientesResena(subastas, resenas, usuarioActual?.id);
+
+  // Lista de contrapartes excluyendo al usuario en sesión
   const otrosUsuarios = usuarios.filter((usuario) => !mismoId(usuario.id, usuarioActual?.id));
 
   return (

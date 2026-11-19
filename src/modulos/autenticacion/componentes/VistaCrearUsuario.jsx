@@ -6,6 +6,7 @@ import { PaginaFormulario } from '../../nucleo/diseno/componentesBloques';
 
 export function VistaCrearUsuario() {
   const navegar = useNavigate();
+
   const crearUsuario = usarTiendaAutenticacion((estado) => estado.crearUsuario);
 
   return (

@@ -7,7 +7,6 @@ import {
 import { eliminarPorId, reemplazarPorId } from '../../nucleo/utilidades/ayudas';
 import { usarTiendaAutenticacion } from '../../autenticacion/estado/tiendaAutenticacion';
 
-// Al cambiar una reseña, el backend recalcula la reputación promedio de los usuarios (RN07)
 async function refrescarReputaciones() {
   const tiendaAuth = usarTiendaAutenticacion.getState();
   await tiendaAuth.obtenerUsuarios();
@@ -16,9 +15,10 @@ async function refrescarReputaciones() {
 
 // Tienda global de calificaciones / reseñas RN07 (conecta con /api/reviews)
 export const usarTiendaResenas = create((set) => ({
-  resenas: [],
-  cargando: false,
-  error: null,
+  // ESTADOS REACTIVOS
+  resenas: [],      // Array de reseñas (emitidas y recibidas)
+  cargando: false,  // Bandera de llamada HTTP
+  error: null,      // Mensaje de error si falla la petición
 
   obtenerResenas: async () => {
     if (!hayTokenSesion()) {
@@ -28,7 +28,7 @@ export const usarTiendaResenas = create((set) => ({
 
     set({ cargando: true, error: null });
     try {
-      const datos = await peticionHttp('/reviews');
+      const datos = await peticionHttp('/resenas');
       set({ resenas: datos, cargando: false });
       return datos;
     } catch (error) {
@@ -41,18 +41,18 @@ export const usarTiendaResenas = create((set) => ({
     set({ error: null });
     try {
       const cuerpo = {
-        auctionId: Number(datos.idSubasta),
-        rating: Number(datos.calificacion),
-        comment: datos.comentario ? datos.comentario.trim() : '',
+        subastaId: Number(datos.idSubasta),
+        puntaje: Number(datos.calificacion),
+        comentario: datos.comentario ? datos.comentario.trim() : '',
       };
       if (datos.idUsuarioCalificado) {
-        cuerpo.targetUserId = Number(datos.idUsuarioCalificado);
+        cuerpo.calificadoId = Number(datos.idUsuarioCalificado);
       }
       if (datos.contextoRol) {
-        cuerpo.roleContext = datos.contextoRol;
+        cuerpo.contextoRol = datos.contextoRol;
       }
 
-      const creada = await peticionHttp('/reviews', {
+      const creada = await peticionHttp('/resenas', {
         method: 'POST',
         body: JSON.stringify(cuerpo),
       });
@@ -70,13 +70,13 @@ export const usarTiendaResenas = create((set) => ({
     set({ error: null });
     try {
       const cuerpo = {};
-      if (cambios.calificacion !== undefined) cuerpo.rating = Number(cambios.calificacion);
+      if (cambios.calificacion !== undefined) cuerpo.puntaje = Number(cambios.calificacion);
       if (cambios.comentario !== undefined) {
-        cuerpo.comment = cambios.comentario ? cambios.comentario.trim() : '';
+        cuerpo.comentario = cambios.comentario ? cambios.comentario.trim() : '';
       }
-      if (cambios.contextoRol !== undefined) cuerpo.roleContext = cambios.contextoRol;
+      if (cambios.contextoRol !== undefined) cuerpo.contextoRol = cambios.contextoRol;
 
-      const actualizada = await peticionHttp(`/reviews/${id}`, {
+      const actualizada = await peticionHttp(`/resenas/${id}`, {
         method: 'PUT',
         body: JSON.stringify(cuerpo),
       });
@@ -93,7 +93,7 @@ export const usarTiendaResenas = create((set) => ({
   eliminarResena: async (id) => {
     set({ error: null });
     try {
-      await peticionHttp(`/reviews/${id}`, { method: 'DELETE' });
+      await peticionHttp(`/resenas/${id}`, { method: 'DELETE' });
       set((estado) => ({ resenas: eliminarPorId(estado.resenas, id) }));
 
       await refrescarReputaciones();
@@ -104,6 +104,7 @@ export const usarTiendaResenas = create((set) => ({
   },
 }));
 
+// Al cerrar sesión, limpiamos las reseñas en memoria
 registrarLimpiezaSesion(() => {
   usarTiendaResenas.setState({ resenas: [], error: null, cargando: false });
 });

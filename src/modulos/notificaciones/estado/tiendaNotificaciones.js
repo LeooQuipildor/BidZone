@@ -8,9 +8,10 @@ import { eliminarPorId, mismoId } from '../../nucleo/utilidades/ayudas';
 
 // Tienda global de notificaciones del usuario (conecta con /api/notifications)
 export const usarTiendaNotificaciones = create((set) => ({
-  notificaciones: [],
-  cargando: false,
-  error: null,
+  // ESTADOS REACTIVOS
+  notificaciones: [], // Array de notificaciones recibidas
+  cargando: false,    // Bandera de llamada HTTP
+  error: null,        // Mensaje de error si falla la petición
 
   obtenerNotificaciones: async () => {
     if (!hayTokenSesion()) {
@@ -20,7 +21,7 @@ export const usarTiendaNotificaciones = create((set) => ({
 
     set({ cargando: true, error: null });
     try {
-      const datos = await peticionHttp('/notifications');
+      const datos = await peticionHttp('/notificaciones');
       set({ notificaciones: datos, cargando: false });
       return datos;
     } catch (error) {
@@ -32,13 +33,13 @@ export const usarTiendaNotificaciones = create((set) => ({
   marcarComoLeida: async (id) => {
     set({ error: null });
     try {
-      const actualizada = await peticionHttp(`/notifications/${id}/read`, {
+      const actualizada = await peticionHttp(`/notificaciones/${id}/leida`, {
         method: 'PATCH',
       });
       set((estado) => ({
         notificaciones: estado.notificaciones.map((notificacion) =>
           mismoId(notificacion.id, id)
-            ? { ...notificacion, ...actualizada, read: true }
+            ? { ...notificacion, ...actualizada, leida: true }
             : notificacion
         ),
       }));
@@ -52,11 +53,11 @@ export const usarTiendaNotificaciones = create((set) => ({
   marcarTodasComoLeidas: async () => {
     set({ error: null });
     try {
-      await peticionHttp('/notifications/read-all', { method: 'PATCH' });
+      await peticionHttp('/notificaciones/leer-todas', { method: 'PATCH' });
       set((estado) => ({
         notificaciones: estado.notificaciones.map((notificacion) => ({
           ...notificacion,
-          read: true,
+          leida: true,
         })),
       }));
     } catch (error) {
@@ -68,7 +69,7 @@ export const usarTiendaNotificaciones = create((set) => ({
   eliminarNotificacion: async (id) => {
     set({ error: null });
     try {
-      await peticionHttp(`/notifications/${id}`, { method: 'DELETE' });
+      await peticionHttp(`/notificaciones/${id}`, { method: 'DELETE' });
       set((estado) => ({
         notificaciones: eliminarPorId(estado.notificaciones, id),
       }));
@@ -78,18 +79,17 @@ export const usarTiendaNotificaciones = create((set) => ({
     }
   },
 
-  // Envía un aviso administrativo a un usuario (solo Admin: POST /api/notifications)
-  enviarNotificacion: async ({ idUsuario, idSubasta = null, titulo, mensaje, tipo = 'system' }) => {
+  enviarNotificacion: async ({ idUsuario, idSubasta = null, titulo, mensaje, tipo = 'sistema' }) => {
     set({ error: null });
     try {
       const cuerpo = {
-        userId: Number(idUsuario),
-        auctionId: idSubasta ? Number(idSubasta) : null,
-        title: String(titulo || '').trim(),
-        message: String(mensaje || '').trim(),
-        type: tipo,
+        usuarioId: Number(idUsuario),
+        subastaId: idSubasta ? Number(idSubasta) : null,
+        titulo: String(titulo || '').trim(),
+        mensaje: String(mensaje || '').trim(),
+        tipo,
       };
-      return await peticionHttp('/notifications', {
+      return await peticionHttp('/notificaciones', {
         method: 'POST',
         body: JSON.stringify(cuerpo),
       });
@@ -100,6 +100,7 @@ export const usarTiendaNotificaciones = create((set) => ({
   },
 }));
 
+// Al cerrar sesión, limpiamos la lista de notificaciones en memoria
 registrarLimpiezaSesion(() => {
   usarTiendaNotificaciones.setState({
     notificaciones: [],

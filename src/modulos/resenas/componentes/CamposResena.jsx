@@ -4,12 +4,12 @@ import { mismoId } from '../../nucleo/utilidades/ayudas';
 import { Select } from '../../nucleo/diseno/ui';
 
 const PUNTUACIONES = ['5', '4', '3', '2', '1'];
+
 const OPCIONES_ROL_RESENA = [
   { valor: 'comprador_a_vendedor', etiqueta: 'Comprador → Vendedor' },
   { valor: 'vendedor_a_comprador', etiqueta: 'Vendedor → Comprador' },
 ];
 
-// Botonera de 1 a 5 estrellas para calificar la operación
 export function SelectorEstrellas({ valorActual, alElegir }) {
   return (
     <div className="space-y-1.5">
@@ -40,7 +40,6 @@ export function SelectorEstrellas({ valorActual, alElegir }) {
   );
 }
 
-// Selectores iniciales al emitir una reseña nueva (subasta finalizada, contraparte y rol)
 export function CamposSeleccionResena({
   subastasElegibles,
   otrosUsuarios,
@@ -52,26 +51,29 @@ export function CamposSeleccionResena({
   bloquearContraparte,
   alCambiar,
 }) {
+  // Mapeo de subastas con indicación de si ya fue calificada por este usuario
   const opcionesSubastas = subastasElegibles.map((subasta) => {
     const yaCalificada = resenas.some(
-      (item) => mismoId(item.auctionId, subasta.id) && mismoId(item.reviewerId, idUsuarioActual)
+      (item) => mismoId(item.subastaId, subasta.id) && mismoId(item.autorId, idUsuarioActual)
     );
     return {
       valor: String(subasta.id),
-      etiqueta: `#${subasta.id} — ${subasta.title}${yaCalificada ? ' (Ya calificada)' : ''}`,
+      etiqueta: `#${subasta.id} — ${subasta.titulo}${yaCalificada ? ' (Ya calificada)' : ''}`,
     };
   });
 
+  // Mapeo de usuarios contraparte
   const opcionesContraparte =
     otrosUsuarios.length > 0
       ? otrosUsuarios.map((usuario) => ({
           valor: String(usuario.id),
-          etiqueta: usuario.email ? `${usuario.name} (${usuario.email})` : usuario.name,
+          etiqueta: usuario.correo ? `${usuario.nombre} (${usuario.correo})` : usuario.nombre,
         }))
       : [{ valor: '', etiqueta: 'Sin contraparte disponible' }];
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      {/* 1. Selector de Subasta Finalizada */}
       <Select
         id="idSubasta"
         name="idSubasta"
@@ -80,6 +82,8 @@ export function CamposSeleccionResena({
         onChange={alCambiar}
         options={opcionesSubastas}
       />
+
+      {/* 2. Selector de Usuario Contraparte */}
       <Select
         id="idUsuarioCalificado"
         name="idUsuarioCalificado"
@@ -89,6 +93,8 @@ export function CamposSeleccionResena({
         onChange={alCambiar}
         options={opcionesContraparte}
       />
+
+      {/* 3. Selector de Rol en la Operación */}
       <Select
         id="contextoRol"
         name="contextoRol"

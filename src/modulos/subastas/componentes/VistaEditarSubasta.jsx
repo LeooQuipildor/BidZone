@@ -25,14 +25,16 @@ export function VistaEditarSubasta() {
     obtenerPujas();
   }, [id, obtenerSubastaPorId, obtenerPujas]);
 
+  // Selección de la subasta activa
   const subasta =
     detalleSubastaActual && mismoId(detalleSubastaActual.id, id)
       ? detalleSubastaActual
       : buscarPorId(subastas, id);
 
-  const esAdmin = usuarioActual?.role === 'admin';
-  const esDueno = Boolean(subasta && mismoId(usuarioActual?.id, subasta.sellerId));
+  const esAdmin = usuarioActual?.rol === 'admin';
+  const esDueno = Boolean(subasta && mismoId(usuarioActual?.id, subasta.vendedorId));
 
+  // Control de errores de acceso y existencia
   let errorTitulo = '';
   let errorMensaje = '';
   if (!subasta) {
@@ -45,11 +47,13 @@ export function VistaEditarSubasta() {
   }
 
   const rutaRetorno = subasta ? `/subastas/${subasta.id}` : '/subastas';
+
+  // Verificación de si la subasta ya recibió pujas para aplicar la RN08
   const tienePujas = Boolean(
     subasta &&
-      (Number(subasta.bidCount || 0) > 0 ||
-        (Array.isArray(subasta.bids) && subasta.bids.length > 0) ||
-        pujas.some((puja) => mismoId(puja.auctionId, id)))
+      (Number(subasta.cantidadPujas || 0) > 0 ||
+        (Array.isArray(subasta.pujas) && subasta.pujas.length > 0) ||
+        pujas.some((puja) => mismoId(puja.subastaId, id)))
   );
 
   async function manejarActualizacion(datos) {

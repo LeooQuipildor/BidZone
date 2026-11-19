@@ -3,7 +3,6 @@ import { ArrowLeft, ArrowRight, Mail, MapPin, Phone, Sparkles } from 'lucide-rea
 import { Button, Card } from './ui';
 import { ErrorCard, Loading } from './uiFeedback';
 
-// Encabezado estándar para vistas independientes del sistema
 export function CabeceraPagina({ titulo, subtitulo, accion }) {
   return (
     <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-6 mb-8 border-b border-[#224F10]/15">
@@ -22,7 +21,6 @@ export function CabeceraPagina({ titulo, subtitulo, accion }) {
   );
 }
 
-// Contenedor estándar para todas las vistas de Crear y Editar (/new y /edit)
 export function PaginaFormulario({
   titulo,
   subtitulo,
@@ -63,7 +61,6 @@ export function PaginaFormulario({
   );
 }
 
-// Botonera inferior compartida entre todos los formularios de carga y edición
 export function AccionesFormulario({
   alCancelar,
   textoCancelar = 'Cancelar',
@@ -89,7 +86,6 @@ export function AccionesFormulario({
   );
 }
 
-// Caja reutilizable para mostrar los datos de contacto liberados tras ganar (RN05)
 export function DatosContactoPersona({
   titulo,
   persona,
@@ -109,24 +105,23 @@ export function DatosContactoPersona({
   return (
     <div className={`space-y-1 ${claseBorde}`}>
       <p className={`text-[10px] font-bold uppercase tracking-wider ${colorTitulo}`}>{titulo}</p>
-      <p className={colorNombre}>{persona?.name || nombrePorDefecto}</p>
+      <p className={colorNombre}>{persona?.nombre || nombrePorDefecto}</p>
       <p className={`flex items-center gap-1.5 ${colorDato}`}>
         <Phone className={`w-3.5 h-3.5 shrink-0 ${colorIcono}`} />
-        {persona?.phone || 'Sin teléfono'}
+        {persona?.telefono || 'Sin teléfono'}
       </p>
       <p className={`flex items-center gap-1.5 truncate ${colorDato}`}>
         <Mail className={`w-3.5 h-3.5 shrink-0 ${colorIcono}`} />
-        {persona?.email || 'Privado (RN05)'}
+        {persona?.correo || 'Privado (RN05)'}
       </p>
       <p className={`flex items-center gap-1.5 ${colorDato}`}>
         <MapPin className={`w-3.5 h-3.5 shrink-0 ${colorIcono}`} />
-        {persona?.city || 'Argentina'}
+        {persona?.ciudad || 'Argentina'}
       </p>
     </div>
   );
 }
 
-// Fila reutilizable de botones tipo píldora para filtrar listados
 export function FiltrosBotones({ opciones, valorActual, alElegir, claseInactivo }) {
   const estiloInactivo = claseInactivo || 'bg-[#F7FBF3] text-[#0D0D0D]/70 hover:bg-[#EAFFD0]';
   return (
@@ -152,7 +147,6 @@ export function FiltrosBotones({ opciones, valorActual, alElegir, claseInactivo 
   );
 }
 
-// Tarjeta verde destacada usada al final de las grillas del Inicio y del Catálogo
 export function TarjetaCtaCatalogo({ titulo, descripcion, textoBoton, alHacerClic }) {
   return (
     <div className="rounded-[28px] bg-[#224F10] text-[#EAFFD0] p-6 sm:p-7 flex flex-col justify-between min-h-[320px] shadow-sm">

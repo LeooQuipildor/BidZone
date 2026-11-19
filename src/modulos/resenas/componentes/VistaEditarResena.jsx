@@ -20,14 +20,16 @@ export function VistaEditarResena() {
     obtenerResenas();
   }, [obtenerResenas]);
 
+  // Búsqueda de la reseña a editar
   const resena = buscarPorId(resenas, id);
 
+  // Verificación de autoría
   let errorTitulo = '';
   let errorMensaje = '';
   if (!resena) {
     errorTitulo = 'Calificación no encontrada';
     errorMensaje = 'El registro solicitado no existe.';
-  } else if (!mismoId(usuarioActual?.id, resena.reviewerId)) {
+  } else if (!mismoId(usuarioActual?.id, resena.autorId)) {
     errorTitulo = 'Sin permisos de edición';
     errorMensaje = 'Solo el autor de la reseña puede modificarla.';
   }

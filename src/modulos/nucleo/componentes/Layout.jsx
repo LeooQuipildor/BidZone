@@ -7,6 +7,7 @@ import { mismoId } from '../utilidades/ayudas';
 import { Navbar } from './Navbar';
 import { Footer } from './Footer';
 
+// Lista de rutas que corresponden a secciones del Panel de Control
 const RUTAS_PANEL = [
   '/panel',
   '/dashboard',
@@ -22,18 +23,18 @@ const RUTAS_PANEL = [
   '/notifications',
 ];
 
-// Estructura general que envuelve todas las páginas con Navbar, contenido y Footer
 export function Layout({ children }) {
   const navegar = useNavigate();
   const ubicacion = useLocation();
   const rutaAnteriorRef = useRef(ubicacion.pathname);
+
+  // ESTADO GLOBAL (Zustand)
   const usuarioActual = usarTiendaAutenticacion((estado) => estado.usuarioActual);
   const verificarSesion = usarTiendaAutenticacion((estado) => estado.verificarSesion);
   const cerrarSesion = usarTiendaAutenticacion((estado) => estado.cerrarSesion);
   const notificaciones = usarTiendaNotificaciones((estado) => estado.notificaciones);
   const obtenerNotificaciones = usarTiendaNotificaciones((estado) => estado.obtenerNotificaciones);
 
-  // Al cambiar de página vamos arriba al instante; si se toca el enlace actual, subimos suave
   useEffect(() => {
     const cambioDePagina = rutaAnteriorRef.current !== ubicacion.pathname;
     rutaAnteriorRef.current = ubicacion.pathname;
@@ -45,22 +46,23 @@ export function Layout({ children }) {
     }
   }, [ubicacion.pathname, ubicacion.search, ubicacion.key]);
 
-  // Al iniciar la app, validamos el token guardado si existe
   useEffect(() => {
     if (hayTokenSesion()) verificarSesion();
   }, [verificarSesion]);
 
-  // Cuando la persona inicia sesión, cargamos sus notificaciones
   useEffect(() => {
     if (usuarioActual?.id) obtenerNotificaciones();
   }, [usuarioActual?.id, obtenerNotificaciones]);
 
   const esInicio = ubicacion.pathname === '/';
   const esPanel = RUTAS_PANEL.includes(ubicacion.pathname);
+
+  // Calcula cuántas notificaciones pertenecen al usuario conectado y están sin leer
   const cantidadSinLeer = usuarioActual
-    ? notificaciones.filter((item) => mismoId(item.userId, usuarioActual.id) && !item.read).length
+    ? notificaciones.filter((item) => mismoId(item.usuarioId, usuarioActual.id) && !item.leida).length
     : 0;
 
+  // Ajuste de anchura del contenedor principal según la vista
   let claseContenido = 'flex-1 w-full max-w-7xl mx-auto px-3 sm:px-6 pt-5 pb-12';
   if (esInicio) claseContenido = 'flex-1 w-full';
   else if (esPanel) claseContenido = 'flex-1 w-full max-w-[1400px] mx-auto px-3 sm:px-6 pt-5 pb-12';
@@ -72,13 +74,18 @@ export function Layout({ children }) {
 
   return (
     <div className="min-h-screen flex flex-col bg-[#EAFFD0] text-[#0D0D0D]">
+      {/* Barra de navegación superior */}
       <Navbar
         esInicio={esInicio}
         usuarioActual={usuarioActual}
         cantidadSinLeer={cantidadSinLeer}
         alCerrarSesion={manejarCierreSesion}
       />
+
+      {/* Contenido dinámico inyectado por las rutas hijas de React Router */}
       <main className={claseContenido}>{children}</main>
+
+      {/* Pie de página común */}
       <Footer />
     </div>
   );

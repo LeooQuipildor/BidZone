@@ -4,8 +4,6 @@ import { Button } from '../../nucleo/diseno/ui';
 import { Modal } from '../../nucleo/diseno/uiFeedback';
 import { formatearMoneda } from '../../nucleo/utilidades/formatos';
 
-// Modal compartido para confirmar una puja antes de enviarla al servidor (RN04)
-// Se usa en el detalle de la subasta, en la pantalla de nueva puja y en el panel
 export function ModalConfirmarPuja({
   estaAbierto,
   alCerrar,
@@ -15,19 +13,22 @@ export function ModalConfirmarPuja({
   montoPuja,
   notaPuja,
 }) {
+  // Cálculo de cuánto dinero extra sobre el precio actual representa esta oferta
   const diferenciaVsActual = subasta
-    ? Number(montoPuja) - Number(subasta.currentPrice)
+    ? Number(montoPuja) - Number(subasta.precioActual)
     : 0;
 
   return (
     <Modal
       isOpen={estaAbierto}
       onClose={() => {
+        // Si está en curso la petición, no permitimos cerrar para evitar inconsistencias
         if (!enviando) alCerrar();
       }}
       title="Confirmar oferta"
     >
       <div className="space-y-5">
+        {/* Alerta de recordatorio legal RN04 */}
         <div className="p-3.5 bg-[#B0E454]/30 rounded-2xl border border-[#224F10]/20 text-xs text-[#0D0D0D]">
           <p className="font-bold text-sm mb-1 text-[#224F10] flex items-center gap-1.5">
             <CheckCircle2 className="w-4 h-4 text-[#224F10]" />
@@ -38,6 +39,7 @@ export function ModalConfirmarPuja({
           </p>
         </div>
 
+        {/* Ficha resumen con los datos de la subasta */}
         <div className="bg-white/90 rounded-2xl p-4 sm:p-5 border border-[#224F10]/15 space-y-4">
           {subasta && (
             <>
@@ -46,7 +48,7 @@ export function ModalConfirmarPuja({
                   Artículo / Subasta
                 </span>
                 <span className="text-sm font-semibold text-[#0D0D0D] line-clamp-2">
-                  {subasta.title}
+                  {subasta.titulo}
                 </span>
               </div>
 
@@ -54,20 +56,20 @@ export function ModalConfirmarPuja({
                 <div>
                   <span className="text-[11px] text-[#0D0D0D]/55 block">Oferta líder actual</span>
                   <strong className="text-sm font-semibold text-[#0D0D0D]">
-                    {formatearMoneda(subasta.currentPrice)}
+                    {formatearMoneda(subasta.precioActual)}
                   </strong>
                 </div>
                 <div>
                   <span className="text-[11px] text-[#0D0D0D]/55 block">Incremento mínimo</span>
                   <strong className="text-sm font-semibold text-[#224F10]">
-                    +{formatearMoneda(subasta.minIncrement)}
+                    +{formatearMoneda(subasta.incrementoMinimo)}
                   </strong>
                 </div>
               </div>
             </>
           )}
 
-          {/* Recuadro destacado con el monto que va a ofertar la persona */}
+          {/* Recuadro destacado con el monto final de la puja */}
           <div className="bg-[#EAFFD0] p-4 rounded-2xl border-2 border-[#224F10]/30 shadow-xs">
             <span className="text-xs font-bold uppercase tracking-wider text-[#224F10] block mb-1">
               Monto que estás ofertando:
@@ -84,6 +86,7 @@ export function ModalConfirmarPuja({
             </div>
           </div>
 
+          {/* Nota opcional de coordinación si el postor escribió una */}
           {notaPuja && (
             <div className="text-xs text-[#0D0D0D]/80 pt-1">
               <span className="font-semibold block text-[#0D0D0D]">Nota de coordinación:</span>
@@ -94,6 +97,7 @@ export function ModalConfirmarPuja({
           )}
         </div>
 
+        {/* Botones de Cancelar y Confirmar */}
         <div className="flex flex-col-reverse sm:flex-row items-center justify-end gap-3 pt-1">
           <Button
             variant="outline"

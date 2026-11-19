@@ -12,7 +12,6 @@ const OPCIONES_MOTIVO = [
   { valor: 'Artículo distinto a la descripción publicada', etiqueta: 'El producto no coincide con lo publicado' },
 ];
 
-// Formulario para que el socio abra un nuevo ticket de reclamo o edite el suyo mientras siga abierto
 export function FormularioReporte({
   reporte = null,
   subastas = [],
@@ -25,17 +24,20 @@ export function FormularioReporte({
   alCancelar,
 }) {
   const estaEditando = Boolean(reporte);
-  const bloqueado = Boolean(estaEditando && reporte.status !== 'en_revision');
+
+  // Si el ticket ya fue dictaminado por moderación, queda congelado para edición
+  const bloqueado = Boolean(estaEditando && reporte.estado !== 'en_revision');
 
   const [datosFormulario, setDatosFormulario] = useState(() => ({
-    idSubasta: reporte ? String(reporte.auctionId) : idSubastaInicial,
-    idUsuarioReportado: reporte ? String(reporte.reportedUserId) : idUsuarioReportadoInicial,
-    motivo: reporte ? reporte.reason || '' : 'Incumplimiento de pago en plazo acordado',
-    descripcion: reporte?.description || '',
-    urlEvidencia: reporte?.evidenceUrl || '',
+    idSubasta: reporte ? String(reporte.subastaId) : idSubastaInicial,
+    idUsuarioReportado: reporte ? String(reporte.denunciadoId) : idUsuarioReportadoInicial,
+    motivo: reporte ? reporte.motivo || '' : 'Incumplimiento de pago en plazo acordado',
+    descripcion: reporte?.descripcion || '',
+    urlEvidencia: reporte?.urlEvidencia || '',
   }));
   const [mensajeError, setMensajeError] = useState('');
 
+  // Resolución segura de identificadores válidos
   const idSubastaEfectiva = estaEditando
     ? datosFormulario.idSubasta
     : elegirIdValido(subastas, datosFormulario.idSubasta, idSubastaInicial);
@@ -84,30 +86,35 @@ export function FormularioReporte({
     }
   }
 
+  // Opciones de subastas para el componente Select
   const opcionesSubastas =
     subastas.length > 0
-      ? subastas.map((subasta) => ({ valor: String(subasta.id), etiqueta: `#${subasta.id} — ${subasta.title}` }))
+      ? subastas.map((subasta) => ({ valor: String(subasta.id), etiqueta: `#${subasta.id} — ${subasta.titulo}` }))
       : [{ valor: '', etiqueta: 'Sin subastas registradas' }];
 
+  // Opciones de usuarios para el componente Select
   const opcionesUsuarios =
     otrosUsuarios.length > 0
       ? otrosUsuarios.map((usuario) => ({
           valor: String(usuario.id),
-          etiqueta: usuario.email ? `${usuario.name} (${usuario.email})` : `${usuario.name} (${usuario.city || 'Socio BidZone'})`,
+          etiqueta: usuario.correo ? `${usuario.nombre} (${usuario.correo})` : `${usuario.nombre} (${usuario.ciudad || 'Socio BidZone'})`,
         }))
       : [{ valor: '', etiqueta: 'Sin usuarios disponibles' }];
 
   return (
     <form onSubmit={manejarEnvio} className="space-y-4">
+      {/* Alerta de bloqueo si el ticket ya no está en revisión */}
       {bloqueado && (
         <Alert type="warning" title="Ticket cerrado para edición">
           Este ticket ya fue resuelto por moderación y no admite cambios del denunciante.
         </Alert>
       )}
+
       {mensajeError && (
         <Alert type="error" onClose={() => setMensajeError('')}>{mensajeError}</Alert>
       )}
 
+      {/* Selectores de Subasta y Usuario Denunciado (solo al crear) */}
       {!estaEditando && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Select
@@ -129,6 +136,7 @@ export function FormularioReporte({
         </div>
       )}
 
+      {/* Motivo de la denuncia y enlace a pruebas */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {estaEditando ? (
           <Input
@@ -160,6 +168,7 @@ export function FormularioReporte({
         />
       </div>
 
+      {/* Relato detallado de los hechos */}
       <Textarea
         id="descripcion"
         name="descripcion"
@@ -170,6 +179,7 @@ export function FormularioReporte({
         onChange={manejarCambio}
       />
 
+      {/* Botones de acción */}
       <AccionesFormulario
         alCancelar={alCancelar}
         mostrarGuardar={!bloqueado}

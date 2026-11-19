@@ -7,7 +7,6 @@ import { Alert } from '../../nucleo/diseno/uiFeedback';
 import { AccionesFormulario } from '../../nucleo/diseno/componentesBloques';
 import { CamposSeleccionResena, SelectorEstrellas } from './CamposResena';
 
-// Formulario único para crear o editar una calificación (RN07)
 export function FormularioResena({
   resena = null,
   subastasElegibles = [],
@@ -22,15 +21,17 @@ export function FormularioResena({
   alCancelar,
 }) {
   const estaEditando = Boolean(resena);
+
   const [datosFormulario, setDatosFormulario] = useState(() => ({
     idSubasta: idSubastaInicial,
     idUsuarioCalificado: idUsuarioCalificadoInicial,
-    calificacion: resena ? String(resena.rating ?? '5') : '5',
-    contextoRol: resena?.roleContext || '',
-    comentario: resena?.comment || '',
+    calificacion: resena ? String(resena.puntaje ?? '5') : '5',
+    contextoRol: resena?.contextoRol || '',
+    comentario: resena?.comentario || '',
   }));
   const [mensajeError, setMensajeError] = useState('');
 
+  // Caso límite: El usuario no tiene transacciones concluidas para calificar
   if (!estaEditando && subastasElegibles.length === 0) {
     return (
       <Alert type="info" title="Sin operaciones calificables aún">
@@ -39,18 +40,23 @@ export function FormularioResena({
     );
   }
 
+  // Subasta activa seleccionada para la reseña
   const subastaSeleccionada = !estaEditando
     ? buscarPorId(subastasElegibles, datosFormulario.idSubasta) || subastasElegibles[0] || null
     : null;
+
+  // Cálculo de valores por defecto (contraparte y rol)
   const valoresDefecto = obtenerValoresPorDefectoResena(subastaSeleccionada, idUsuarioActual, otrosUsuarios);
 
   const idSubastaEfectiva = subastaSeleccionada ? String(subastaSeleccionada.id) : '';
   const idCalificadoEfectivo = datosFormulario.idUsuarioCalificado || valoresDefecto.idUsuarioCalificado;
   const rolEfectivo = datosFormulario.contextoRol || valoresDefecto.contextoRol;
+
+  // Booleano que indica si el usuario logueado es parte de la subasta (vendedor o ganador)
   const esParticipante = Boolean(
     subastaSeleccionada &&
-      (mismoId(subastaSeleccionada.winnerId, idUsuarioActual) ||
-        mismoId(subastaSeleccionada.sellerId, idUsuarioActual))
+      (mismoId(subastaSeleccionada.ganadorId, idUsuarioActual) ||
+        mismoId(subastaSeleccionada.vendedorId, idUsuarioActual))
   );
 
   function manejarCambio(evento) {
@@ -110,6 +116,7 @@ export function FormularioResena({
         <Alert type="error" onClose={() => setMensajeError('')}>{mensajeError}</Alert>
       )}
 
+      {/* Selectores de subasta, contraparte y rol (solo al crear) */}
       {!estaEditando && (
         <CamposSeleccionResena
           subastasElegibles={subastasElegibles}
@@ -124,11 +131,13 @@ export function FormularioResena({
         />
       )}
 
+      {/* Botonera de 1 a 5 estrellas */}
       <SelectorEstrellas
         valorActual={datosFormulario.calificacion}
         alElegir={(valor) => setDatosFormulario((previo) => ({ ...previo, calificacion: valor }))}
       />
 
+      {/* Área de texto para la opinión y detalles del cumplimiento */}
       <Textarea
         id="comentario"
         name="comentario"
@@ -138,6 +147,7 @@ export function FormularioResena({
         onChange={manejarCambio}
       />
 
+      {/* Botones de acción */}
       <AccionesFormulario
         alCancelar={alCancelar}
         textoGuardar={estaEditando ? 'Guardar Cambios' : 'Publicar Reseña'}

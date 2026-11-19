@@ -13,7 +13,7 @@ const TARJETAS_SEGURIDAD = [
     titulo: 'Ofertas en vivo auditables',
     texto: 'Cada puja supera el monto actual respetando el incremento mínimo configurado por el dueño (RN01).',
     icono: Gavel,
-    destacada: true,
+    destacada: true, // Se resalta con un fondo verde oscuro principal
   },
   {
     titulo: 'Liberación de datos al ganar',
@@ -34,6 +34,7 @@ const TARJETAS_SEGURIDAD = [
 
 export function Inicio() {
   const navegar = useNavigate();
+
   const subastas = usarTiendaSubastas((estado) => estado.subastas);
   const errorSubastas = usarTiendaSubastas((estado) => estado.error);
   const obtenerSubastas = usarTiendaSubastas((estado) => estado.obtenerSubastas);
@@ -52,10 +53,11 @@ export function Inicio() {
 
   return (
     <div className="w-full">
+      {/* 1. Portada con llamada a la acción y buscador interactivo */}
       <PortadaInicio categorias={CATEGORIAS_INICIO} alBuscar={buscarDesdePortada} />
 
       <div className="max-w-7xl mx-auto px-3 sm:px-6 space-y-16 py-12 sm:py-16">
-        {/* Tarjetas explicativas sobre seguridad y reglas */}
+        {/* 2. Sección explicativa sobre seguridad, reglas de negocio y transparencia */}
         <section className="space-y-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-end">
             <div className="lg:col-span-6 space-y-2">
@@ -84,6 +86,7 @@ export function Inicio() {
             </div>
           </div>
 
+          {/* Grilla con 4 tarjetas de valor y reglas de negocio */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {TARJETAS_SEGURIDAD.map((tarjeta) => {
               const IconoTarjeta = tarjeta.icono;
@@ -113,6 +116,7 @@ export function Inicio() {
           </div>
         </section>
 
+        {/* 3. Catálogo preliminar de subastas en vivo filtrable */}
         <SeccionCatalogoInicio
           categorias={CATEGORIAS_INICIO}
           categoriaSeleccionada={categoriaSeleccionada}
@@ -121,6 +125,7 @@ export function Inicio() {
           errorSubastas={errorSubastas}
         />
 
+        {/* 4. Módulos y funcionalidades destacadas de la plataforma */}
         <SeccionModulosInicio />
       </div>
     </div>

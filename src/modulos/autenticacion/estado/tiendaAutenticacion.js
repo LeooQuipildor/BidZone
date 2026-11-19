@@ -9,9 +9,9 @@ import {
 } from '../../nucleo/servicios/clienteApi';
 import { eliminarPorId, mismoId, reemplazarPorId } from '../../nucleo/utilidades/ayudas';
 
+// Clave utilizada para guardar el objeto del usuario en el localStorage del navegador
 const CLAVE_USUARIO_SESION = 'bidzone_session_user';
 
-// Lee el usuario guardado en localStorage al abrir la app (si todavía hay token)
 function obtenerUsuarioGuardado() {
   try {
     if (!hayTokenSesion()) {
@@ -30,26 +30,26 @@ function guardarSesion(token, usuario) {
   if (usuario) localStorage.setItem(CLAVE_USUARIO_SESION, JSON.stringify(usuario));
 }
 
-// Traduce los campos en español del formulario al formato JSON que espera el backend
 function construirCuerpoUsuario(datos) {
   const cuerpo = {
-    name: String(datos.nombre || '').trim(),
-    email: String(datos.correo || '').trim().toLowerCase(),
-    phone: String(datos.telefono || '').trim(),
-    city: String(datos.ciudad || '').trim(),
+    nombre: String(datos.nombre || '').trim(),
+    correo: String(datos.correo || '').trim().toLowerCase(),
+    telefono: String(datos.telefono || '').trim(),
+    ciudad: String(datos.ciudad || '').trim(),
   };
-  if (datos.contrasena) cuerpo.password = datos.contrasena;
-  if (datos.rol !== undefined) cuerpo.role = datos.rol;
-  if (datos.estado !== undefined) cuerpo.status = datos.estado;
+  if (datos.contrasena) cuerpo.contrasena = datos.contrasena;
+  if (datos.rol !== undefined) cuerpo.rol = datos.rol;
+  if (datos.estado !== undefined) cuerpo.estado = datos.estado;
   return cuerpo;
 }
 
-// Tienda global de autenticación y usuarios (conecta con /api/auth y /api/users)
+// Tienda global de autenticación y usuarios (conecta con /api/autenticacion y /api/usuarios)
 export const usarTiendaAutenticacion = create((set, get) => ({
-  usuarioActual: obtenerUsuarioGuardado(),
-  usuarios: [],
-  cargando: false,
-  error: null,
+  // ESTADOS REACTIVOS
+  usuarioActual: obtenerUsuarioGuardado(), // Objeto del usuario conectado o null
+  usuarios: [],                           // Lista de todos los usuarios (para panel de admin)
+  cargando: false,                        // Bandera booleana para mostrar spinners
+  error: null,                            // Mensaje de error si una petición falla
 
   verificarSesion: async () => {
     if (!hayTokenSesion()) {
@@ -57,12 +57,12 @@ export const usarTiendaAutenticacion = create((set, get) => ({
       return null;
     }
     try {
-      const respuesta = await peticionHttp('/auth/me');
-      guardarSesion(null, respuesta.user);
-      set({ usuarioActual: respuesta.user, error: null });
-      return respuesta.user;
+      const respuesta = await peticionHttp('/autenticacion/perfil');
+      guardarSesion(null, respuesta.usuario);
+      set({ usuarioActual: respuesta.usuario, error: null });
+      return respuesta.usuario;
     } catch (error) {
-      // Si la cuenta fue sancionada o cerrada (RN06), cerramos sesión
+      // Si la cuenta fue sancionada o cerrada por infracción (RN06), cerramos sesión forzosa
       if (String(error.message || '').includes('RN06')) get().cerrarSesion();
       else set({ error: error.message });
       return null;
@@ -76,7 +76,7 @@ export const usarTiendaAutenticacion = create((set, get) => ({
     }
     set({ cargando: true, error: null });
     try {
-      const datos = await peticionHttp('/users');
+      const datos = await peticionHttp('/usuarios');
       set({ usuarios: datos, cargando: false });
       return datos;
     } catch (error) {
@@ -89,16 +89,16 @@ export const usarTiendaAutenticacion = create((set, get) => ({
     set({ cargando: true, error: null });
     try {
       const cuerpo = {
-        email: String(correo || '').trim().toLowerCase(),
-        password: String(contrasena || ''),
+        correo: String(correo || '').trim().toLowerCase(),
+        contrasena: String(contrasena || ''),
       };
-      const respuesta = await peticionHttp('/auth/login', {
+      const respuesta = await peticionHttp('/autenticacion/iniciar-sesion', {
         method: 'POST',
         body: JSON.stringify(cuerpo),
       });
-      guardarSesion(respuesta.token, respuesta.user);
-      set({ usuarioActual: respuesta.user, cargando: false, error: null });
-      return respuesta.user;
+      guardarSesion(respuesta.token, respuesta.usuario);
+      set({ usuarioActual: respuesta.usuario, cargando: false, error: null });
+      return respuesta.usuario;
     } catch (error) {
       set({ cargando: false, error: error.message });
       throw error;
@@ -108,13 +108,13 @@ export const usarTiendaAutenticacion = create((set, get) => ({
   registrarUsuario: async (datos) => {
     set({ cargando: true, error: null });
     try {
-      const respuesta = await peticionHttp('/auth/register', {
+      const respuesta = await peticionHttp('/autenticacion/registrar', {
         method: 'POST',
         body: JSON.stringify(construirCuerpoUsuario(datos)),
       });
-      guardarSesion(respuesta.token, respuesta.user);
-      set({ usuarioActual: respuesta.user, cargando: false, error: null });
-      return respuesta.user;
+      guardarSesion(respuesta.token, respuesta.usuario);
+      set({ usuarioActual: respuesta.usuario, cargando: false, error: null });
+      return respuesta.usuario;
     } catch (error) {
       set({ cargando: false, error: error.message });
       throw error;
@@ -133,10 +133,10 @@ export const usarTiendaAutenticacion = create((set, get) => ({
     try {
       const cuerpo = {
         ...construirCuerpoUsuario(datos),
-        role: datos.rol || 'user',
-        status: datos.estado || 'active',
+        rol: datos.rol || 'usuario',
+        estado: datos.estado || 'activa',
       };
-      const creado = await peticionHttp('/users', {
+      const creado = await peticionHttp('/usuarios', {
         method: 'POST',
         body: JSON.stringify(cuerpo),
       });
@@ -152,7 +152,7 @@ export const usarTiendaAutenticacion = create((set, get) => ({
     set({ error: null });
     try {
       const cuerpo = construirCuerpoUsuario(cambios);
-      const actualizado = await peticionHttp(`/users/${id}`, {
+      const actualizado = await peticionHttp(`/usuarios/${id}`, {
         method: 'PUT',
         body: JSON.stringify(cuerpo),
       });
@@ -178,17 +178,41 @@ export const usarTiendaAutenticacion = create((set, get) => ({
   eliminarUsuario: async (id) => {
     set({ error: null });
     try {
-      await peticionHttp(`/users/${id}`, { method: 'DELETE' });
+      await peticionHttp(`/usuarios/${id}`, { method: 'DELETE' });
       set((estado) => ({ usuarios: eliminarPorId(estado.usuarios, id) }));
     } catch (error) {
       set({ error: error.message });
       throw error;
     }
   },
+
+  solicitarRecuperacion: async (correo) => {
+    set({ error: null });
+    const cuerpo = { correo: String(correo || '').trim().toLowerCase() };
+    return peticionHttp('/autenticacion/solicitar-recuperacion', {
+      method: 'POST',
+      body: JSON.stringify(cuerpo),
+    });
+  },
+
+  restablecerContrasena: async ({ correo, codigo, nuevaContrasena }) => {
+    set({ error: null });
+    const cuerpo = {
+      correo: String(correo || '').trim().toLowerCase(),
+      codigo: String(codigo || '').trim(),
+      nuevaContrasena: String(nuevaContrasena || ''),
+    };
+    return peticionHttp('/autenticacion/restablecer-contrasena', {
+      method: 'POST',
+      body: JSON.stringify(cuerpo),
+    });
+  },
 }));
 
 // Si el servidor responde 401 (sesión vencida), cerramos la sesión automáticamente
 registrarManejadorSinAutorizacion(() => usarTiendaAutenticacion.getState().cerrarSesion());
+
+// Registramos la función de limpieza que se llamará al cerrar sesión
 registrarLimpiezaSesion(() => {
   usarTiendaAutenticacion.setState({ usuarioActual: null, usuarios: [], error: null, cargando: false });
 });

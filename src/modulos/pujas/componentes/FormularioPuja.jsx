@@ -14,7 +14,6 @@ import { Input, Select } from '../../nucleo/diseno/ui';
 import { Alert } from '../../nucleo/diseno/uiFeedback';
 import { AccionesFormulario } from '../../nucleo/diseno/componentesBloques';
 
-// Formulario único para crear o editar la nota de una puja vinculante (RN04: el monto nunca se edita)
 export function FormularioPuja({
   puja = null,
   subastas = [],
@@ -24,13 +23,17 @@ export function FormularioPuja({
   alCancelar,
 }) {
   const estaEditando = Boolean(puja);
-  const subastasActivas = subastas.filter((subasta) => subasta.status === 'activa');
 
-  const [idSubastaElegida, setIdSubastaElegida] = useState(puja ? String(puja.auctionId) : '');
+  // Subastas que admiten ofertas actualmente
+  const subastasActivas = subastas.filter((subasta) => subasta.estado === 'activa');
+
+  // Identificador de la subasta seleccionada en el formulario
+  const [idSubastaElegida, setIdSubastaElegida] = useState(puja ? String(puja.subastaId) : '');
   const idSubastaEfectiva = estaEditando
-    ? String(puja.auctionId)
+    ? String(puja.subastaId)
     : elegirIdValido(subastasActivas, idSubastaElegida);
 
+  // Subasta activa en el formulario
   const subastaSeleccionada = buscarPorId(
     estaEditando ? subastas : subastasActivas,
     idSubastaEfectiva
@@ -38,13 +41,15 @@ export function FormularioPuja({
   const montoSugerido = obtenerMontoPujaSugerido(subastaSeleccionada);
   const maximoPermitido = obtenerMontoPujaMaximo(subastaSeleccionada);
 
-  const [monto, setMonto] = useState(() => (puja ? String(puja.amount ?? '') : montoSugerido));
-  const [nota, setNota] = useState(puja?.note || '');
+  // Estados locales para los campos
+  const [monto, setMonto] = useState(() => (puja ? String(puja.monto ?? '') : montoSugerido));
+  const [nota, setNota] = useState(puja?.nota || '');
   const [compromisoAceptado, setCompromisoAceptado] = useState(true);
   const [mensajeError, setMensajeError] = useState('');
   const [mostrarConfirmacion, setMostrarConfirmacion] = useState(false);
   const [enviando, setEnviando] = useState(false);
 
+  // Caso límite: Al intentar crear una puja si no hay subastas abiertas
   if (!estaEditando && subastasActivas.length === 0) {
     return (
       <Alert type="info" title="Sin subastas activas">
@@ -106,11 +111,13 @@ export function FormularioPuja({
     }
   }
 
+  // Mapeo de subastas a opciones para el componente Select
   const opcionesSubastas = (estaEditando ? subastas : subastasActivas).map((subasta) => ({
     valor: String(subasta.id),
-    etiqueta: `${subasta.title} (Actual: ${formatearMoneda(subasta.currentPrice)})`,
+    etiqueta: `${subasta.titulo} (Actual: ${formatearMoneda(subasta.precioActual)})`,
   }));
 
+  // Texto explicativo del monto según el modo
   let textoAyudaMonto;
   if (estaEditando) {
     textoAyudaMonto = 'RN04: El monto ofertado es vinculante e irrevocable.';
@@ -121,6 +128,7 @@ export function FormularioPuja({
   return (
     <>
       <form onSubmit={manejarEnvio} className="space-y-4">
+        {/* Alerta explicativa de inmutabilidad RN04 en modo edición */}
         {estaEditando && (
           <Alert type="info" title="Regla de Negocio RN04 (Irrevocabilidad del Monto)">
             Puedes actualizar tu nota de coordinación, pero el importe ofertado no se modifica.
@@ -131,6 +139,7 @@ export function FormularioPuja({
           <Alert type="error" onClose={() => setMensajeError('')}>{mensajeError}</Alert>
         )}
 
+        {/* Fila 1: Selector de subasta y monto (bloqueados en edición) */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Select
             id="idSubasta"
@@ -152,10 +161,12 @@ export function FormularioPuja({
           />
         </div>
 
+        {/* Resumen de números de la subasta seleccionada */}
         {!estaEditando && (
           <ResumenOfertaSubasta subasta={subastaSeleccionada} montoSugerido={montoSugerido} />
         )}
 
+        {/* Campo de nota o mensaje del postor */}
         <Input
           id="nota"
           label="Nota de Coordinación / Observación"
@@ -164,10 +175,12 @@ export function FormularioPuja({
           onChange={(evento) => setNota(evento.target.value)}
         />
 
+        {/* Casilla legal obligatoria RN04 */}
         {!estaEditando && (
           <CasillaCompromisoPuja aceptado={compromisoAceptado} alCambiar={setCompromisoAceptado} />
         )}
 
+        {/* Botones de acción */}
         <AccionesFormulario
           alCancelar={alCancelar}
           textoGuardar={estaEditando ? 'Guardar Cambios' : 'Confirmar Puja'}
@@ -175,6 +188,7 @@ export function FormularioPuja({
         />
       </form>
 
+      {/* Modal flotante de verificación antes del envío */}
       <ModalConfirmarPuja
         estaAbierto={mostrarConfirmacion}
         alCerrar={() => setMostrarConfirmacion(false)}

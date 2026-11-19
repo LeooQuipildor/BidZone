@@ -1,7 +1,6 @@
 import React from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
-// Barra de paginación reutilizada en el Catálogo público y en el Panel de Control
 export function PaginacionCatalogo({
   paginaActual,
   totalPaginas,
@@ -10,21 +9,28 @@ export function PaginacionCatalogo({
   etiquetaElemento = 'subastas',
   alCambiarPagina,
 }) {
+  // Retorno temprano si no hay registros para mostrar
   if (totalElementos === 0) return null;
 
+  // Cálculo del rango inferior y superior visible
   const desde = (paginaActual - 1) * elementosPorPagina + 1;
   const hasta = Math.min(paginaActual * elementosPorPagina, totalElementos);
+
+  // Arreglo dinámico con los números de página [1, 2, 3...]
   const paginas = Array.from({ length: totalPaginas }, (_, indice) => indice + 1);
 
   return (
     <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-[#224F10]/12">
+      {/* Texto informativo de elementos mostrados */}
       <p className="text-xs text-[#0D0D0D]/65 font-medium">
         Mostrando <span className="font-semibold text-[#0D0D0D]">{desde}–{hasta}</span> de{' '}
         <span className="font-semibold text-[#0D0D0D]">{totalElementos}</span> {etiquetaElemento}
       </p>
 
+      {/* Controles de navegación interactivos (solo si hay más de 1 página) */}
       {totalPaginas > 1 && (
         <nav aria-label="Paginación de subastas" className="flex flex-wrap items-center gap-1.5">
+          {/* Botón Página Anterior */}
           <button
             type="button"
             disabled={paginaActual <= 1}
@@ -35,6 +41,7 @@ export function PaginacionCatalogo({
             Anterior
           </button>
 
+          {/* Botones numéricos individuales */}
           {paginas.map((numero) => {
             const estaActiva = numero === paginaActual;
             return (
@@ -54,6 +61,7 @@ export function PaginacionCatalogo({
             );
           })}
 
+          {/* Botón Página Siguiente */}
           <button
             type="button"
             disabled={paginaActual >= totalPaginas}

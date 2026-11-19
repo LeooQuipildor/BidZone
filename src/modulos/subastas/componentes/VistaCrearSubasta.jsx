@@ -6,6 +6,8 @@ import { PaginaFormulario } from '../../nucleo/diseno/componentesBloques';
 
 export function VistaCrearSubasta() {
   const navegar = useNavigate();
+
+  // Acción para persistir la nueva subasta
   const crearSubasta = usarTiendaSubastas((estado) => estado.crearSubasta);
 
   async function manejarCreacion(datos) {

@@ -1,7 +1,6 @@
 import React from 'react';
 import { formatearMoneda } from '../../nucleo/utilidades/formatos';
 
-// Casilla obligatoria de aceptación de oferta vinculante (RN04) compartida en sala y formulario
 export function CasillaCompromisoPuja({ aceptado, alCambiar, textoDetallado = false }) {
   return (
     <label className="flex items-start gap-2.5 text-xs text-[#0D0D0D]/85 cursor-pointer bg-[#B0E454]/25 p-3.5 rounded-2xl border border-[#224F10]/20">
@@ -24,17 +23,16 @@ export function CasillaCompromisoPuja({ aceptado, alCambiar, textoDetallado = fa
   );
 }
 
-// Tarjeta compacta que resume precio actual, incremento mínimo RN01 y monto sugerido
 export function ResumenOfertaSubasta({ subasta, montoSugerido }) {
   if (!subasta) return null;
 
   return (
     <div className="p-3.5 rounded-2xl bg-[#F7FBF3] border border-[#224F10]/15 text-xs flex flex-wrap gap-x-6 gap-y-1">
       <span>
-        Precio actual: <strong className="text-[#224F10]">{formatearMoneda(subasta.currentPrice)}</strong>
+        Precio actual: <strong className="text-[#224F10]">{formatearMoneda(subasta.precioActual)}</strong>
       </span>
       <span>
-        Incremento RN01: <strong>+{formatearMoneda(subasta.minIncrement)}</strong>
+        Incremento RN01: <strong>+{formatearMoneda(subasta.incrementoMinimo)}</strong>
       </span>
       <span>
         Mínimo sugerido: <strong className="text-[#224F10]">{formatearMoneda(montoSugerido)}</strong>

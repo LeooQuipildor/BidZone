@@ -4,7 +4,13 @@ import { usarTiendaReportes } from '../../../reportes/estado/tiendaReportes';
 import { FormularioReporte } from '../../../reportes/componentes/FormularioReporte';
 import { PanelResolucionTicket } from '../../../reportes/componentes/PanelResolucionTicket';
 import { buscarPorId, coincideConBusqueda, mismoId } from '../../utilidades/ayudas';
-import { AvisoPanel, BotonPanel, CabeceraSeccionPanel, ContenedorFormularioPanel, EstadoVacioPanel } from './PanelCompartido';
+import {
+  AvisoPanel,
+  BotonPanel,
+  CabeceraSeccionPanel,
+  ContenedorFormularioPanel,
+  EstadoVacioPanel,
+} from './PanelCompartido';
 import { FiltrosBotones } from '../../diseno/componentesBloques';
 import { TarjetaReportePanel } from './TarjetaReportePanel';
 
@@ -15,14 +21,23 @@ const FILTROS_ESTADO_TICKET = [
   { valor: 'desestimado', etiqueta: 'Solucionados' },
 ];
 
-// Pestaña de reportes tipo Ticket RN06: el Socio abre tickets; el Admin los atiende y resuelve inline
-export function TabReportesPanel({ usuarioActual, usuarios, subastas, reportes, textoBusqueda, datosIniciales }) {
+export function TabReportesPanel({
+  usuarioActual,
+  usuarios,
+  subastas,
+  reportes,
+  textoBusqueda,
+  datosIniciales,
+}) {
+  // Acciones asíncronas de la tienda de Zustand `tiendaReportes.js`
   const crearReporte = usarTiendaReportes((estado) => estado.crearReporte);
   const actualizarReporte = usarTiendaReportes((estado) => estado.actualizarReporte);
   const eliminarReporte = usarTiendaReportes((estado) => estado.eliminarReporte);
 
-  const esAdmin = usuarioActual?.role === 'admin';
+  const esAdmin = usuarioActual?.rol === 'admin';
   const otrosUsuarios = usuarios.filter((usuario) => !mismoId(usuario.id, usuarioActual?.id));
+
+  // Estados locales para filtros, alertas y control de modales
   const [filtroEstado, setFiltroEstado] = useState('todos');
   const [aviso, setAviso] = useState(null);
   const [formularioAbierto, setFormularioAbierto] = useState(Boolean(datosIniciales?.abrirFormulario));
@@ -30,14 +45,21 @@ export function TabReportesPanel({ usuarioActual, usuarios, subastas, reportes, 
   const [idTicketAtendiendo, setIdTicketAtendiendo] = useState(null);
 
   const reporteEditando = idReporteEditando ? buscarPorId(reportes, idReporteEditando) : null;
-  const cantidadAbiertos = reportes.filter((item) => item.status === 'en_revision').length;
+  const cantidadAbiertos = reportes.filter((item) => item.estado === 'en_revision').length;
 
+  // Filtrado de reportes según el estado del ticket y el término de búsqueda ingresado
   const reportesFiltrados = reportes.filter((reporte) => {
-    if (filtroEstado !== 'todos' && reporte.status !== filtroEstado) return false;
-    const denunciado = buscarPorId(usuarios, reporte.reportedUserId);
-    const subasta = buscarPorId(subastas, reporte.auctionId);
+    if (filtroEstado !== 'todos' && reporte.estado !== filtroEstado) return false;
+    const denunciado = buscarPorId(usuarios, reporte.denunciadoId);
+    const subasta = buscarPorId(subastas, reporte.subastaId);
     return coincideConBusqueda(
-      [`#${reporte.id}`, reporte.reason, reporte.description, denunciado?.name || reporte.reportedUserName, subasta?.title || reporte.auctionTitle],
+      [
+        `#${reporte.id}`,
+        reporte.motivo,
+        reporte.descripcion,
+        denunciado?.nombre || reporte.nombreDenunciado,
+        subasta?.titulo || reporte.tituloSubasta,
+      ],
       textoBusqueda
     );
   });
@@ -50,13 +72,18 @@ export function TabReportesPanel({ usuarioActual, usuarios, subastas, reportes, 
   function manejarGuardadoReclamo(reporteGuardado) {
     setAviso({
       tipo: 'exito',
-      texto: reporteEditando ? `Ticket #${reporteEditando.id} actualizado.` : `Ticket #${reporteGuardado.id} abierto para revisión RN06.`,
+      texto: reporteEditando
+        ? `Ticket #${reporteEditando.id} actualizado.`
+        : `Ticket #${reporteGuardado.id} abierto para revisión RN06.`,
     });
     cerrarFormulario();
   }
 
   function manejarTicketResuelto(reporteResuelto) {
-    setAviso({ tipo: 'exito', texto: `Ticket #${reporteResuelto.id} actualizado: ${reporteResuelto.sanctionApplied}.` });
+    setAviso({
+      tipo: 'exito',
+      texto: `Ticket #${reporteResuelto.id} actualizado: ${reporteResuelto.sancionAplicada}.`,
+    });
     setIdTicketAtendiendo(null);
   }
 
@@ -77,21 +104,29 @@ export function TabReportesPanel({ usuarioActual, usuarios, subastas, reportes, 
 
   return (
     <div className="space-y-5">
+      {/* Cabecera con estadísticas de tickets y botón para abrir nuevo reclamo */}
       <CabeceraSeccionPanel
         titulo={esAdmin ? 'Tickets y Reportes' : 'Mis Reportes'}
         subtitulo={subtituloPanel}
         botonPrincipal={
           <BotonPanel
             icono={<Plus className="w-3.5 h-3.5" />}
-            alHacerClic={() => { setIdReporteEditando(null); setIdTicketAtendiendo(null); setFormularioAbierto(true); setAviso(null); }}
+            alHacerClic={() => {
+              setIdReporteEditando(null);
+              setIdTicketAtendiendo(null);
+              setFormularioAbierto(true);
+              setAviso(null);
+            }}
           >
             Informar Incumplimiento
           </BotonPanel>
         }
       />
 
+      {/* Banner de alertas y mensajes */}
       <AvisoPanel aviso={aviso} alCerrar={() => setAviso(null)} />
 
+      {/* Modal flotante del formulario de reporte */}
       {formularioAbierto && (
         <ContenedorFormularioPanel
           titulo={reporteEditando ? `Editar Ticket #${reporteEditando.id}` : 'Abrir Nuevo Ticket de Reporte'}
@@ -112,34 +147,44 @@ export function TabReportesPanel({ usuarioActual, usuarios, subastas, reportes, 
         </ContenedorFormularioPanel>
       )}
 
+      {/* Barra de botones de filtro por estado de resolución */}
       <div className="rounded-2xl bg-white border border-[#224F10]/10 p-4 shadow-2xs">
         <FiltrosBotones opciones={FILTROS_ESTADO_TICKET} valorActual={filtroEstado} alElegir={setFiltroEstado} />
       </div>
 
+      {/* Lista de tarjetas de reporte o estado vacío */}
       {reportesFiltrados.length === 0 ? (
         <EstadoVacioPanel mensaje="No hay tickets para mostrar con los filtros actuales." />
       ) : (
         <div className="space-y-4">
           {reportesFiltrados.map((reporte) => {
-            const subasta = buscarPorId(subastas, reporte.auctionId);
-            const denunciante = buscarPorId(usuarios, reporte.reporterId);
-            const denunciado = buscarPorId(usuarios, reporte.reportedUserId);
-            const nombreDenunciado = denunciado?.name || reporte.reportedUserName || 'Usuario';
+            const subasta = buscarPorId(subastas, reporte.subastaId);
+            const denunciante = buscarPorId(usuarios, reporte.denuncianteId);
+            const denunciado = buscarPorId(usuarios, reporte.denunciadoId);
+            const nombreDenunciado = denunciado?.nombre || reporte.nombreDenunciado || 'Usuario';
             const estaAtendiendo = esAdmin && mismoId(idTicketAtendiendo, reporte.id);
 
             return (
               <TarjetaReportePanel
                 key={reporte.id}
                 reporte={reporte}
-                tituloSubasta={subasta?.title || reporte.auctionTitle || `Subasta #${reporte.auctionId}`}
-                nombreDenunciante={denunciante?.name || reporte.reporterName || 'Usuario'}
+                tituloSubasta={subasta?.titulo || reporte.tituloSubasta || `Subasta #${reporte.subastaId}`}
+                nombreDenunciante={denunciante?.nombre || reporte.nombreDenunciante || 'Usuario'}
                 nombreDenunciado={nombreDenunciado}
-                estadoDenunciado={denunciado?.status}
-                puedeEditarReclamo={mismoId(usuarioActual?.id, reporte.reporterId) && reporte.status === 'en_revision'}
+                estadoDenunciado={denunciado?.estado}
+                puedeEditarReclamo={mismoId(usuarioActual?.id, reporte.denuncianteId) && reporte.estado === 'en_revision'}
                 esAdmin={esAdmin}
                 estaAtendiendo={estaAtendiendo}
-                alAtenderTicket={() => { cerrarFormulario(); setIdTicketAtendiendo(estaAtendiendo ? null : reporte.id); setAviso(null); }}
-                alEditarReclamo={() => { setIdReporteEditando(reporte.id); setFormularioAbierto(true); setAviso(null); }}
+                alAtenderTicket={() => {
+                  cerrarFormulario();
+                  setIdTicketAtendiendo(estaAtendiendo ? null : reporte.id);
+                  setAviso(null);
+                }}
+                alEditarReclamo={() => {
+                  setIdReporteEditando(reporte.id);
+                  setFormularioAbierto(true);
+                  setAviso(null);
+                }}
                 alEliminar={() => manejarEliminacion(reporte)}
                 panelResolucion={
                   estaAtendiendo && (
@@ -147,7 +192,7 @@ export function TabReportesPanel({ usuarioActual, usuarios, subastas, reportes, 
                       key={reporte.id}
                       reporte={reporte}
                       nombreDenunciado={nombreDenunciado}
-                      estadoDenunciado={denunciado?.status}
+                      estadoDenunciado={denunciado?.estado}
                       alActualizarReporte={actualizarReporte}
                       alGuardar={manejarTicketResuelto}
                       alCancelar={() => setIdTicketAtendiendo(null)}

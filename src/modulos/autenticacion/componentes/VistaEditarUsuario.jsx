@@ -7,6 +7,7 @@ import { PaginaFormulario } from '../../nucleo/diseno/componentesBloques';
 
 export function VistaEditarUsuario() {
   const { id } = useParams();
+
   const navegar = useNavigate();
 
   const usuarios = usarTiendaAutenticacion((estado) => estado.usuarios);
@@ -20,7 +21,7 @@ export function VistaEditarUsuario() {
   }, [obtenerUsuarios]);
 
   const usuarioObjetivo = buscarPorId(usuarios, id);
-  const esAdmin = usuarioActual?.role === 'admin';
+  const esAdmin = usuarioActual?.rol === 'admin';
   const rutaRetorno = esAdmin ? '/usuarios' : '/panel?tab=perfil';
 
   let errorTitulo = '';
@@ -29,13 +30,14 @@ export function VistaEditarUsuario() {
     errorTitulo = 'Usuario no encontrado';
     errorMensaje = 'El registro solicitado no existe.';
   } else if (!esAdmin && !mismoId(usuarioActual?.id, usuarioObjetivo.id)) {
+    // Si no es admin y no es su propio id, se bloquea la acción
     errorTitulo = 'Sin permisos de edición';
     errorMensaje = 'Solo puedes editar tu propio perfil o contar con permisos de administrador.';
   }
 
   return (
     <PaginaFormulario
-      titulo={usuarioObjetivo ? `Editar Usuario: ${usuarioObjetivo.name}` : 'Editar Usuario'}
+      titulo={usuarioObjetivo ? `Editar Usuario: ${usuarioObjetivo.nombre}` : 'Editar Usuario'}
       subtitulo="Modificación de datos de contacto, rol de acceso y estado disciplinario de la cuenta."
       textoVolver="Volver"
       alVolver={() => navegar(rutaRetorno)}

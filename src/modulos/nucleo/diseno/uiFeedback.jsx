@@ -2,7 +2,6 @@ import React, { useEffect } from 'react';
 import { AlertTriangle, CheckCircle2, Info, X } from 'lucide-react';
 import { Button } from './ui';
 
-// Cartel para avisos informativos, de éxito, advertencia o error
 export function Alert({ type = 'info', title, children, onClose }) {
   const estilos = {
     info: 'bg-[#B0E454]/40 border-[#224F10]/30 text-[#0D0D0D]',
@@ -34,7 +33,6 @@ export function Alert({ type = 'info', title, children, onClose }) {
   );
 }
 
-// Indicador giratorio mientras cargan los datos desde el servidor
 export function Loading({ text = 'Cargando...' }) {
   return (
     <div className="flex flex-col items-center justify-center py-12 gap-3">
@@ -44,7 +42,6 @@ export function Loading({ text = 'Cargando...' }) {
   );
 }
 
-// Ventana emergente reutilizable (se cierra con Escape o al tocar el fondo oscuro)
 export function Modal({ isOpen, onClose, title, children }) {
   useEffect(() => {
     if (!isOpen) return;
@@ -82,7 +79,6 @@ export function Modal({ isOpen, onClose, title, children }) {
   );
 }
 
-// Tarjeta reutilizable para mostrar un error o falta de permisos con botón para volver
 export function ErrorCard({ title, message, backLabel, onBack }) {
   return (
     <div className="max-w-xl mx-auto my-12">

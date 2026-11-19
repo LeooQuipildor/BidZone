@@ -9,13 +9,11 @@ const ETIQUETAS_ESTADO_BLOQUEADO = {
   cancelada: 'Cancelada',
 };
 
-// Mantiene el estado informativo del lote (el cierre automático aplica por fecha de fin RN03)
 function obtenerOpcionesEstadoSubasta(subasta) {
   if (!subasta) return [];
-  return [{ valor: subasta.status, etiqueta: ETIQUETAS_ESTADO_BLOQUEADO[subasta.status] || subasta.status }];
+  return [{ valor: subasta.estado, etiqueta: ETIQUETAS_ESTADO_BLOQUEADO[subasta.estado] || subasta.estado }];
 }
 
-// Conjunto de campos visuales del formulario para publicar o editar una subasta
 export function CamposSubasta({
   datosFormulario,
   estaEditando,
@@ -23,6 +21,7 @@ export function CamposSubasta({
   bloquearCamposFinancieros,
   alCambiar,
 }) {
+  // Opciones de estado calculadas para el selector en modo edición
   const opcionesEstado = obtenerOpcionesEstadoSubasta(subasta);
 
   // Parsear URLs actuales (soporta una o varias separadas por coma)
@@ -66,6 +65,7 @@ export function CamposSubasta({
 
   return (
     <>
+      {/* 1. Título del Artículo */}
       <Input
         id="titulo"
         name="titulo"
@@ -75,6 +75,7 @@ export function CamposSubasta({
         onChange={alCambiar}
       />
 
+      {/* 2. Categoría, Estado (si edita) y Fecha/Hora de Cierre */}
       <div className={`grid grid-cols-1 ${estaEditando ? 'sm:grid-cols-3' : 'sm:grid-cols-2'} gap-4`}>
         <Select
           id="categoria"
@@ -110,6 +111,7 @@ export function CamposSubasta({
         />
       </div>
 
+      {/* 3. Condiciones Financieras: Precio Base e Incremento Mínimo (RN01) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Input
           id="precioInicial"
@@ -135,7 +137,7 @@ export function CamposSubasta({
         />
       </div>
 
-      {/* Gestión de hasta 4 imágenes reales del artículo */}
+      {/* 4. Gestión de hasta 4 imágenes reales del artículo */}
       <div className="space-y-3 p-4 rounded-2xl bg-white/70 border border-[#224F10]/15">
         <div className="flex items-center justify-between gap-2">
           <div>
@@ -206,6 +208,7 @@ export function CamposSubasta({
         </div>
       </div>
 
+      {/* 5. Descripción y Términos de Entrega */}
       <Textarea
         id="descripcion"
         name="descripcion"

@@ -4,6 +4,7 @@ import { ChevronDown, HelpCircle } from 'lucide-react';
 import { Button, Card } from '../diseno/ui';
 import { CabeceraPagina } from '../diseno/componentesBloques';
 
+// Listado de preguntas y respuestas informativas
 const PREGUNTAS_FRECUENTES = [
   {
     pregunta: '¿Cómo participo y envío una oferta en BidZone?',
@@ -42,9 +43,10 @@ const PREGUNTAS_FRECUENTES = [
   },
 ];
 
-// Página pública de preguntas frecuentes con acordeón simple
 export function VistaPreguntasFrecuentes() {
   const navegar = useNavigate();
+
+  // Estado local: Guarda qué pregunta está desplegada (inicia con la primera, índice 0)
   const [indiceAbierto, setIndiceAbierto] = useState(0);
 
   function alternarPregunta(indice) {
@@ -53,6 +55,7 @@ export function VistaPreguntasFrecuentes() {
 
   return (
     <div className="space-y-8">
+      {/* Cabecera común de la página */}
       <CabeceraPagina
         titulo="Preguntas Frecuentes"
         subtitulo="Respuestas claras sobre cómo pujar, coordinar la entrega al ganar y usar BidZone con seguridad."
@@ -61,6 +64,7 @@ export function VistaPreguntasFrecuentes() {
         }
       />
 
+      {/* Lista de preguntas tipo acordeón */}
       <div className="space-y-3 max-w-4xl">
         {PREGUNTAS_FRECUENTES.map((item, indice) => {
           const estaAbierta = indiceAbierto === indice;
@@ -82,6 +86,7 @@ export function VistaPreguntasFrecuentes() {
                 />
               </button>
 
+              {/* Renderizado condicional del cuerpo de la respuesta */}
               {estaAbierta && (
                 <div className="px-6 pb-5 pt-1 text-xs sm:text-sm text-[#0D0D0D]/75 leading-relaxed border-t border-[#224F10]/10">
                   {item.respuesta}

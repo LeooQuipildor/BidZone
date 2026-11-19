@@ -1,6 +1,6 @@
 import { IMAGEN_SUBASTA_POR_DEFECTO } from '../../nucleo/utilidades/formatos';
 
-// Galería adicional por ID para las subastas iniciales de demostración
+// Galería complementaria específica para los lotes demo iniciales (IDs 101 a 105).
 const FOTOS_POR_SUBASTA = {
   101: [
     'https://images.unsplash.com/photo-1559085715-23704349e326?auto=format&fit=crop&w=900&q=80',
@@ -35,13 +35,13 @@ export function obtenerFotosSubasta(subasta) {
 
   // 1. Extraer todas las URLs de imágenes provistas por el usuario
   let fotosUsuario = [];
-  if (Array.isArray(subasta.images) && subasta.images.length > 0) {
-    fotosUsuario = subasta.images.filter(
+  if (Array.isArray(subasta.imagenes) && subasta.imagenes.length > 0) {
+    fotosUsuario = subasta.imagenes.filter(
       (url) => typeof url === 'string' && url.trim().length > 0
     );
-  } else if (typeof subasta.imageUrl === 'string' && subasta.imageUrl.trim().length > 0) {
+  } else if (typeof subasta.urlImagen === 'string' && subasta.urlImagen.trim().length > 0) {
     // Si contiene varias URLs separadas por coma o saltos de línea
-    fotosUsuario = subasta.imageUrl
+    fotosUsuario = subasta.urlImagen
       .split(/[\n,]+/)
       .map((url) => url.trim())
       .filter((url) => url.length > 0);
@@ -50,7 +50,7 @@ export function obtenerFotosSubasta(subasta) {
   // 2. Si es una de las subastas iniciales de demo (101 a 105) y no tiene fotos extras personalizadas, usamos las del demo
   const extrasDemo = FOTOS_POR_SUBASTA[Number(subasta.id)] || [];
   if (fotosUsuario.length <= 1 && extrasDemo.length > 0) {
-    const principal = fotosUsuario[0] || subasta.imageUrl || IMAGEN_SUBASTA_POR_DEFECTO;
+    const principal = fotosUsuario[0] || subasta.urlImagen || IMAGEN_SUBASTA_POR_DEFECTO;
     const galeriaDemo = [principal];
     for (const extra of extrasDemo) {
       if (!galeriaDemo.includes(extra)) galeriaDemo.push(extra);

@@ -11,7 +11,7 @@ const OPCIONES_DECISION = [
     titulo: 'Solucionar sin sanción',
     detalle: 'Cierra el ticket sin sancionar cuentas.',
     estado: 'desestimado',
-    accionCuenta: 'none',
+    accionCuenta: 'ninguna',
     sugerencia: 'Caso solucionado entre las partes sin sanción disciplinaria.',
   },
   {
@@ -19,7 +19,7 @@ const OPCIONES_DECISION = [
     titulo: 'Suspender infractor',
     detalle: 'Suspende la cuenta reportada y le envía aviso.',
     estado: 'resuelto_sancion',
-    accionCuenta: 'suspend',
+    accionCuenta: 'suspender',
     sugerencia: 'Suspensión temporal de cuenta por incumplimiento RN06.',
   },
   {
@@ -27,7 +27,7 @@ const OPCIONES_DECISION = [
     titulo: 'Cerrar cuenta',
     detalle: 'Bloqueo definitivo de la cuenta infractora.',
     estado: 'resuelto_sancion',
-    accionCuenta: 'close',
+    accionCuenta: 'cerrar',
     sugerencia: 'Cierre definitivo de cuenta por falta grave RN06.',
   },
   {
@@ -35,12 +35,11 @@ const OPCIONES_DECISION = [
     titulo: 'Rehabilitar cuenta',
     detalle: 'Restituye la cuenta a estado activo y cierra el ticket.',
     estado: 'desestimado',
-    accionCuenta: 'activate',
+    accionCuenta: 'activar',
     sugerencia: 'Cuenta rehabilitada tras regularización del expediente.',
   },
 ];
 
-// Panel claro tipo sistema de tickets para resolver un reporte sin editar la denuncia original
 export function PanelResolucionTicket({
   reporte,
   nombreDenunciado,
@@ -49,18 +48,21 @@ export function PanelResolucionTicket({
   alGuardar,
   alCancelar,
 }) {
-  const claveInicial = reporte.status === 'resuelto_sancion' ? 'suspender' : 'solucionar';
+  // Determinación de la opción inicial según el estado previo del ticket
+  const claveInicial = reporte.estado === 'resuelto_sancion' ? 'suspender' : 'solucionar';
   const opcionInicial = OPCIONES_DECISION.find((op) => op.clave === claveInicial);
-  const textoGuardado = reporte.sanctionApplied && reporte.sanctionApplied !== 'Pendiente de evaluación'
-    ? reporte.sanctionApplied
+  const textoGuardado = reporte.sancionAplicada && reporte.sancionAplicada !== 'Pendiente de evaluación'
+    ? reporte.sancionAplicada
     : opcionInicial.sugerencia;
 
+  // Estados locales para la decisión, el dictamen y las alertas
   const [claveDecision, setClaveDecision] = useState(claveInicial);
   const [dictamen, setDictamen] = useState(textoGuardado);
   const [editadoManual, setEditadoManual] = useState(false);
   const [mensajeError, setMensajeError] = useState('');
   const [enviando, setEnviando] = useState(false);
 
+  // Opción activa seleccionada actualmente
   const decisionActual = OPCIONES_DECISION.find((op) => op.clave === claveDecision) || OPCIONES_DECISION[0];
 
   function elegirDecision(opcion) {
@@ -98,6 +100,7 @@ export function PanelResolucionTicket({
 
   return (
     <form onSubmit={manejarEnvio} className="space-y-4 bg-[#F7FBF3] border border-[#224F10]/15 rounded-2xl p-4 sm:p-5">
+      {/* Cabecera del ticket con el denunciado y su estado disciplinario actual */}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#224F10]">
           <ShieldAlert className="w-4 h-4" />
@@ -112,6 +115,7 @@ export function PanelResolucionTicket({
         <Alert type="error" onClose={() => setMensajeError('')}>{mensajeError}</Alert>
       )}
 
+      {/* Selector en tarjetas de las 4 decisiones disponibles */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
         {OPCIONES_DECISION.map((opcion) => {
           const activa = opcion.clave === claveDecision;
@@ -135,6 +139,7 @@ export function PanelResolucionTicket({
         })}
       </div>
 
+      {/* Dictamen o respuesta oficial escrita que quedará registrada */}
       <Input
         id={`dictamen-${reporte.id}`}
         label="Respuesta / Dictamen visible en el Ticket *"
@@ -146,6 +151,7 @@ export function PanelResolucionTicket({
         }}
       />
 
+      {/* Botones de acción */}
       <AccionesFormulario
         alCancelar={alCancelar}
         enviando={enviando}

@@ -29,12 +29,12 @@ const TARJETAS_MOSAICO = [
   },
 ];
 
-// Accesos directos de la portada hacia los 5 módulos principales de BidZone
 export function SeccionModulosInicio() {
   const navegar = useNavigate();
 
   return (
     <section className="space-y-7">
+      {/* Cabecera explicativa de la sección */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-end">
         <div className="lg:col-span-6 space-y-1.5">
           <div className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-[#224F10]">
@@ -50,7 +50,9 @@ export function SeccionModulosInicio() {
         </p>
       </div>
 
+      {/* Cuadrícula de 12 columnas: 6 columnas para el bloque grande y 6 para las 4 tarjetas del mosaico */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+        {/* Bloque grande izquierdo: Sala de Adjudicación Directa (RN05) */}
         <div className="lg:col-span-6 relative rounded-3xl overflow-hidden min-h-[410px] bg-[#0D0D0D] p-6 sm:p-8 flex flex-col justify-end">
           <img
             src="https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=1200&q=80"
@@ -72,6 +74,7 @@ export function SeccionModulosInicio() {
               </p>
             </div>
 
+            {/* Botones de acción directa */}
             <div className="flex flex-wrap items-center gap-3 pt-1">
               <button
                 type="button"
@@ -97,6 +100,7 @@ export function SeccionModulosInicio() {
           </div>
         </div>
 
+        {/* Bloque derecho: Mosaico 2x2 con enlaces a los módulos */}
         <div className="lg:col-span-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
           {TARJETAS_MOSAICO.map((item) => (
             <Link

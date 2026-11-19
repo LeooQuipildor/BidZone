@@ -1,8 +1,8 @@
-// Imagen ilustrativa cuando una subasta no trae foto propia
 export const IMAGEN_SUBASTA_POR_DEFECTO =
   'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=900&q=80';
 
-// Opciones de categoría para crear o editar una subasta
+// Opciones de categoría temática disponibles al crear o editar una publicación.
+// Se usa en: 'CamposSubasta.jsx' para poblar el <Select>.
 export const OPCIONES_CATEGORIAS_SUBASTA = [
   { valor: 'Tecnología', etiqueta: 'Tecnología' },
   { valor: 'Gaming', etiqueta: 'Gaming' },
@@ -12,7 +12,8 @@ export const OPCIONES_CATEGORIAS_SUBASTA = [
   { valor: 'Vehículos', etiqueta: 'Vehículos' },
 ];
 
-// Lista de categorías usada en filtros del inicio, catálogo y panel
+// Lista de categorías para botones horizontales de filtro (incluye opción 'Todas').
+// Se usa en: 'FiltrosBotones.jsx' en Inicio, Catálogo y Panel.
 export const CATEGORIAS_FILTRO_SUBASTA = [
   'Todas',
   'Tecnología',
@@ -23,7 +24,7 @@ export const CATEGORIAS_FILTRO_SUBASTA = [
   'Vehículos',
 ];
 
-// Opciones para filtrar por estado o cierre en el catálogo público
+// Opciones para filtrar por estado o cercanía al cierre en el catálogo público.
 export const OPCIONES_ESTADO_SALA = [
   { valor: 'activa', etiqueta: 'En vivo (Activas)' },
   { valor: 'terminaHoy', etiqueta: 'Termina Hoy' },
@@ -31,14 +32,13 @@ export const OPCIONES_ESTADO_SALA = [
   { valor: 'finalizada', etiqueta: 'Finalizadas' },
 ];
 
-// Criterios de ordenamiento compartidos para listas de subastas
+// Criterios de ordenamiento compartidos para catálogos y listas de subastas.
 export const OPCIONES_ORDEN_SUBASTA = [
   { valor: 'proximasACerrar', etiqueta: 'Próximas a finalizar' },
   { valor: 'menorPrecio', etiqueta: 'Menor precio actual' },
   { valor: 'mayorPrecio', etiqueta: 'Mayor precio actual' },
 ];
 
-// Formatea un monto a pesos argentinos sin decimales (ejemplo: $ 150.000)
 export function formatearMoneda(monto) {
   const numero = Number(monto) || 0;
   return new Intl.NumberFormat('es-AR', {
@@ -48,7 +48,6 @@ export function formatearMoneda(monto) {
   }).format(numero);
 }
 
-// Convierte una fecha ISO a texto legible en español (ejemplo: 10 nov 2026, 18:30)
 export function formatearFechaHora(fechaTexto) {
   if (!fechaTexto) return '—';
   const fecha = new Date(fechaTexto);
@@ -62,29 +61,26 @@ export function formatearFechaHora(fechaTexto) {
   }).format(fecha);
 }
 
-// Convierte una fecha al formato YYYY-MM-DDTHH:mm requerido por <input type="datetime-local">
 export function fechaParaInputLocal(fechaEntrada) {
   const unDiaEnMs = 24 * 60 * 60 * 1000;
   const fecha = fechaEntrada ? new Date(fechaEntrada) : new Date(Date.now() + unDiaEnMs);
   if (Number.isNaN(fecha.getTime())) return '';
 
+  // Ajustamos la diferencia horaria local (timezone offset) para no perder horas al convertir
   const diferenciaLocalMs = fecha.getTimezoneOffset() * 60 * 1000;
   return new Date(fecha.getTime() - diferenciaLocalMs).toISOString().slice(0, 16);
 }
 
-// Convierte el texto de un <input type="datetime-local"> a fecha ISO UTC para el servidor
 export function inputLocalAFechaIso(valorLocal) {
   if (!valorLocal) return '';
   const fecha = new Date(valorLocal);
   return Number.isNaN(fecha.getTime()) ? '' : fecha.toISOString();
 }
 
-// Agrega un cero a la izquierda en números de un solo dígito (ejemplo: 7 -> "07")
 function completarDosDigitos(numero) {
   return String(numero).padStart(2, '0');
 }
 
-// Calcula el tiempo que falta hasta que termine una subasta
 export function calcularTiempoRestante(fechaFinTexto, ahoraMs = Date.now()) {
   const diferenciaMs = new Date(fechaFinTexto).getTime() - ahoraMs;
   if (Number.isNaN(diferenciaMs) || diferenciaMs <= 0) {
@@ -104,6 +100,7 @@ export function calcularTiempoRestante(fechaFinTexto, ahoraMs = Date.now()) {
   const minutos = Math.floor((totalSegundos % 3600) / 60);
   const segundos = totalSegundos % 60;
 
+  // Formato compacto tipo reloj digital
   let textoFormateado = `${completarDosDigitos(horas)}:${completarDosDigitos(minutos)}:${completarDosDigitos(segundos)}`;
   if (dias > 0) {
     textoFormateado = `${dias}d ${completarDosDigitos(horas)}h ${completarDosDigitos(minutos)}m ${completarDosDigitos(segundos)}s`;
@@ -112,7 +109,6 @@ export function calcularTiempoRestante(fechaFinTexto, ahoraMs = Date.now()) {
   return { vencida: false, dias, horas, minutos, segundos, textoFormateado };
 }
 
-// Toma las primeras 2 iniciales de un nombre para el avatar circular (ejemplo: "Juan Pérez" -> "JP")
 export function obtenerIniciales(nombre, respaldo = 'BZ') {
   const texto = String(nombre || respaldo).trim();
   if (!texto) return respaldo;
@@ -126,15 +122,13 @@ export function obtenerIniciales(nombre, respaldo = 'BZ') {
   return (iniciales || respaldo).toUpperCase();
 }
 
-// Devuelve una etiqueta amigable para el rol de usuario
 export function formatearRolUsuario(rol, versionCorta = false) {
   if (rol === 'admin') return versionCorta ? 'Admin' : 'Administrador';
   return 'Socio';
 }
 
-// Devuelve etiqueta legible para el estado disciplinario de una cuenta
 export function formatearEstadoCuenta(estado) {
-  if (estado === 'suspended') return 'Suspendida';
-  if (estado === 'closed') return 'Cerrada';
+  if (estado === 'suspendida') return 'Suspendida';
+  if (estado === 'cerrada') return 'Cerrada';
   return 'Activa';
 }

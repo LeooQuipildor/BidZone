@@ -24,7 +24,6 @@ function obtenerTextoBotonAdmin(estaAtendiendo, estado) {
   return estado === 'en_revision' ? 'Atender Ticket' : 'Cambiar resolución';
 }
 
-// Tarjeta tipo Ticket de soporte/mediación para un reporte RN06
 export function TarjetaReportePanel({
   reporte,
   tituloSubasta,
@@ -39,11 +38,12 @@ export function TarjetaReportePanel({
   alEliminar,
   panelResolucion = null,
 }) {
-  const insignia = obtenerInsigniaTicket(reporte.status);
-  const textoBotonAdmin = obtenerTextoBotonAdmin(estaAtendiendo, reporte.status);
+  const insignia = obtenerInsigniaTicket(reporte.estado);
+  const textoBotonAdmin = obtenerTextoBotonAdmin(estaAtendiendo, reporte.estado);
 
   return (
     <div className="rounded-2xl bg-white border border-[#224F10]/10 p-5 space-y-4 shadow-2xs">
+      {/* Cabecera del ticket: Insignia de estado, Número de ticket, Fecha y Botones de acción */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#224F10]/8 pb-3">
         <div className="flex flex-wrap items-center gap-2">
           <span
@@ -56,11 +56,13 @@ export function TarjetaReportePanel({
             Ticket #{reporte.id}
           </span>
           <span className="text-[11px] text-[#0D0D0D]/50">
-            · {formatearFechaHora(reporte.createdAt)}
+            · {formatearFechaHora(reporte.creadoEn)}
           </span>
         </div>
 
+        {/* Acciones de gestión */}
         <div className="flex items-center gap-1.5">
+          {/* Botón para que el administrador atienda o modifique la resolución del ticket */}
           {esAdmin && (
             <button
               type="button"
@@ -71,6 +73,8 @@ export function TarjetaReportePanel({
               {textoBotonAdmin}
             </button>
           )}
+
+          {/* Botón para que el usuario que reportó edite los detalles si sigue abierto */}
           {!esAdmin && puedeEditarReclamo && (
             <button
               type="button"
@@ -80,6 +84,8 @@ export function TarjetaReportePanel({
               Editar reclamo
             </button>
           )}
+
+          {/* Botón para eliminar el ticket (solo administradores) */}
           {esAdmin && (
             <button
               type="button"
@@ -93,12 +99,13 @@ export function TarjetaReportePanel({
         </div>
       </div>
 
+      {/* Cuerpo del ticket: Motivo principal y Descripción detallada */}
       <div className="space-y-1.5">
-        <h3 className="text-base font-bold text-[#0D0D0D]">{reporte.reason}</h3>
-        <p className="text-xs text-[#0D0D0D]/75 leading-relaxed">{reporte.description}</p>
-        {reporte.evidenceUrl && (
+        <h3 className="text-base font-bold text-[#0D0D0D]">{reporte.motivo}</h3>
+        <p className="text-xs text-[#0D0D0D]/75 leading-relaxed">{reporte.descripcion}</p>
+        {reporte.urlEvidencia && (
           <a
-            href={reporte.evidenceUrl}
+            href={reporte.urlEvidencia}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#224F10] hover:underline"
@@ -109,13 +116,14 @@ export function TarjetaReportePanel({
         )}
       </div>
 
+      {/* Ficha técnica: Subasta vinculada, partes involucradas y dictamen administrativo actual */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-[#F7FBF3] p-3.5 rounded-xl border border-[#224F10]/10 text-xs">
         <div>
           <span className="text-[10px] uppercase tracking-wider text-[#0D0D0D]/50 block">
             Subasta Involucrada
           </span>
           <Link
-            to={`/subastas/${reporte.auctionId}`}
+            to={`/subastas/${reporte.subastaId}`}
             className="font-semibold text-[#224F10] hover:underline"
           >
             {tituloSubasta}
@@ -139,11 +147,12 @@ export function TarjetaReportePanel({
           </span>
           <strong className="text-[#224F10] inline-flex items-center gap-1">
             <ShieldAlert className="w-3.5 h-3.5 shrink-0" />
-            <span>{reporte.sanctionApplied}</span>
+            <span>{reporte.sancionAplicada}</span>
           </strong>
         </div>
       </div>
 
+      {/* Renderizado condicional del panel de mediación interactivo para administradores */}
       {estaAtendiendo && panelResolucion}
     </div>
   );

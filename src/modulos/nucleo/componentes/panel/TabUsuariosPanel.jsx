@@ -16,22 +16,23 @@ import { TarjetaUsuarioPanel } from './TarjetaUsuarioPanel';
 const OPCIONES_FILTRO_ROL = [
   { valor: 'todos', etiqueta: 'Rol: Todos' },
   { valor: 'admin', etiqueta: 'Rol: Administrador' },
-  { valor: 'user', etiqueta: 'Rol: Socio' },
+  { valor: 'usuario', etiqueta: 'Rol: Socio' },
 ];
 
 const OPCIONES_FILTRO_ESTADO = [
   { valor: 'todos', etiqueta: 'Estado: Todos' },
-  { valor: 'active', etiqueta: 'Estado: Activa' },
-  { valor: 'suspended', etiqueta: 'Estado: Suspendida' },
-  { valor: 'closed', etiqueta: 'Estado: Cerrada' },
+  { valor: 'activa', etiqueta: 'Estado: Activa' },
+  { valor: 'suspendida', etiqueta: 'Estado: Suspendida' },
+  { valor: 'cerrada', etiqueta: 'Estado: Cerrada' },
 ];
 
-// Pestaña exclusiva de Administrador para gestionar cuentas, roles y sanciones RN06
 export function TabUsuariosPanel({ usuarioActual, usuarios, textoBusqueda }) {
+  // Acciones asíncronas del store de Zustand `tiendaAutenticacion.js`
   const crearUsuario = usarTiendaAutenticacion((estado) => estado.crearUsuario);
   const actualizarUsuario = usarTiendaAutenticacion((estado) => estado.actualizarUsuario);
   const eliminarUsuario = usarTiendaAutenticacion((estado) => estado.eliminarUsuario);
 
+  // Estados locales para filtros, alertas y control de formularios
   const [filtroRol, setFiltroRol] = useState('todos');
   const [filtroEstado, setFiltroEstado] = useState('todos');
   const [aviso, setAviso] = useState(null);
@@ -40,13 +41,14 @@ export function TabUsuariosPanel({ usuarioActual, usuarios, textoBusqueda }) {
 
   const usuarioEditando = idUsuarioEditando ? buscarPorId(usuarios, idUsuarioEditando) : null;
   const cantidadSancionados = usuarios.filter(
-    (item) => item.status === 'suspended' || item.status === 'closed'
+    (item) => item.estado === 'suspendida' || item.estado === 'cerrada'
   ).length;
 
+  // Filtrado compuesto de usuarios: por texto, por rol y por estado
   const usuariosFiltrados = usuarios.filter((usuario) => {
-    const coincideTexto = coincideConBusqueda([usuario.name, usuario.email, usuario.city], textoBusqueda);
-    const coincideRol = filtroRol === 'todos' || usuario.role === filtroRol;
-    const coincideEstado = filtroEstado === 'todos' || usuario.status === filtroEstado;
+    const coincideTexto = coincideConBusqueda([usuario.nombre, usuario.correo, usuario.ciudad], textoBusqueda);
+    const coincideRol = filtroRol === 'todos' || usuario.rol === filtroRol;
+    const coincideEstado = filtroEstado === 'todos' || usuario.estado === filtroEstado;
     return coincideTexto && coincideRol && coincideEstado;
   });
 
@@ -70,10 +72,10 @@ export function TabUsuariosPanel({ usuarioActual, usuarios, textoBusqueda }) {
       setAviso({ tipo: 'error', texto: 'No puedes eliminar tu propia sesión activa.' });
       return;
     }
-    if (!window.confirm(`¿Confirmas eliminar al usuario "${usuario.name}"?`)) return;
+    if (!window.confirm(`¿Confirmas eliminar al usuario "${usuario.nombre}"?`)) return;
     try {
       await eliminarUsuario(usuario.id);
-      setAviso({ tipo: 'exito', texto: `Usuario "${usuario.name}" eliminado.` });
+      setAviso({ tipo: 'exito', texto: `Usuario "${usuario.nombre}" eliminado.` });
     } catch (error) {
       setAviso({ tipo: 'error', texto: error.message });
     }
@@ -81,6 +83,7 @@ export function TabUsuariosPanel({ usuarioActual, usuarios, textoBusqueda }) {
 
   return (
     <div className="space-y-5">
+      {/* Cabecera con conteo total/sancionados y botón de alta de nuevo usuario */}
       <CabeceraSeccionPanel
         titulo="Gestión de Usuarios"
         subtitulo={`Administración de cuentas (${usuarios.length} registradas · ${cantidadSancionados} sancionadas).`}
@@ -98,11 +101,13 @@ export function TabUsuariosPanel({ usuarioActual, usuarios, textoBusqueda }) {
         }
       />
 
+      {/* Banner de mensajes de éxito o error */}
       <AvisoPanel aviso={aviso} alCerrar={() => setAviso(null)} />
 
+      {/* Modal flotante del formulario de usuario */}
       {formularioAbierto && (
         <ContenedorFormularioPanel
-          titulo={usuarioEditando ? `Editar Usuario: ${usuarioEditando.name}` : 'Alta de Nuevo Usuario'}
+          titulo={usuarioEditando ? `Editar Usuario: ${usuarioEditando.nombre}` : 'Alta de Nuevo Usuario'}
           alCerrar={cerrarFormulario}
         >
           <FormularioUsuario
@@ -117,6 +122,7 @@ export function TabUsuariosPanel({ usuarioActual, usuarios, textoBusqueda }) {
         </ContenedorFormularioPanel>
       )}
 
+      {/* Selectores de filtrado por Rol y por Estado */}
       <div className="rounded-2xl bg-white border border-[#224F10]/10 p-4 grid grid-cols-1 sm:grid-cols-2 gap-3 shadow-2xs">
         <SelectPanel
           valor={filtroRol}
@@ -130,6 +136,7 @@ export function TabUsuariosPanel({ usuarioActual, usuarios, textoBusqueda }) {
         />
       </div>
 
+      {/* Grilla de tarjetas de usuario o estado vacío */}
       {usuariosFiltrados.length === 0 ? (
         <EstadoVacioPanel mensaje="No hay usuarios que coincidan con el filtro aplicado." />
       ) : (

@@ -21,10 +21,13 @@ import {
   TarjetaCtaCatalogo,
 } from '../../nucleo/diseno/componentesBloques';
 
+// Constante de paginación para el catálogo
 const SUBASTAS_POR_PAGINA = 20;
 
 export function VistaListaSubastas() {
   const navegar = useNavigate();
+
+  // Reloj de cuenta regresiva sincronizado cada segundo
   const ahoraMs = useRelojSegundo();
 
   const subastas = usarTiendaSubastas((estado) => estado.subastas);
@@ -37,6 +40,7 @@ export function VistaListaSubastas() {
   const eliminarSubasta = usarTiendaSubastas((estado) => estado.eliminarSubasta);
   const usuarioActual = usarTiendaAutenticacion((estado) => estado.usuarioActual);
 
+  // Estados locales para mensajes de éxito y subasta seleccionada para revisión disciplinaria
   const [aviso, setAviso] = useState(null);
   const [subastaSolicitada, setSubastaSolicitada] = useState(null);
 
@@ -44,10 +48,12 @@ export function VistaListaSubastas() {
     obtenerSubastas();
   }, [obtenerSubastas]);
 
+  // Asegura que el valor del filtro de estado sea coherente
   const estadoSala = OPCIONES_ESTADO_SALA.some((opcion) => opcion.valor === filtros.estado)
     ? filtros.estado
     : 'activa';
 
+  // Procesamiento y ordenamiento de las subastas según filtros activos
   const subastasFiltradas = filtrarYOrdenarSubastas(
     subastas,
     filtros.busqueda,
@@ -57,13 +63,15 @@ export function VistaListaSubastas() {
     ahoraMs
   );
 
+  // Paginación segura de los resultados filtrados
   const {
     elementosPagina: subastasPaginadas,
     paginaActual: paginaSegura,
     totalPaginas,
   } = paginarLista(subastasFiltradas, paginaCatalogo, SUBASTAS_POR_PAGINA);
 
-  const esAdmin = usuarioActual?.role === 'admin';
+  // Permiso de administrador para moderación
+  const esAdmin = usuarioActual?.rol === 'admin';
 
   function manejarCambioPagina(nuevaPagina) {
     cambiarPaginaCatalogo(nuevaPagina);
@@ -71,13 +79,13 @@ export function VistaListaSubastas() {
   }
 
   async function manejarEliminacion(subasta) {
-    if (!window.confirm(`¿Confirmas la eliminación de la subasta "${subasta.title}"?`)) {
+    if (!window.confirm(`¿Confirmas la eliminación de la subasta "${subasta.titulo}"?`)) {
       return;
     }
     setAviso(null);
     try {
       await eliminarSubasta(subasta.id);
-      setAviso({ tipo: 'success', texto: `Subasta "${subasta.title}" eliminada exitosamente.` });
+      setAviso({ tipo: 'success', texto: `Subasta "${subasta.titulo}" eliminada exitosamente.` });
     } catch (error) {
       setAviso({ tipo: 'error', texto: error.message });
     }
@@ -85,6 +93,7 @@ export function VistaListaSubastas() {
 
   return (
     <div className="space-y-8">
+      {/* Cabecera con título y botón de publicación directa */}
       <CabeceraPagina
         titulo="Elige tu lote en subasta"
         subtitulo="Explora artículos en vivo, realiza ofertas vinculantes o administra tus publicaciones."
@@ -98,13 +107,14 @@ export function VistaListaSubastas() {
         }
       />
 
+      {/* Alertas de error o éxito */}
       {(aviso || errorSubastas) && (
         <Alert type={aviso?.tipo || 'error'} onClose={() => setAviso(null)}>
           {aviso?.texto || errorSubastas}
         </Alert>
       )}
 
-      {/* Filtros por categoría, búsqueda y ordenamiento */}
+      {/* Barra de filtros por categoría y caja de búsqueda */}
       <div className="space-y-4">
         <FiltrosBotones
           opciones={CATEGORIAS_FILTRO_SUBASTA}
@@ -140,6 +150,7 @@ export function VistaListaSubastas() {
         </Card>
       </div>
 
+      {/* Cuadrícula de tarjetas o estado vacío */}
       {subastasFiltradas.length === 0 ? (
         <Card className="text-center py-12">
           <p className="text-sm text-[#0D0D0D]/65">
@@ -150,7 +161,7 @@ export function VistaListaSubastas() {
         <div className="space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {subastasPaginadas.map((subasta) => {
-              const esVendedor = mismoId(usuarioActual?.id, subasta.sellerId);
+              const esVendedor = mismoId(usuarioActual?.id, subasta.vendedorId);
               return (
                 <TarjetaSubasta
                   key={subasta.id}
@@ -164,6 +175,7 @@ export function VistaListaSubastas() {
               );
             })}
 
+            {/* En la última página mostramos la tarjeta CTA para invitar a publicar */}
             {paginaSegura === totalPaginas && (
               <TarjetaCtaCatalogo
                 titulo="¿Tienes un artículo para subastar?"
@@ -174,6 +186,7 @@ export function VistaListaSubastas() {
             )}
           </div>
 
+          {/* Barra de paginación */}
           <PaginacionCatalogo
             paginaActual={paginaSegura}
             totalPaginas={totalPaginas}
@@ -184,6 +197,7 @@ export function VistaListaSubastas() {
         </div>
       )}
 
+      {/* Modal de moderación disciplinaria para Administradores */}
       <PanelSolicitudCorreccion
         enModal
         subasta={subastaSolicitada}

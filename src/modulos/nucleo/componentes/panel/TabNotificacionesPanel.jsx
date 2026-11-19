@@ -12,13 +12,15 @@ import {
 } from './PanelCompartido';
 
 function FilaNotificacion({ item, alMarcarLeida, alEliminar }) {
-  const sinLeer = !item.read;
+  const sinLeer = !item.leida;
+
   return (
     <div
       className={`p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-colors ${
         sinLeer ? 'bg-[#F7FBF3]/80' : 'bg-white'
       }`}
     >
+      {/* Columna izquierda: Icono, Título, Mensaje y Metadatos */}
       <div className="flex items-start gap-3.5 min-w-0">
         <span
           className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
@@ -27,24 +29,25 @@ function FilaNotificacion({ item, alMarcarLeida, alEliminar }) {
         >
           <Bell className="w-4 h-4" />
         </span>
+
         <div className="space-y-1 min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <h3 className="text-sm font-bold text-[#0D0D0D]">{item.title}</h3>
+            <h3 className="text-sm font-bold text-[#0D0D0D]">{item.titulo}</h3>
             {sinLeer && (
               <span className="px-2 py-0.5 rounded-full bg-[#B0E454] text-[#0D0D0D] text-[10px] font-bold">
                 Nueva
               </span>
             )}
           </div>
-          <p className="text-xs text-[#0D0D0D]/75">{item.message}</p>
+          <p className="text-xs text-[#0D0D0D]/75">{item.mensaje}</p>
           <div className="flex flex-wrap items-center gap-3 text-[11px] text-[#0D0D0D]/45">
-            <span>{formatearFechaHora(item.createdAt)}</span>
-            {item.auctionId && (
+            <span>{formatearFechaHora(item.creadoEn)}</span>
+            {item.subastaId && (
               <Link
-                to={`/subastas/${item.auctionId}`}
+                to={`/subastas/${item.subastaId}`}
                 className="inline-flex items-center gap-1 font-semibold text-[#224F10] hover:underline"
               >
-                <span>Ver subasta #{item.auctionId}</span>
+                <span>Ver subasta #{item.subastaId}</span>
                 <ExternalLink className="w-3 h-3" />
               </Link>
             )}
@@ -52,6 +55,7 @@ function FilaNotificacion({ item, alMarcarLeida, alEliminar }) {
         </div>
       </div>
 
+      {/* Columna derecha: Botón para marcar leída y botón de eliminación */}
       <div className="flex items-center justify-end gap-2 shrink-0">
         {sinLeer && (
           <button
@@ -76,20 +80,22 @@ function FilaNotificacion({ item, alMarcarLeida, alEliminar }) {
   );
 }
 
-// Bandeja estrictamente personal de notificaciones del usuario conectado
 export function TabNotificacionesPanel({ usuarioActual, notificaciones, textoBusqueda }) {
+  // Acciones asíncronas del store de Zustand `tiendaNotificaciones.js`
   const marcarComoLeida = usarTiendaNotificaciones((estado) => estado.marcarComoLeida);
   const marcarTodasComoLeidas = usarTiendaNotificaciones((estado) => estado.marcarTodasComoLeidas);
   const eliminarNotificacion = usarTiendaNotificaciones((estado) => estado.eliminarNotificacion);
+
   const [mensajeError, setMensajeError] = useState('');
 
+  // Filtrado estricto por usuario y por texto de búsqueda
   const misNotificaciones = notificaciones.filter((item) =>
-    mismoId(item.userId, usuarioActual?.id)
+    mismoId(item.usuarioId, usuarioActual?.id)
   );
   const filtradas = misNotificaciones.filter((item) =>
-    coincideConBusqueda([item.title, item.message], textoBusqueda)
+    coincideConBusqueda([item.titulo, item.mensaje], textoBusqueda)
   );
-  const cantidadSinLeer = misNotificaciones.filter((item) => !item.read).length;
+  const cantidadSinLeer = misNotificaciones.filter((item) => !item.leida).length;
 
   async function ejecutarAccion(accion) {
     setMensajeError('');
@@ -102,6 +108,7 @@ export function TabNotificacionesPanel({ usuarioActual, notificaciones, textoBus
 
   return (
     <div className="space-y-5">
+      {/* Cabecera con conteo de no leídas y botón masivo para marcar todas */}
       <CabeceraSeccionPanel
         titulo="Mis Notificaciones"
         subtitulo={`Solo tus avisos personales · ${cantidadSinLeer} pendientes sin leer de ${misNotificaciones.length}.`}
@@ -118,11 +125,13 @@ export function TabNotificacionesPanel({ usuarioActual, notificaciones, textoBus
         }
       />
 
+      {/* Banner de error en caso de falla en la operación */}
       <AvisoPanel
         aviso={mensajeError ? { tipo: 'error', texto: mensajeError } : null}
         alCerrar={() => setMensajeError('')}
       />
 
+      {/* Listado de notificaciones o estado vacío */}
       {filtradas.length === 0 ? (
         <EstadoVacioPanel mensaje="No tienes notificaciones personales para mostrar." />
       ) : (

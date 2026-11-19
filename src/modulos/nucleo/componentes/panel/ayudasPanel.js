@@ -26,7 +26,6 @@ export const OPCIONES_ORDEN_PANEL = OPCIONES_ORDEN_SUBASTA.map((op) => ({
   etiqueta: `Orden: ${op.etiqueta}`,
 }));
 
-// Construye los grupos de botones de la barra lateral del panel según rol y contadores reales
 export function construirMenuPanel({
   esAdmin,
   usuarioActual,
@@ -37,17 +36,21 @@ export function construirMenuPanel({
   resenas,
   notificaciones,
 }) {
-  const misSubastas = subastas.filter((item) => mismoId(item.sellerId, usuarioActual?.id));
-  const misPujas = pujas.filter((item) => mismoId(item.bidderId, usuarioActual?.id));
+  // Filtros de colecciones personales
+  const misSubastas = subastas.filter((item) => mismoId(item.vendedorId, usuarioActual?.id));
+  const misPujas = pujas.filter((item) => mismoId(item.postorId, usuarioActual?.id));
   const misResenas = resenas.filter(
     (item) =>
-      mismoId(item.reviewerId, usuarioActual?.id) || mismoId(item.targetUserId, usuarioActual?.id)
+      mismoId(item.autorId, usuarioActual?.id) || mismoId(item.calificadoId, usuarioActual?.id)
   );
-  const reportesAbiertos = reportes.filter((item) => item.status === 'en_revision').length;
+
+  // Conteo de elementos pendientes que requieren atención urgente
+  const reportesAbiertos = reportes.filter((item) => item.estado === 'en_revision').length;
   const notificacionesSinLeer = notificaciones.filter(
-    (item) => mismoId(item.userId, usuarioActual?.id) && !item.read
+    (item) => mismoId(item.usuarioId, usuarioActual?.id) && !item.leida
   ).length;
 
+  // Bloque principal de navegación funcional
   const seccionesMenu = [
     { id: 'resumen', etiqueta: 'Resumen', icono: LayoutDashboard },
     {
@@ -66,6 +69,7 @@ export function construirMenuPanel({
     { id: 'resenas', etiqueta: 'Mis Reseñas', icono: Star, cantidad: misResenas.length },
   ];
 
+  // Si es administrador se agrega la sección de Usuarios
   if (esAdmin) {
     seccionesMenu.push({
       id: 'usuarios',
@@ -75,6 +79,7 @@ export function construirMenuPanel({
     });
   }
 
+  // Bloque secundario de cuenta personal
   const seccionesCuenta = [
     {
       id: 'notificaciones',
@@ -88,7 +93,6 @@ export function construirMenuPanel({
   return { seccionesMenu, seccionesCuenta };
 }
 
-// Calcula título, subtítulo y estado vacío de la pestaña de subastas según rol y vista activa
 export function obtenerTextosTabSubastas(esAdmin, vistaAdmin, totalPlataforma, totalPropias) {
   if (esAdmin && vistaAdmin === 'todas') {
     return {

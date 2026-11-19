@@ -4,7 +4,6 @@ import { TarjetaSubasta } from '../../subastas/componentes/TarjetaSubasta';
 import { useRelojSegundo } from '../utilidades/ayudas';
 import { FiltrosBotones, TarjetaCtaCatalogo } from '../diseno/componentesBloques';
 
-// Catálogo rápido de subastas en el inicio con filtro por categoría
 export function SeccionCatalogoInicio({
   categorias,
   categoriaSeleccionada,
@@ -13,15 +12,17 @@ export function SeccionCatalogoInicio({
   errorSubastas,
 }) {
   const navegar = useNavigate();
+
   const ahoraMs = useRelojSegundo();
 
   const catalogoFiltrado =
     categoriaSeleccionada === 'Todas'
       ? subastas
-      : subastas.filter((subasta) => subasta.category === categoriaSeleccionada);
+      : subastas.filter((subasta) => subasta.categoria === categoriaSeleccionada);
 
   return (
     <section className="space-y-7">
+      {/* Cabecera de la sección con título y botones de filtrado rápido */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div className="space-y-1.5">
           <div className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-[#224F10]">
@@ -33,6 +34,7 @@ export function SeccionCatalogoInicio({
           </h2>
         </div>
 
+        {/* Componente reutilizable para renderizar los botones de categoría */}
         <FiltrosBotones
           opciones={categorias}
           valorActual={categoriaSeleccionada}
@@ -41,17 +43,21 @@ export function SeccionCatalogoInicio({
         />
       </div>
 
+      {/* Alerta visual en caso de que ocurra un error de red y no haya subastas disponibles */}
       {errorSubastas && subastas.length === 0 && (
         <div className="rounded-2xl bg-red-50 border border-red-200 px-4 py-3 text-xs text-red-800 font-medium">
           {errorSubastas}
         </div>
       )}
 
+      {/* Grilla responsiva de tarjetas de subasta */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Renderizado de hasta 7 tarjetas con slice */}
         {catalogoFiltrado.slice(0, 7).map((subasta) => (
           <TarjetaSubasta key={subasta.id} subasta={subasta} ahoraMs={ahoraMs} />
         ))}
 
+        {/* Tarjeta final de Call To Action que completa el hueco de la grilla */}
         <TarjetaCtaCatalogo
           titulo={`${subastas.length} lotes activos y adjudicados`}
           descripcion="Explora todas las categorías, filtra por precio y consulta el historial completo de ofertas en vivo."

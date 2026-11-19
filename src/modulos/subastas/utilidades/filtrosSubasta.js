@@ -4,14 +4,13 @@ import {
   mismoId,
 } from '../../nucleo/utilidades/ayudas';
 
-// Verifica si una subasta cumple con el filtro de estado o ventana de cierre
 function coincideEstadoSubasta(subasta, estadoFiltro, ahoraMs) {
-  if (estadoFiltro === 'todas') return subasta.status !== 'cancelada';
-  if (estadoFiltro === 'finalizada') return subasta.status === 'finalizada';
+  if (estadoFiltro === 'todas') return subasta.estado !== 'cancelada';
+  if (estadoFiltro === 'finalizada') return subasta.estado === 'finalizada';
 
-  const fechaFinMs = new Date(subasta.endTime).getTime();
+  const fechaFinMs = new Date(subasta.fechaFin).getTime();
   const estaActiva =
-    subasta.status === 'activa' && !Number.isNaN(fechaFinMs) && fechaFinMs > ahoraMs;
+    subasta.estado === 'activa' && !Number.isNaN(fechaFinMs) && fechaFinMs > ahoraMs;
   if (!estaActiva) return false;
   if (estadoFiltro === 'activa') return true;
 
@@ -24,10 +23,9 @@ function coincideEstadoSubasta(subasta, estadoFiltro, ahoraMs) {
     return fechaFinMs >= finHoyMs && fechaFinMs < finMananaMs;
   }
 
-  return subasta.status === estadoFiltro;
+  return subasta.estado === estadoFiltro;
 }
 
-// Filtra por texto, categoría y estado, y luego ordena las subastas según el criterio elegido
 export function filtrarYOrdenarSubastas(
   subastas,
   textoBusqueda,
@@ -36,28 +34,30 @@ export function filtrarYOrdenarSubastas(
   ordenarPor,
   ahoraMs = Date.now()
 ) {
+  // 1. Filtrado multidimensional
   const filtradas = subastas.filter((subasta) => {
     const coincideTexto = coincideConBusqueda(
-      [subasta.title, subasta.description, subasta.category],
+      [subasta.titulo, subasta.descripcion, subasta.categoria],
       textoBusqueda
     );
-    const coincideCategoria = categoria === 'Todas' || subasta.category === categoria;
+    const coincideCategoria = categoria === 'Todas' || subasta.categoria === categoria;
     const coincideEstado = coincideEstadoSubasta(subasta, estadoFiltro, ahoraMs);
     return coincideTexto && coincideCategoria && coincideEstado;
   });
 
+  // 2. Ordenamiento según el criterio elegido
   return filtradas.sort((subastaA, subastaB) => {
     if (ordenarPor === 'menorPrecio') {
-      return Number(subastaA.currentPrice) - Number(subastaB.currentPrice);
+      return Number(subastaA.precioActual) - Number(subastaB.precioActual);
     }
     if (ordenarPor === 'mayorPrecio') {
-      return Number(subastaB.currentPrice) - Number(subastaA.currentPrice);
+      return Number(subastaB.precioActual) - Number(subastaA.precioActual);
     }
-    return new Date(subastaA.endTime).getTime() - new Date(subastaB.endTime).getTime();
+    // Por defecto: próximas a cerrar (las de menor fecha de fin van primero)
+    return new Date(subastaA.fechaFin).getTime() - new Date(subastaB.fechaFin).getTime();
   });
 }
 
-// Reúne pujas ordenadas, vendedor, ganador y permisos de contacto para VistaDetalleSubasta
 export function prepararDatosDetalleSubasta({
   subasta,
   detalleEncontrado,
@@ -66,58 +66,62 @@ export function prepararDatosDetalleSubasta({
   usuarioActual,
   ahoraMs = Date.now(),
 }) {
-  const pujasBase = Array.isArray(detalleEncontrado?.bids)
-    ? detalleEncontrado.bids
-    : pujas.filter((puja) => mismoId(puja.auctionId, subasta.id));
+  // 1. Obtenemos las pujas de la subasta (priorizando las del detalle devuelto por la API)
+  const pujasBase = Array.isArray(detalleEncontrado?.pujas)
+    ? detalleEncontrado.pujas
+    : pujas.filter((puja) => mismoId(puja.subastaId, subasta.id));
 
+  // 2. Ordenamos las pujas de forma descendente (la mayor oferta queda en la posición 0)
   const pujasSubasta = [...pujasBase].sort(
-    (pujaA, pujaB) => Number(pujaB.amount) - Number(pujaA.amount)
+    (pujaA, pujaB) => Number(pujaB.monto) - Number(pujaA.monto)
   );
 
-  const vendedor = detalleEncontrado?.seller ||
-    buscarPorId(usuarios, subasta.sellerId) || {
-      id: subasta.sellerId,
-      name: subasta.sellerName || 'Vendedor',
-      reputation: subasta.sellerReputation || 5.0,
-      phone: subasta.sellerPhone,
-      email: subasta.sellerEmail,
-      city: subasta.sellerCity,
+  // 3. Identificamos los datos del vendedor
+  const vendedor = detalleEncontrado?.vendedor ||
+    buscarPorId(usuarios, subasta.vendedorId) || {
+      id: subasta.vendedorId,
+      nombre: subasta.nombreVendedor || 'Vendedor',
+      reputacion: subasta.reputacionVendedor || 5.0,
+      telefono: subasta.telefonoVendedor,
+      correo: subasta.correoVendedor,
+      ciudad: subasta.ciudadVendedor,
     };
 
-  const fechaFinMs = new Date(subasta.endTime).getTime();
+  const fechaFinMs = new Date(subasta.fechaFin).getTime();
   const tiempoExpirado = !Number.isNaN(fechaFinMs) && fechaFinMs <= ahoraMs;
-  const esFinalizada = subasta.status === 'finalizada' || tiempoExpirado;
+  const esFinalizada = subasta.estado === 'finalizada' || tiempoExpirado;
 
-  let ganador = detalleEncontrado?.winner || null;
-  if (!ganador && subasta.winnerId) {
-    ganador = buscarPorId(usuarios, subasta.winnerId) || {
-      id: subasta.winnerId,
-      name: subasta.winnerName || 'Ganador',
-      phone: subasta.winnerPhone,
-      email: subasta.winnerEmail,
-      city: subasta.winnerCity,
+  // 4. Identificamos al ganador (si la subasta ya concluyó y fue adjudicada)
+  let ganador = detalleEncontrado?.ganador || null;
+  if (!ganador && subasta.ganadorId) {
+    ganador = buscarPorId(usuarios, subasta.ganadorId) || {
+      id: subasta.ganadorId,
+      nombre: subasta.nombreGanador || 'Ganador',
+      telefono: subasta.telefonoGanador,
+      correo: subasta.correoGanador,
+      ciudad: subasta.ciudadGanador,
     };
   }
 
   // Si la subasta finalizó (por estado o por tiempo) y tiene pujas, el ganador es el líder de la oferta más alta
   if (!ganador && esFinalizada && pujasSubasta.length > 0) {
     const mejorPuja = pujasSubasta[0];
-    ganador = buscarPorId(usuarios, mejorPuja.bidderId) || {
-      id: mejorPuja.bidderId,
-      name: mejorPuja.bidderName || 'Ganador',
-      phone: mejorPuja.bidderPhone,
-      email: mejorPuja.bidderEmail,
-      city: mejorPuja.bidderCity,
+    ganador = buscarPorId(usuarios, mejorPuja.postorId) || {
+      id: mejorPuja.postorId,
+      nombre: mejorPuja.nombrePostor || 'Ganador',
     };
   }
 
-  const esVendedor = Boolean(usuarioActual && mismoId(usuarioActual.id, subasta.sellerId));
-  const esAdmin = usuarioActual?.role === 'admin';
+  // 5. Calculamos roles de autorización del usuario actual
+  const esVendedor = Boolean(usuarioActual && mismoId(usuarioActual.id, subasta.vendedorId));
+  const esAdmin = usuarioActual?.rol === 'admin';
   const esGanador = Boolean(usuarioActual && ganador && mismoId(usuarioActual.id, ganador.id));
 
-  const puedeVerContactoDesbloqueado = detalleEncontrado?.contactUnlocked !== undefined
-    ? Boolean(detalleEncontrado.contactUnlocked)
-    : Boolean(esFinalizada && ganador && (esVendedor || esAdmin || esGanador));
+  // 6. Aplicamos la regla RN05 de liberación condicional de contacto
+  const puedeVerContactoDesbloqueado =
+    detalleEncontrado?.contactoLiberado !== undefined
+      ? Boolean(detalleEncontrado.contactoLiberado)
+      : Boolean(esFinalizada && ganador && (esVendedor || esAdmin || esGanador));
 
   return {
     pujasSubasta,

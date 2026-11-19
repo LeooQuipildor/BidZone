@@ -6,6 +6,7 @@ import { Alert } from '../../nucleo/diseno/uiFeedback';
 
 export function VistaRegistro() {
   const navegar = useNavigate();
+
   const registrarUsuario = usarTiendaAutenticacion((estado) => estado.registrarUsuario);
   const cargando = usarTiendaAutenticacion((estado) => estado.cargando);
 
@@ -17,6 +18,8 @@ export function VistaRegistro() {
     contrasena: '',
     confirmarContrasena: '',
   });
+
+  // Estado para mensajes de alerta y errores de validación
   const [mensajeError, setMensajeError] = useState('');
 
   function manejarCambio(evento) {
@@ -28,21 +31,25 @@ export function VistaRegistro() {
     evento.preventDefault();
     setMensajeError('');
 
+    // Validación 1: Campos requeridos no vacíos
     if (!datosFormulario.nombre.trim() || !datosFormulario.correo.trim() || !datosFormulario.contrasena) {
       setMensajeError('Por favor completa todos los campos obligatorios.');
       return;
     }
 
+    // Validación 2: Longitud mínima de la contraseña
     if (datosFormulario.contrasena.length < 6) {
       setMensajeError('La contraseña debe tener al menos 6 caracteres.');
       return;
     }
 
+    // Validación 3: Confirmación coincidente
     if (datosFormulario.contrasena !== datosFormulario.confirmarContrasena) {
       setMensajeError('Las contraseñas ingresadas no coinciden.');
       return;
     }
 
+    // Validación 4: Teléfono requerido (esencial para RN05 de BidZone)
     if (!datosFormulario.telefono.trim()) {
       setMensajeError(
         'El teléfono de contacto es obligatorio para coordinar pago y entrega al ganar o vender en una subasta.'
@@ -51,6 +58,7 @@ export function VistaRegistro() {
     }
 
     try {
+      // Envío de la solicitud a través del store
       await registrarUsuario(datosFormulario);
       navegar('/', { replace: true });
     } catch (error) {
@@ -60,6 +68,7 @@ export function VistaRegistro() {
 
   return (
     <div className="max-w-lg mx-auto my-8">
+      {/* Cabecera visual del registro */}
       <div className="text-center mb-8 space-y-2">
         <span className="text-[11px] uppercase tracking-[0.2em] text-[#224F10] font-bold">
           NUEVO PARTICIPANTE
@@ -71,6 +80,7 @@ export function VistaRegistro() {
       </div>
 
       <Card className="p-6 sm:p-8 rounded-3xl">
+        {/* Alerta de error si falla la validación o la API */}
         {mensajeError && (
           <div className="mb-4">
             <Alert type="error" onClose={() => setMensajeError('')}>
@@ -79,6 +89,7 @@ export function VistaRegistro() {
           </div>
         )}
 
+        {/* Formulario con campos controlados */}
         <form onSubmit={manejarEnvio} className="space-y-4">
           <Input
             id="nombre"
@@ -149,6 +160,7 @@ export function VistaRegistro() {
           </Button>
         </form>
 
+        {/* Enlace para volver a Iniciar Sesión */}
         <p className="text-center text-xs text-[#0D0D0D]/70 mt-6">
           ¿Ya tienes una cuenta?{' '}
           <Link to="/iniciar-sesion" className="text-[#224F10] font-bold hover:underline">

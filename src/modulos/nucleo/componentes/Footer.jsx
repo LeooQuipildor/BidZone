@@ -2,6 +2,7 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowRight, ShieldCheck } from 'lucide-react';
 
+// Enlaces de navegación interna
 const ENLACES_PLATAFORMA = [
   { ruta: '/subastas', etiqueta: 'Catálogo de Lotes' },
   { ruta: '/subastas/nueva', etiqueta: 'Publicar Subasta' },
@@ -9,6 +10,7 @@ const ENLACES_PLATAFORMA = [
   { ruta: '/reportes', etiqueta: 'Centro de Reportes' },
 ];
 
+// Enlaces de ayuda, contacto y reglamentos para el pie
 const ENLACES_AYUDA_CONTACTO = [
   { ruta: '/preguntas-frecuentes', etiqueta: 'Preguntas Frecuentes' },
   { ruta: '/contacto', etiqueta: 'Contactos y Soporte' },
@@ -16,12 +18,14 @@ const ENLACES_AYUDA_CONTACTO = [
   { ruta: '/reglamentos', etiqueta: 'Reglamentos de Convivencia' },
 ];
 
+// Integrantes del equipo
 const INTEGRANTES_GRUPO = [
   'Mario Matías Moussa',
   'Luciano Medina',
   'Leandro Agustín Quipildor',
 ];
 
+// Módulos principales del sistema
 const MODULOS_PIE = ['Subastas', 'Pujas', 'Reportes', 'Reseñas', 'Usuarios'];
 
 export function Footer() {
@@ -30,6 +34,8 @@ export function Footer() {
   return (
     <div className="w-full max-w-7xl mx-auto px-3 sm:px-6 pb-6">
       <footer className="rounded-[28px] bg-[#224F10] text-[#EAFFD0] p-7 sm:p-10 shadow-md">
+        
+        {/* Fila 1: Llamado a la acción + Columnas de enlaces y créditos */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 pb-8 border-b border-[#EAFFD0]/15">
           <div className="lg:col-span-5 space-y-5">
             <h3 className="text-2xl sm:text-3xl font-semibold tracking-tight text-[#EAFFD0] leading-snug max-w-sm">
@@ -58,6 +64,7 @@ export function Footer() {
           </div>
 
           <div className="lg:col-span-7 grid grid-cols-2 sm:grid-cols-3 gap-6 text-xs">
+            {/* Columna Plataforma */}
             <div className="space-y-2.5">
               <p className="text-[11px] uppercase tracking-wider text-[#B0E454] font-semibold">
                 Plataforma
@@ -73,6 +80,7 @@ export function Footer() {
               </ul>
             </div>
 
+            {/* Columna Reglas de Negocio */}
             <div className="space-y-2.5">
               <p className="text-[11px] uppercase tracking-wider text-[#B0E454] font-semibold">
                 Ayuda y Contacto
@@ -88,6 +96,7 @@ export function Footer() {
               </ul>
             </div>
 
+            {/* Columna Equipo de Desarrollo */}
             <div className="space-y-2.5 col-span-2 sm:col-span-1">
               <p className="text-[11px] uppercase tracking-wider text-[#B0E454] font-semibold">
                 Grupo 8 · Prog 4
@@ -101,6 +110,7 @@ export function Footer() {
           </div>
         </div>
 
+        {/* Fila 2: Aclaración de modelo P2P (sin pasarelas de pago) + Pastillas de módulos */}
         <div className="py-5 border-b border-[#EAFFD0]/15 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <span className="w-8 h-8 rounded-lg bg-[#EAFFD0]/10 border border-[#EAFFD0]/20 flex items-center justify-center text-[#B0E454]">
@@ -128,6 +138,7 @@ export function Footer() {
           </div>
         </div>
 
+        {/* Fila 3: Copyright y paleta cromática de la identidad visual */}
         <div className="pt-5 flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] text-[#EAFFD0]/60">
           <span>© 2026 BidZone · Todos los derechos reservados · Programación 4</span>
           <span>Paleta Oficial: #B0E454 · #224F10 · #EAFFD0 · #0D0D0D</span>

@@ -4,7 +4,6 @@ import { ArrowRight, Clock, Layers, ShieldCheck, Tag } from "lucide-react";
 import { OPCIONES_ESTADO_SALA, OPCIONES_ORDEN_SUBASTA } from "../utilidades/formatos";
 import imagenPortada from "../../../assets/images/portada-bidzone.jpg";
 
-// Cajita reutilizable para cada filtro rápido de la portada
 function CajaFiltroPortada({ icono, titulo, children }) {
   return (
     <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-white/75 border border-[#224F10]/10">
@@ -19,9 +18,9 @@ function CajaFiltroPortada({ icono, titulo, children }) {
   );
 }
 
-// Portada principal del inicio con accesos rápidos y barra de búsqueda de subastas
 export function PortadaInicio({ categorias, alBuscar }) {
   const navegar = useNavigate();
+
   const [categoriaElegida, setCategoriaElegida] = useState("Todas");
   const [estadoElegido, setEstadoElegido] = useState("activa");
   const [ordenElegido, setOrdenElegido] = useState("proximasACerrar");
@@ -36,6 +35,7 @@ export function PortadaInicio({ categorias, alBuscar }) {
 
   return (
     <section className="relative w-full min-h-[580px] sm:min-h-[660px] bg-[#0D0D0D] flex flex-col justify-between pt-36 md:pt-32 lg:pt-28 pb-8 sm:pb-10 px-4 sm:px-8 lg:px-12 shadow-lg overflow-hidden">
+      {/* Imagen de fondo representativa con overlay oscuro en degradado para asegurar contraste de texto */}
       <img
         src={imagenPortada}
         alt="Portada BidZone"
@@ -43,6 +43,7 @@ export function PortadaInicio({ categorias, alBuscar }) {
       />
       <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/45 to-black/15" />
 
+      {/* Contenido textual del Hero (Título, lema, botones CTA) */}
       <div className="relative z-10 max-w-7xl mx-auto w-full my-auto py-6 sm:py-8">
         <div className="max-w-2xl space-y-6">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-black/40 backdrop-blur-md border border-white/20 text-[#B0E454] text-xs font-semibold">
@@ -60,6 +61,7 @@ export function PortadaInicio({ categorias, alBuscar }) {
             vendedor y del ganador para coordinar sin intermediarios.
           </p>
 
+          {/* Botones de acción directa: Explorar catálogo o Publicar un nuevo artículo */}
           <div className="flex flex-wrap items-center gap-3 pt-2">
             <button
               type="button"
@@ -86,9 +88,10 @@ export function PortadaInicio({ categorias, alBuscar }) {
         </div>
       </div>
 
-      {/* Barra inferior de filtros rápidos */}
+      {/* Barra inferior flotante de filtros rápidos */}
       <div className="relative z-10 max-w-7xl mx-auto w-full mt-6">
         <div className="rounded-2xl bg-[#EAFFD0] text-[#0D0D0D] p-2.5 sm:p-3 shadow-xl border border-[#224F10]/15 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5 items-center">
+          {/* 1. Selector de Categoría */}
           <CajaFiltroPortada
             icono={<Layers className="w-4 h-4" />}
             titulo="Categoría del lote"
@@ -106,6 +109,7 @@ export function PortadaInicio({ categorias, alBuscar }) {
             </select>
           </CajaFiltroPortada>
 
+          {/* 2. Selector de Estado de la Sala */}
           <CajaFiltroPortada
             icono={<Clock className="w-4 h-4" />}
             titulo="Estado de subasta"
@@ -123,6 +127,7 @@ export function PortadaInicio({ categorias, alBuscar }) {
             </select>
           </CajaFiltroPortada>
 
+          {/* 3. Selector de Ordenamiento */}
           <CajaFiltroPortada
             icono={<Tag className="w-4 h-4" />}
             titulo="Orden de precios"
@@ -140,6 +145,7 @@ export function PortadaInicio({ categorias, alBuscar }) {
             </select>
           </CajaFiltroPortada>
 
+          {/* 4. Mención de la Regla de Negocio RN05 */}
           <CajaFiltroPortada
             icono={<ShieldCheck className="w-4 h-4" />}
             titulo="Modalidad de cierre"
@@ -149,6 +155,7 @@ export function PortadaInicio({ categorias, alBuscar }) {
             </p>
           </CajaFiltroPortada>
 
+          {/* 5. Botón de ejecución de la búsqueda */}
           <button
             type="button"
             onClick={enviarBusquedaRapida}

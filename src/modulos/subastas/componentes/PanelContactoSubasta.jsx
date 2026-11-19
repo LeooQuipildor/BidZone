@@ -5,7 +5,6 @@ import { Button, Badge } from '../../nucleo/diseno/ui';
 import { DatosContactoPersona } from '../../nucleo/diseno/componentesBloques';
 import { formatearMoneda } from '../../nucleo/utilidades/formatos';
 
-// Tarjeta mostrada al finalizar la subasta: libera datos de contacto solo a las partes (RN05)
 export function PanelContactoSubasta({
   subasta,
   vendedor,
@@ -14,14 +13,15 @@ export function PanelContactoSubasta({
   esVendedor,
   esFinalizada = false,
 }) {
-  const finalizada = subasta.status === 'finalizada' || esFinalizada;
-
+  const finalizada = subasta.estado === 'finalizada' || esFinalizada;
   if (!finalizada) return null;
 
+  // Identificador de la contraparte para prellenar la denuncia si hubiera problemas (RN06)
   const idContraparte = esVendedor ? ganador?.id : vendedor?.id;
 
   return (
     <div className="rounded-3xl bg-[#0D0D0D] text-[#EAFFD0] p-6 sm:p-8 shadow-lg space-y-5">
+      {/* Cabecera del panel con escudo de seguridad */}
       <div className="flex items-center justify-between border-b border-[#EAFFD0]/15 pb-3">
         <div className="flex items-center gap-2">
           <ShieldCheck className="w-6 h-6 text-[#B0E454]" />
@@ -32,9 +32,11 @@ export function PanelContactoSubasta({
         <Badge variant="lime">{ganador ? 'Adjudicada' : 'Cerrada'}</Badge>
       </div>
 
+      {/* Escenario 1: Cerrada sin ofertas */}
       {!ganador ? (
         <p className="text-sm text-[#EAFFD0]/80">Esta subasta finalizó sin recibir ofertas.</p>
       ) : puedeVerContactoDesbloqueado ? (
+        /* Escenario 2: Usuario autorizado (Ganador, Vendedor o Admin) */
         <div className="space-y-4">
           <p className="text-xs sm:text-sm text-[#EAFFD0]/85 leading-relaxed">
             ¡Felicitaciones! Como parte involucrada en la adjudicación,{' '}
@@ -57,6 +59,7 @@ export function PanelContactoSubasta({
             </div>
           </div>
 
+          {/* Bloque con las fichas de contacto privadas de ambas partes */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-[#224F10]/35 p-5 rounded-2xl border border-[#B0E454]/30 text-xs">
             <DatosContactoPersona
               titulo="Datos del Dueño del Artículo"
@@ -71,6 +74,7 @@ export function PanelContactoSubasta({
             />
           </div>
 
+          {/* Botones de acción post-subasta: Calificar (RN07) o Denunciar (RN06) */}
           <div className="flex flex-wrap gap-3 pt-2">
             <Link to={`/resenas/nueva?subasta=${subasta.id}`}>
               <Button size="sm">
@@ -89,11 +93,12 @@ export function PanelContactoSubasta({
           </div>
         </div>
       ) : (
+        /* Escenario 3: Tercero no autorizado (Público general) */
         <div className="flex items-center gap-3 bg-[#224F10]/30 p-4 rounded-2xl border border-[#B0E454]/30 text-xs text-[#EAFFD0]">
           <Lock className="w-5 h-5 text-[#B0E454] shrink-0" />
           <div>
-            Subasta adjudicada a <strong className="text-[#B0E454]">{ganador.name}</strong> por{' '}
-            <strong className="text-[#B0E454]">{formatearMoneda(subasta.currentPrice)}</strong>. Por privacidad (RN05), los teléfonos y correos solo son visibles para el vendedor y el ganador.
+            Subasta adjudicada a <strong className="text-[#B0E454]">{ganador.nombre}</strong> por{' '}
+            <strong className="text-[#B0E454]">{formatearMoneda(subasta.precioActual)}</strong>. Por privacidad (RN05), los teléfonos y correos solo son visibles para el vendedor y el ganador.
           </div>
         </div>
       )}

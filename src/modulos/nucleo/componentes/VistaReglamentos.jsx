@@ -13,6 +13,7 @@ import {
 import { Badge, Button, Card } from '../diseno/ui';
 import { CabeceraPagina } from '../diseno/componentesBloques';
 
+// Constante con las 8 reglas de negocio del sistema
 const REGLAS_PLATAFORMA = [
   {
     codigo: 'RN01',
@@ -72,12 +73,12 @@ const REGLAS_PLATAFORMA = [
   },
 ];
 
-// Página pública con las 8 reglas de negocio y convivencia de BidZone
 export function VistaReglamentos() {
   const navegar = useNavigate();
 
   return (
     <div className="space-y-8">
+      {/* Cabecera visual con botón de acción */}
       <CabeceraPagina
         titulo="Reglamentos y Normas de Uso"
         subtitulo="Conoce las reglas obligatorias que garantizan transparencia, compromiso de compra y trato directo seguro en cada subasta."
@@ -86,6 +87,7 @@ export function VistaReglamentos() {
         }
       />
 
+      {/* Grilla responsiva de 2 columnas con tarjetas por cada regla */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {REGLAS_PLATAFORMA.map((regla) => {
           const Icono = regla.icono;
@@ -106,6 +108,7 @@ export function VistaReglamentos() {
         })}
       </div>
 
+      {/* Banner inferior oscuro destacando la mesa de mediación RN06 */}
       <div className="rounded-3xl bg-[#0D0D0D] text-[#EAFFD0] p-6 sm:p-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="space-y-1 max-w-2xl">
           <p className="text-xs font-bold uppercase tracking-wider text-[#B0E454]">

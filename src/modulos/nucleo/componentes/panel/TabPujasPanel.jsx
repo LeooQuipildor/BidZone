@@ -14,25 +14,31 @@ import {
 } from './PanelCompartido';
 import { FilaPujaPanel } from './FilaPujaPanel';
 
-// Pestaña personal de pujas: muestra únicamente las ofertas realizadas por el usuario conectado (RN04)
 export function TabPujasPanel({ usuarioActual, subastas, pujas, textoBusqueda }) {
   const navegar = useNavigate();
+
+  // Acciones asíncronas de la tienda de Zustand `tiendaPujas.js`
   const crearPuja = usarTiendaPujas((estado) => estado.crearPuja);
   const actualizarPuja = usarTiendaPujas((estado) => estado.actualizarPuja);
 
+  // Estados locales para filtrado y edición
   const [filtroSubasta, setFiltroSubasta] = useState('todas');
   const [aviso, setAviso] = useState(null);
   const [idPujaEditando, setIdPujaEditando] = useState(null);
 
-  const misPujas = pujas.filter((puja) => mismoId(puja.bidderId, usuarioActual?.id));
+  // Filtrado de pujas pertenecientes estrictamente a la sesión actual
+  const misPujas = pujas.filter((puja) => mismoId(puja.postorId, usuarioActual?.id));
   const pujaEditando = idPujaEditando ? buscarPorId(misPujas, idPujaEditando) : null;
-  const idsSubastasConPujas = [...new Set(misPujas.map((puja) => String(puja.auctionId)))];
 
+  // Obtención de IDs únicos de subastas en las cuales el usuario ha participado
+  const idsSubastasConPujas = [...new Set(misPujas.map((puja) => String(puja.subastaId)))];
+
+  // Filtro compuesto: por subasta elegida en el select y por texto de búsqueda
   const pujasFiltradas = misPujas.filter((puja) => {
-    const subasta = buscarPorId(subastas, puja.auctionId);
-    const coincideSubasta = filtroSubasta === 'todas' || mismoId(puja.auctionId, filtroSubasta);
+    const subasta = buscarPorId(subastas, puja.subastaId);
+    const coincideSubasta = filtroSubasta === 'todas' || mismoId(puja.subastaId, filtroSubasta);
     const coincideTexto = coincideConBusqueda(
-      [subasta?.title || puja.auctionTitle, puja.note],
+      [subasta?.titulo || puja.tituloSubasta, puja.nota],
       textoBusqueda
     );
     return coincideSubasta && coincideTexto;
@@ -47,19 +53,21 @@ export function TabPujasPanel({ usuarioActual, subastas, pujas, textoBusqueda })
     setIdPujaEditando(null);
   }
 
+  // Generación de opciones para el selector de subastas
   const opcionesFiltroSubastas = [
     { valor: 'todas', etiqueta: `Todas mis subastas (${misPujas.length})` },
     ...idsSubastasConPujas.map((idSubasta) => {
       const subasta = buscarPorId(subastas, idSubasta);
       return {
         valor: idSubasta,
-        etiqueta: `#${idSubasta} — ${subasta?.title || `Subasta #${idSubasta}`}`,
+        etiqueta: `#${idSubasta} — ${subasta?.titulo || `Subasta #${idSubasta}`}`,
       };
     }),
   ];
 
   return (
     <div className="space-y-5">
+      {/* Cabecera con recordatorio de compromiso legal RN04 y botón de exploración */}
       <CabeceraSeccionPanel
         titulo="Mis Pujas"
         subtitulo={`Historial de tus ${misPujas.length} ofertas vinculantes (RN04). Para ofertar ve a Explorar.`}
@@ -74,8 +82,10 @@ export function TabPujasPanel({ usuarioActual, subastas, pujas, textoBusqueda })
         }
       />
 
+      {/* Banner de mensajes y notificaciones */}
       <AvisoPanel aviso={aviso} alCerrar={() => setAviso(null)} />
 
+      {/* Formulario modal para editar la nota de coordinación */}
       {pujaEditando && (
         <ContenedorFormularioPanel
           titulo={`Editar Nota de Puja #${pujaEditando.id}`}
@@ -93,6 +103,7 @@ export function TabPujasPanel({ usuarioActual, subastas, pujas, textoBusqueda })
         </ContenedorFormularioPanel>
       )}
 
+      {/* Selector para aislar las ofertas de una subasta específica */}
       {idsSubastasConPujas.length > 0 && (
         <div className="rounded-2xl bg-white border border-[#224F10]/10 p-4 shadow-2xs">
           <div className="sm:max-w-sm">
@@ -105,6 +116,7 @@ export function TabPujasPanel({ usuarioActual, subastas, pujas, textoBusqueda })
         </div>
       )}
 
+      {/* Lista de filas de puja o estado vacío */}
       {pujasFiltradas.length === 0 ? (
         <EstadoVacioPanel
           mensaje={
@@ -116,14 +128,14 @@ export function TabPujasPanel({ usuarioActual, subastas, pujas, textoBusqueda })
       ) : (
         <div className="rounded-2xl bg-white border border-[#224F10]/10 divide-y divide-[#224F10]/8 shadow-2xs overflow-hidden">
           {pujasFiltradas.map((puja) => {
-            const subasta = buscarPorId(subastas, puja.auctionId);
+            const subasta = buscarPorId(subastas, puja.subastaId);
             return (
               <FilaPujaPanel
                 key={puja.id}
                 puja={puja}
-                tituloSubasta={subasta?.title || puja.auctionTitle || `Subasta #${puja.auctionId}`}
-                nombrePostor={usuarioActual?.name || puja.bidderName || 'Tú'}
-                esOfertaLider={Boolean(subasta && Number(subasta.currentPrice) === Number(puja.amount))}
+                tituloSubasta={subasta?.titulo || puja.tituloSubasta || `Subasta #${puja.subastaId}`}
+                nombrePostor={usuarioActual?.nombre || puja.nombrePostor || 'Tú'}
+                esOfertaLider={Boolean(subasta && Number(subasta.precioActual) === Number(puja.monto))}
                 alEditar={() => {
                   setIdPujaEditando(puja.id);
                   setAviso(null);

@@ -7,11 +7,14 @@ import { PaginaFormulario } from '../../nucleo/diseno/componentesBloques';
 
 export function VistaCrearPuja() {
   const navegar = useNavigate();
+
+  // Acciones y estados de tiendas
   const crearPuja = usarTiendaPujas((estado) => estado.crearPuja);
   const subastas = usarTiendaSubastas((estado) => estado.subastas);
   const cargandoSubastas = usarTiendaSubastas((estado) => estado.cargando);
   const obtenerSubastas = usarTiendaSubastas((estado) => estado.obtenerSubastas);
 
+  // Asegura que las subastas estén cargadas en la tienda
   useEffect(() => {
     obtenerSubastas();
   }, [obtenerSubastas]);

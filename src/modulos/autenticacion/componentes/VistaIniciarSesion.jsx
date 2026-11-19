@@ -4,10 +4,11 @@ import { ShieldCheck, UserCheck } from 'lucide-react';
 import { usarTiendaAutenticacion } from '../estado/tiendaAutenticacion';
 import { Button, Card, Input } from '../../nucleo/diseno/ui';
 import { Alert } from '../../nucleo/diseno/uiFeedback';
+import { FormularioRecuperarContrasena } from './FormularioRecuperarContrasena';
 
-// Si la persona venía desde una ruta protegida, la devolvemos ahí tras ingresar
 function obtenerDestinoRedireccion(ubicacion) {
   const rutaAnterior = ubicacion.state?.from?.pathname;
+  // Si venía de una ruta válida que no sea un dashboard genérico, lo mandamos ahí
   if (rutaAnterior && rutaAnterior !== '/dashboard' && rutaAnterior !== '/panel') {
     return rutaAnterior;
   }
@@ -17,14 +18,19 @@ function obtenerDestinoRedireccion(ubicacion) {
 export function VistaIniciarSesion() {
   const navegar = useNavigate();
   const ubicacion = useLocation();
+
   const campoContrasenaRef = useRef(null);
+
   const iniciarSesion = usarTiendaAutenticacion((estado) => estado.iniciarSesion);
   const cargando = usarTiendaAutenticacion((estado) => estado.cargando);
 
   const [correo, setCorreo] = useState('');
   const [contrasena, setContrasena] = useState('');
   const [mensajeError, setMensajeError] = useState('');
+  const [mensajeExito, setMensajeExito] = useState('');
+  const [modoRecuperacion, setModoRecuperacion] = useState(false);
 
+  // Calcula la ruta a la que debe ir el usuario al tener éxito
   const rutaDestino = obtenerDestinoRedireccion(ubicacion);
 
   async function manejarEnvio(evento) {
@@ -38,6 +44,7 @@ export function VistaIniciarSesion() {
 
     try {
       await iniciarSesion(correo, contrasena);
+      // Redirección con reemplazo de historial
       navegar(rutaDestino, { replace: true });
     } catch (error) {
       setMensajeError(error.message);
@@ -52,6 +59,7 @@ export function VistaIniciarSesion() {
 
   return (
     <div className="max-w-md mx-auto my-8">
+      {/* Encabezado con título e instrucciones */}
       <div className="text-center mb-8 space-y-2">
         <span className="text-[11px] uppercase tracking-[0.2em] text-[#224F10] font-bold">
           ACCESO SEGURO JWT
@@ -63,44 +71,85 @@ export function VistaIniciarSesion() {
       </div>
 
       <Card className="p-6 sm:p-8 rounded-3xl">
-        {mensajeError && (
-          <div className="mb-4">
-            <Alert type="error" onClose={() => setMensajeError('')}>
-              {mensajeError}
-            </Alert>
-          </div>
+        {modoRecuperacion ? (
+          <FormularioRecuperarContrasena
+            correoInicial={correo}
+            alVolver={() => setModoRecuperacion(false)}
+            alExito={(texto, correoRecuperado) => {
+              setCorreo(correoRecuperado);
+              setContrasena('');
+              setMensajeError('');
+              setMensajeExito(texto);
+              setModoRecuperacion(false);
+            }}
+          />
+        ) : (
+          <>
+            {/* Alerta de éxito tras recuperar contraseña */}
+            {mensajeExito && (
+              <div className="mb-4">
+                <Alert type="success" onClose={() => setMensajeExito('')}>
+                  {mensajeExito}
+                </Alert>
+              </div>
+            )}
+
+            {/* Alerta de error condicional */}
+            {mensajeError && (
+              <div className="mb-4">
+                <Alert type="error" onClose={() => setMensajeError('')}>
+                  {mensajeError}
+                </Alert>
+              </div>
+            )}
+
+            {/* Formulario de credenciales */}
+            <form onSubmit={manejarEnvio} className="space-y-4">
+              <Input
+                id="correo"
+                label="Correo electrónico"
+                type="email"
+                placeholder="ejemplo@bidzone.com"
+                value={correo}
+                onChange={(evento) => setCorreo(evento.target.value)}
+              />
+              <Input
+                ref={campoContrasenaRef}
+                id="contrasena"
+                label="Contraseña"
+                type="password"
+                placeholder="••••••••"
+                value={contrasena}
+                onChange={(evento) => setContrasena(evento.target.value)}
+              />
+
+              <div className="flex justify-end -mt-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMensajeError('');
+                    setMensajeExito('');
+                    setModoRecuperacion(true);
+                  }}
+                  className="text-xs font-semibold text-[#224F10] hover:underline cursor-pointer"
+                >
+                  ¿Olvidaste tu contraseña?
+                </button>
+              </div>
+
+              <Button
+                type="submit"
+                disabled={cargando}
+                className="w-full mt-2"
+                size="lg"
+              >
+                {cargando ? 'Verificando...' : 'Ingresar a BidZone'}
+              </Button>
+            </form>
+          </>
         )}
 
-        <form onSubmit={manejarEnvio} className="space-y-4">
-          <Input
-            id="correo"
-            label="Correo electrónico"
-            type="email"
-            placeholder="ejemplo@bidzone.com"
-            value={correo}
-            onChange={(evento) => setCorreo(evento.target.value)}
-          />
-          <Input
-            ref={campoContrasenaRef}
-            id="contrasena"
-            label="Contraseña"
-            type="password"
-            placeholder="••••••••"
-            value={contrasena}
-            onChange={(evento) => setContrasena(evento.target.value)}
-          />
-
-          <Button
-            type="submit"
-            disabled={cargando}
-            className="w-full mt-2"
-            size="lg"
-          >
-            {cargando ? 'Verificando...' : 'Ingresar a BidZone'}
-          </Button>
-        </form>
-
-        {/* Botones rápidos para autocompletar correos de prueba */}
+        {/* Botones rápidos para autocompletar correos de prueba en entornos de desarrollo */}
         <div className="mt-6 pt-5 border-t border-[#224F10]/15">
           <p className="text-[11px] font-semibold text-[#0D0D0D]/60 mb-3 text-center">
             Autocompletar correo registrado (ingresa la contraseña de tu entorno)
@@ -125,6 +174,7 @@ export function VistaIniciarSesion() {
           </div>
         </div>
 
+        {/* Enlace hacia la vista de registro */}
         <p className="text-center text-xs text-[#0D0D0D]/70 mt-6">
           ¿Aún no tienes cuenta?{' '}
           <Link to="/registro" className="text-[#224F10] font-bold hover:underline">

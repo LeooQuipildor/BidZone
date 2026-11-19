@@ -24,20 +24,23 @@ export function VistaEditarPuja() {
     obtenerSubastas();
   }, [obtenerPujas, obtenerSubastas]);
 
+  // Búsqueda de la puja objetivo
   const puja = buscarPorId(pujas, id);
 
+  // Verificación de seguridad y titularidad
   let errorTitulo = '';
   let errorMensaje = '';
   if (!puja) {
     errorTitulo = 'Puja no encontrada';
     errorMensaje = 'El registro de oferta solicitado no existe.';
-  } else if (!mismoId(usuarioActual?.id, puja.bidderId)) {
+  } else if (!mismoId(usuarioActual?.id, puja.postorId)) {
     errorTitulo = 'Sin permisos de edición';
     errorMensaje = 'RN04: Solo el postor titular puede editar su nota de coordinación; los montos ofertados no se editan.';
   }
 
-  const subasta = puja ? buscarPorId(subastas, puja.auctionId) : null;
-  const tituloSubasta = subasta?.title || puja?.auctionTitle || `#${puja?.auctionId}`;
+  // Identificación de la subasta vinculada
+  const subasta = puja ? buscarPorId(subastas, puja.subastaId) : null;
+  const tituloSubasta = subasta?.titulo || puja?.tituloSubasta || `#${puja?.subastaId}`;
 
   return (
     <PaginaFormulario

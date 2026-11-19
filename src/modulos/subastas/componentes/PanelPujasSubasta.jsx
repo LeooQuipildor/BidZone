@@ -14,7 +14,6 @@ import {
   validarDatosPuja,
 } from '../../nucleo/utilidades/ayudas';
 
-// Columna derecha del detalle de subasta: formulario para ofertar en vivo e historial auditable
 export function PanelPujasSubasta({
   subasta,
   pujasSubasta,
@@ -29,27 +28,29 @@ export function PanelPujasSubasta({
   alError,
 }) {
   const navegar = useNavigate();
+
   const [montoIngresado, setMontoIngresado] = useState(() => obtenerMontoPujaSugerido(subasta));
   const [notaPuja, setNotaPuja] = useState('');
   const [compromisoAceptado, setCompromisoAceptado] = useState(true);
   const [mostrarConfirmacion, setMostrarConfirmacion] = useState(false);
   const [enviando, setEnviando] = useState(false);
 
-  const fechaFinMs = new Date(subasta.endTime).getTime();
+  const fechaFinMs = new Date(subasta.fechaFin).getTime();
   const tiempoExpirado = !Number.isNaN(fechaFinMs) && fechaFinMs <= ahoraMs;
-  const esActiva = subasta.status === 'activa' && !tiempoExpirado && !esFinalizada;
-  const tiempoRestante = subasta.endTime
-    ? calcularTiempoRestante(subasta.endTime, ahoraMs)
+  const esActiva = subasta.estado === 'activa' && !tiempoExpirado && !esFinalizada;
+  const tiempoRestante = subasta.fechaFin
+    ? calcularTiempoRestante(subasta.fechaFin, ahoraMs)
     : { textoFormateado: '—' };
   const montoSugerido = obtenerMontoPujaSugerido(subasta);
   const montoMaximoPermitido = obtenerMontoPujaMaximo(subasta);
 
+  // Verificación de liderazgo en las ofertas
   const mejorPuja = pujasSubasta[0] || null;
   const esPostorLider = Boolean(
-    usuarioActual && mejorPuja && mismoId(mejorPuja.bidderId, usuarioActual.id)
+    usuarioActual && mejorPuja && mismoId(mejorPuja.postorId, usuarioActual.id)
   );
   const yaParticipo = Boolean(
-    usuarioActual && pujasSubasta.some((puja) => mismoId(puja.bidderId, usuarioActual.id))
+    usuarioActual && pujasSubasta.some((puja) => mismoId(puja.postorId, usuarioActual.id))
   );
 
   function abrirConfirmacion(evento) {
@@ -57,11 +58,13 @@ export function PanelPujasSubasta({
     alError('');
     alExito('');
 
+    // Si no inició sesión, lo enviamos al login
     if (!usuarioActual) {
       navegar('/iniciar-sesion');
       return;
     }
 
+    // Validación completa mediante la función de negocio
     const errorValidacion = validarDatosPuja({
       subasta,
       monto: montoIngresado,
@@ -88,7 +91,9 @@ export function PanelPujasSubasta({
         compromisoAceptado,
       });
       setMostrarConfirmacion(false);
-      const siguienteSugerido = Number(montoConfirmado) + Number(subasta.minIncrement);
+
+      // Preparamos el siguiente monto sugerido para la próxima puja
+      const siguienteSugerido = Number(montoConfirmado) + Number(subasta.incrementoMinimo);
       setMontoIngresado(String(siguienteSugerido));
       setNotaPuja('');
       alExito(
@@ -105,11 +110,12 @@ export function PanelPujasSubasta({
   return (
     <div className="lg:col-span-5 space-y-6">
       <Card className="space-y-5">
+        {/* Cabecera de la consola: Oferta líder y cronómetro */}
         <div className="flex items-center justify-between border-b border-[#224F10]/15 pb-4">
           <div>
             <span className="text-[11px] text-[#0D0D0D]/60 block">Oferta Líder Actual</span>
             <p className="font-serif-display text-4xl font-semibold text-[#224F10]">
-              {formatearMoneda(subasta.currentPrice)}
+              {formatearMoneda(subasta.precioActual)}
             </p>
           </div>
           <div className="text-right">
@@ -121,12 +127,12 @@ export function PanelPujasSubasta({
           </div>
         </div>
 
+        {/* Insignias reactivas de estado del postor */}
         {esGanador && (
           <Badge variant="lime" className="w-full justify-center py-2.5 font-bold text-xs">
             🏆 ¡Felicidades! Eres el ganador de esta subasta
           </Badge>
         )}
-
         {usuarioActual && esActiva && esPostorLider && (
           <Badge variant="lime" className="w-full justify-center py-2">
             ★ Eres el postor líder actual en esta subasta
@@ -138,18 +144,21 @@ export function PanelPujasSubasta({
           </Badge>
         )}
 
+        {/* Mensaje de cierre definitivo si la subasta terminó (RN03) */}
         {!esActiva && (
           <div className="bg-[#0D0D0D] text-[#EAFFD0] p-4 rounded-2xl text-center text-xs font-medium">
             Esta subasta se encuentra cerrada y ya no admite nuevas pujas (RN03).
           </div>
         )}
 
+        {/* Bloqueo por auto-puja para el vendedor del artículo (RN02) */}
         {esActiva && esVendedor && (
           <Alert type="info" title="Eres el dueño de este artículo (RN02)">
             Como vendedor no puedes realizar auto-pujas sobre tu propia publicación. Al cumplirse la fecha de cierre se adjudicará automáticamente al mejor postor.
           </Alert>
         )}
 
+        {/* Formulario de puja para postores compradores */}
         {esActiva && !esVendedor && (
           <form onSubmit={abrirConfirmacion} className="space-y-4">
             <Input
@@ -169,6 +178,7 @@ export function PanelPujasSubasta({
               onChange={(evento) => setNotaPuja(evento.target.value)}
             />
 
+            {/* Casilla de aceptación del compromiso vinculante (RN04) */}
             <CasillaCompromisoPuja
               aceptado={compromisoAceptado}
               alCambiar={setCompromisoAceptado}
@@ -183,8 +193,10 @@ export function PanelPujasSubasta({
         )}
       </Card>
 
+      {/* Historial público de todas las ofertas recibidas */}
       <HistorialPujasSubasta pujas={pujasSubasta} usuarios={usuarios} />
 
+      {/* Modal flotante de confirmación previa al despacho de la puja */}
       <ModalConfirmarPuja
         estaAbierto={mostrarConfirmacion}
         alCerrar={() => setMostrarConfirmacion(false)}

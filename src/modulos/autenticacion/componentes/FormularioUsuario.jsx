@@ -5,17 +5,16 @@ import { Alert } from '../../nucleo/diseno/uiFeedback';
 import { AccionesFormulario } from '../../nucleo/diseno/componentesBloques';
 
 const OPCIONES_ROL = [
-  { valor: 'user', etiqueta: 'Usuario Estándar' },
+  { valor: 'usuario', etiqueta: 'Usuario Estándar' },
   { valor: 'admin', etiqueta: 'Administrador' },
 ];
 
 const OPCIONES_ESTADO = [
-  { valor: 'active', etiqueta: 'Activa (Habilitada)' },
-  { valor: 'suspended', etiqueta: 'Suspendida (Infracción temporal)' },
-  { valor: 'closed', etiqueta: 'Cerrada (Inhabilitación definitiva)' },
+  { valor: 'activa', etiqueta: 'Activa (Habilitada)' },
+  { valor: 'suspendida', etiqueta: 'Suspendida (Infracción temporal)' },
+  { valor: 'cerrada', etiqueta: 'Cerrada (Inhabilitación definitiva)' },
 ];
 
-// Formulario único reutilizado para crear o editar un usuario (Panel y rutas /new y /edit)
 export function FormularioUsuario({
   usuario = null,
   esAdmin = false,
@@ -24,17 +23,20 @@ export function FormularioUsuario({
   alGuardar,
   alCancelar,
 }) {
+  // `true` si recibimos un usuario para modificar; `false` si es un alta nueva
   const estaEditando = Boolean(usuario);
 
   const [datosFormulario, setDatosFormulario] = useState(() => ({
-    nombre: usuario?.name || '',
-    correo: usuario?.email || '',
+    nombre: usuario?.nombre || '',
+    correo: usuario?.correo || '',
     contrasena: '',
-    telefono: usuario?.phone || '',
-    ciudad: usuario?.city || '',
-    rol: usuario?.role || 'user',
-    estado: usuario?.status || 'active',
+    telefono: usuario?.telefono || '',
+    ciudad: usuario?.ciudad || '',
+    rol: usuario?.rol || 'usuario',
+    estado: usuario?.estado || 'activa',
   }));
+
+  // Estado para capturar y mostrar mensajes de error de validación o del backend
   const [mensajeError, setMensajeError] = useState('');
 
   function manejarCambio(evento) {
@@ -46,6 +48,7 @@ export function FormularioUsuario({
     evento.preventDefault();
     setMensajeError('');
 
+    // Validación básica en cliente
     if (!datosFormulario.nombre.trim() || !datosFormulario.correo.trim()) {
       setMensajeError('El nombre y el correo electrónico son obligatorios.');
       return;
@@ -53,19 +56,25 @@ export function FormularioUsuario({
 
     try {
       if (estaEditando) {
+        // En modo edición: preparamos el payload de cambios
         const cambios = {
           nombre: datosFormulario.nombre.trim(),
           correo: datosFormulario.correo.trim(),
           telefono: datosFormulario.telefono.trim(),
           ciudad: datosFormulario.ciudad.trim(),
         };
+
+        // Solo un administrador tiene permitido alterar el rol y estado de la cuenta
         if (esAdmin) {
           cambios.rol = datosFormulario.rol;
           cambios.estado = datosFormulario.estado;
         }
+
         const actualizado = await alActualizarUsuario(usuario.id, cambios);
+        // Notificamos al componente padre que la operación concluyó exitosamente
         alGuardar?.(actualizado, datosFormulario.nombre.trim());
       } else {
+        // En modo creación: la contraseña temporal es obligatoria
         if (!datosFormulario.contrasena) {
           setMensajeError('Debes asignar una contraseña temporal para el nuevo usuario.');
           return;
@@ -80,12 +89,14 @@ export function FormularioUsuario({
 
   return (
     <form onSubmit={manejarEnvio} className="space-y-4">
+      {/* Alerta de error condicional */}
       {mensajeError && (
         <Alert type="error" onClose={() => setMensajeError('')}>
           {mensajeError}
         </Alert>
       )}
 
+      {/* Fila 1: Nombre completo y correo electrónico */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Input
           id="nombre"
@@ -106,6 +117,7 @@ export function FormularioUsuario({
         />
       </div>
 
+      {/* Fila 2: Contraseña (solo al crear), Teléfono y Ciudad */}
       <div className={`grid grid-cols-1 ${estaEditando ? 'sm:grid-cols-2' : 'sm:grid-cols-3'} gap-4`}>
         {!estaEditando && (
           <Input
@@ -136,6 +148,7 @@ export function FormularioUsuario({
         />
       </div>
 
+      {/* Fila 3: Configuración de Rol y Estado de Cuenta (visible solo para administradores) */}
       {(esAdmin || !estaEditando) && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-[#224F10]/15">
           <Select
@@ -157,6 +170,7 @@ export function FormularioUsuario({
         </div>
       )}
 
+      {/* Botones de acción reutilizables (Guardar y Cancelar) */}
       <AccionesFormulario
         alCancelar={alCancelar}
         textoGuardar={estaEditando ? 'Guardar Cambios' : 'Guardar Usuario'}

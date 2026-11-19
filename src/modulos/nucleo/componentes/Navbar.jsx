@@ -1,8 +1,9 @@
 import React from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
-import { Bell, LogOut, Plus, Search, User, X } from 'lucide-react';
+import { Bell, LayoutDashboard, LogOut, Plus, Search, User, X } from 'lucide-react';
 import { usarTiendaSubastas } from '../../subastas/estado/tiendaSubastas';
 
+// Enlaces de navegación pública del lado izquierdo
 const ENLACES_IZQUIERDA = [
   { ruta: '/', etiqueta: 'Inicio' },
   { ruta: '/subastas', etiqueta: 'Explorar' },
@@ -10,7 +11,6 @@ const ENLACES_IZQUIERDA = [
   { ruta: '/preguntas-frecuentes', etiqueta: 'Preguntas Frecuentes' },
 ];
 
-// Campo buscador compartido entre la barra superior y el menú móvil
 function BuscadorNavbar({ valor, alCambiar, alEnviar, claseExtra = '' }) {
   return (
     <form
@@ -46,9 +46,10 @@ function BuscadorNavbar({ valor, alCambiar, alEnviar, claseExtra = '' }) {
   );
 }
 
-// Barra de navegación superior (desktop y subbarra móvil)
 export function Navbar({ esInicio, usuarioActual, cantidadSinLeer, alCerrarSesion }) {
   const navegar = useNavigate();
+
+  // Conexión con la tienda de subastas para compartir el término de búsqueda
   const textoBusqueda = usarTiendaSubastas((estado) => estado.filtros.busqueda);
   const actualizarFiltros = usarTiendaSubastas((estado) => estado.actualizarFiltros);
 
@@ -64,12 +65,14 @@ export function Navbar({ esInicio, usuarioActual, cantidadSinLeer, alCerrarSesio
   function manejarBusqueda(evento) {
     evento.preventDefault();
     actualizarFiltros({ busqueda: textoBusqueda.trim() });
-    navegar('/subastas');
+    navegar('/subastas'); // Redirige al catálogo con los resultados
   }
 
   return (
     <div className={`w-full z-40 px-3 sm:px-6 pt-3 sm:pt-4 ${clasePosicionBarra}`}>
       <header className="max-w-[1480px] mx-auto bg-[#0D0D0D]/95 backdrop-blur-md text-[#EAFFD0] rounded-xl px-4 sm:px-7 h-14 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 sm:gap-4 shadow-lg border border-[#224F10]/50">
+        
+        {/* Lado izquierdo: Navegación de escritorio */}
         <div className="justify-self-start min-w-0">
           <nav className="hidden lg:flex items-center gap-3.5 xl:gap-5">
             {ENLACES_IZQUIERDA.map((item) => (
@@ -89,6 +92,7 @@ export function Navbar({ esInicio, usuarioActual, cantidadSinLeer, alCerrarSesio
           </nav>
         </div>
 
+        {/* Centro: Logotipo de la marca */}
         <Link
           to="/"
           className="justify-self-center font-serif-display text-2xl sm:text-3xl font-semibold tracking-tight text-[#EAFFD0] hover:text-[#B0E454] transition-colors select-none"
@@ -96,6 +100,7 @@ export function Navbar({ esInicio, usuarioActual, cantidadSinLeer, alCerrarSesio
           BidZone
         </Link>
 
+        {/* Lado derecho: Buscador y Acciones de usuario */}
         <div className="justify-self-end flex items-center gap-2.5 sm:gap-3.5 min-w-0">
           <BuscadorNavbar
             valor={textoBusqueda}
@@ -113,15 +118,20 @@ export function Navbar({ esInicio, usuarioActual, cantidadSinLeer, alCerrarSesio
                 <Plus className="w-3.5 h-3.5" />
                 Publicar
               </Link>
+              <span
+                className="hidden sm:inline-flex items-center gap-1.5 text-xs text-[#EAFFD0]/90 font-medium whitespace-nowrap"
+                title={`${usuarioActual.nombre} (${usuarioActual.rol})`}
+              >
+                <User className="w-3.5 h-3.5 text-[#B0E454]" />
+                <span>¡Hola {usuarioActual.nombre.split(' ')[0]}!</span>
+              </span>
               <Link
                 to="/panel"
-                className="inline-flex items-center gap-1.5 text-xs text-[#EAFFD0] hover:text-[#B0E454] whitespace-nowrap"
-                title={`${usuarioActual.name} (${usuarioActual.role}) — Ir al Panel`}
+                className="inline-flex items-center gap-1.5 bg-[#B0E454] hover:bg-[#EAFFD0] text-[#0D0D0D] px-3 py-1 rounded-full text-xs font-semibold transition-colors whitespace-nowrap"
+                title="Ir al Panel de Control"
               >
-                <User className="w-4 h-4" />
-                <span className="hidden xl:inline font-medium">
-                  {usuarioActual.name.split(' ')[0]}
-                </span>
+                <LayoutDashboard className="w-3.5 h-3.5" />
+                <span>Panel</span>
               </Link>
               <Link
                 to="/panel?tab=notificaciones"
@@ -163,7 +173,7 @@ export function Navbar({ esInicio, usuarioActual, cantidadSinLeer, alCerrarSesio
         </div>
       </header>
 
-      {/* Subbarra en pantallas pequeñas */}
+      {/* Subbarra para pantallas móviles pequeñas (< lg) */}
       <div className="lg:hidden max-w-[1480px] mx-auto mt-1.5 bg-[#224F10]/95 backdrop-blur-md rounded-xl px-3 py-2 space-y-2 text-xs text-[#EAFFD0]">
         <div className="flex items-center gap-2 overflow-x-auto">
           {enlacesMovil.map((item) => (

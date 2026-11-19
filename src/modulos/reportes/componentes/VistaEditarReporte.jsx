@@ -24,24 +24,27 @@ export function VistaEditarReporte() {
     obtenerUsuarios();
   }, [obtenerReportes, obtenerUsuarios]);
 
+  // Búsqueda del reporte objetivo
   const reporte = buscarPorId(reportes, id);
-  const esAdmin = usuarioActual?.role === 'admin';
+  const esAdmin = usuarioActual?.rol === 'admin';
 
+  // Verificación estricta de permisos de acceso
   let errorTitulo = '';
   let errorMensaje = '';
   if (!reporte) {
     errorTitulo = 'Reporte no encontrado';
     errorMensaje = 'El expediente solicitado no existe o no tienes acceso para consultarlo.';
-  } else if (!esAdmin && !mismoId(usuarioActual?.id, reporte.reporterId)) {
+  } else if (!esAdmin && !mismoId(usuarioActual?.id, reporte.denuncianteId)) {
     errorTitulo = 'Sin permisos de edición';
     errorMensaje = 'Solo el denunciante original o un administrador puede modificar este reporte.';
   }
 
-  const usuarioReportado = reporte ? buscarPorId(usuarios, reporte.reportedUserId) : null;
+  // Identificación del usuario acusado y su estado actual
+  const usuarioReportado = reporte ? buscarPorId(usuarios, reporte.denunciadoId) : null;
   const nombreReportado =
-    usuarioReportado?.name || reporte?.reportedUserName || `#${reporte?.reportedUserId}`;
-  const estadoReportado = usuarioReportado?.status
-    ? `Estado actual: ${usuarioReportado.status}`
+    usuarioReportado?.nombre || reporte?.nombreDenunciado || `#${reporte?.denunciadoId}`;
+  const estadoReportado = usuarioReportado?.estado
+    ? `Estado actual: ${usuarioReportado.estado}`
     : 'En evaluación';
 
   return (
@@ -55,23 +58,26 @@ export function VistaEditarReporte() {
       errorTitulo={errorTitulo}
       errorMensaje={errorMensaje}
     >
+      {/* Caso 1: Administrador dictaminando el caso con el panel de resolución */}
       {reporte && esAdmin && (
         <div className="space-y-4">
           <div className="rounded-xl bg-[#F7FBF3] border border-[#224F10]/10 p-4 space-y-1.5 text-xs">
-            <h3 className="text-sm font-bold text-[#0D0D0D]">{reporte.reason}</h3>
-            <p className="text-[#0D0D0D]/75">{reporte.description}</p>
+            <h3 className="text-sm font-bold text-[#0D0D0D]">{reporte.motivo}</h3>
+            <p className="text-[#0D0D0D]/75">{reporte.descripcion}</p>
           </div>
           <PanelResolucionTicket
             key={reporte.id}
             reporte={reporte}
             nombreDenunciado={nombreReportado}
-            estadoDenunciado={usuarioReportado?.status}
+            estadoDenunciado={usuarioReportado?.estado}
             alActualizarReporte={actualizarReporte}
             alGuardar={() => navegar('/reportes')}
             alCancelar={() => navegar('/reportes')}
           />
         </div>
       )}
+
+      {/* Caso 2: Denunciante particular actualizando su queja */}
       {reporte && !esAdmin && (
         <FormularioReporte
           key={reporte.id}

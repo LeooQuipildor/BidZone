@@ -7,7 +7,6 @@ import {
 import { mismoId, reemplazarPorId } from '../../nucleo/utilidades/ayudas';
 import { usarTiendaSubastas } from '../../subastas/estado/tiendaSubastas';
 
-// Al crear o editar una puja también se actualiza el precio actual de su subasta
 async function refrescarSubastaDespuesDePuja(idSubasta) {
   const tiendaSubastas = usarTiendaSubastas.getState();
   await tiendaSubastas.obtenerSubastas();
@@ -20,9 +19,10 @@ async function refrescarSubastaDespuesDePuja(idSubasta) {
 
 // Tienda global de pujas u ofertas (conecta con /api/bids)
 export const usarTiendaPujas = create((set) => ({
-  pujas: [],
-  cargando: false,
-  error: null,
+  // ESTADOS REACTIVOS
+  pujas: [],        // Listado de todas las ofertas registradas
+  cargando: false,  // Indicador de llamada en curso
+  error: null,      // Mensaje de error si la petición falla
 
   obtenerPujas: async () => {
     if (!hayTokenSesion()) {
@@ -32,7 +32,7 @@ export const usarTiendaPujas = create((set) => ({
 
     set({ cargando: true, error: null });
     try {
-      const datos = await peticionHttp('/bids');
+      const datos = await peticionHttp('/pujas');
       set({ pujas: datos, cargando: false });
       return datos;
     } catch (error) {
@@ -45,13 +45,13 @@ export const usarTiendaPujas = create((set) => ({
     set({ error: null });
     try {
       const cuerpo = {
-        auctionId: Number(idSubasta),
-        amount: Number(monto),
-        note: nota ? nota.trim() : '',
-        commitmentAccepted: Boolean(compromisoAceptado),
+        subastaId: Number(idSubasta),
+        monto: Number(monto),
+        nota: nota ? nota.trim() : '',
+        compromisoAceptado: Boolean(compromisoAceptado),
       };
 
-      const creada = await peticionHttp('/bids', {
+      const creada = await peticionHttp('/pujas', {
         method: 'POST',
         body: JSON.stringify(cuerpo),
       });
@@ -69,16 +69,16 @@ export const usarTiendaPujas = create((set) => ({
     set({ error: null });
     try {
       const cuerpo = {
-        note: String(cambios.nota || '').trim(),
+        nota: String(cambios.nota || '').trim(),
       };
 
-      const actualizada = await peticionHttp(`/bids/${id}`, {
+      const actualizada = await peticionHttp(`/pujas/${id}`, {
         method: 'PUT',
         body: JSON.stringify(cuerpo),
       });
       set((estado) => ({ pujas: reemplazarPorId(estado.pujas, id, actualizada) }));
 
-      await refrescarSubastaDespuesDePuja(actualizada.auctionId);
+      await refrescarSubastaDespuesDePuja(actualizada.subastaId);
       return actualizada;
     } catch (error) {
       set({ error: error.message });
@@ -87,6 +87,7 @@ export const usarTiendaPujas = create((set) => ({
   },
 }));
 
+// Al cerrar sesión, limpiamos el historial de pujas en memoria
 registrarLimpiezaSesion(() => {
   usarTiendaPujas.setState({ pujas: [], error: null, cargando: false });
 });
