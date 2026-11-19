@@ -19,7 +19,7 @@
 
 import React from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
-import { Bell, LogOut, Plus, Search, User, X } from 'lucide-react';
+import { Bell, LayoutDashboard, LogOut, Plus, Search, User, X } from 'lucide-react';
 import { usarTiendaSubastas } from '../../subastas/estado/tiendaSubastas';
 
 // Enlaces de navegación pública del lado izquierdo
@@ -155,15 +155,20 @@ export function Navbar({ esInicio, usuarioActual, cantidadSinLeer, alCerrarSesio
                 <Plus className="w-3.5 h-3.5" />
                 Publicar
               </Link>
+              <span
+                className="hidden sm:inline-flex items-center gap-1.5 text-xs text-[#EAFFD0]/90 font-medium whitespace-nowrap"
+                title={`${usuarioActual.nombre} (${usuarioActual.rol})`}
+              >
+                <User className="w-3.5 h-3.5 text-[#B0E454]" />
+                <span>¡Hola {usuarioActual.nombre.split(' ')[0]}!</span>
+              </span>
               <Link
                 to="/panel"
-                className="inline-flex items-center gap-1.5 text-xs text-[#EAFFD0] hover:text-[#B0E454] whitespace-nowrap"
-                title={`${usuarioActual.nombre} (${usuarioActual.rol}) — Ir al Panel`}
+                className="inline-flex items-center gap-1.5 bg-[#B0E454] hover:bg-[#EAFFD0] text-[#0D0D0D] px-3 py-1 rounded-full text-xs font-semibold transition-colors whitespace-nowrap"
+                title="Ir al Panel de Control"
               >
-                <User className="w-4 h-4" />
-                <span className="hidden xl:inline font-medium">
-                  {usuarioActual.nombre.split(' ')[0]}
-                </span>
+                <LayoutDashboard className="w-3.5 h-3.5" />
+                <span>Panel</span>
               </Link>
               <Link
                 to="/panel?tab=notificaciones"
