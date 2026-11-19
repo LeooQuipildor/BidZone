@@ -247,6 +247,34 @@ export const usarTiendaAutenticacion = create((set, get) => ({
       throw error;
     }
   },
+
+  /**
+   * Paso 1 de recuperación: solicita al backend enviar un código de 6 dígitos al correo (Nodemailer).
+   */
+  solicitarRecuperacion: async (correo) => {
+    set({ error: null });
+    const cuerpo = { correo: String(correo || '').trim().toLowerCase() };
+    return peticionHttp('/autenticacion/solicitar-recuperacion', {
+      method: 'POST',
+      body: JSON.stringify(cuerpo),
+    });
+  },
+
+  /**
+   * Paso 2 de recuperación: verifica el código y ejecuta UPDATE de contraseña en MySQL.
+   */
+  restablecerContrasena: async ({ correo, codigo, nuevaContrasena }) => {
+    set({ error: null });
+    const cuerpo = {
+      correo: String(correo || '').trim().toLowerCase(),
+      codigo: String(codigo || '').trim(),
+      nuevaContrasena: String(nuevaContrasena || ''),
+    };
+    return peticionHttp('/autenticacion/restablecer-contrasena', {
+      method: 'POST',
+      body: JSON.stringify(cuerpo),
+    });
+  },
 }));
 
 // Si el servidor responde 401 (sesión vencida), cerramos la sesión automáticamente

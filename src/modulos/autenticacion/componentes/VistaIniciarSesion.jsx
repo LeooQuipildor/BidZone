@@ -36,6 +36,7 @@ import { ShieldCheck, UserCheck } from 'lucide-react';
 import { usarTiendaAutenticacion } from '../estado/tiendaAutenticacion';
 import { Button, Card, Input } from '../../nucleo/diseno/ui';
 import { Alert } from '../../nucleo/diseno/uiFeedback';
+import { FormularioRecuperarContrasena } from './FormularioRecuperarContrasena';
 
 /**
  * Función auxiliar para determinar a qué página redirigir al usuario tras el login.
@@ -80,6 +81,8 @@ export function VistaIniciarSesion() {
   const [correo, setCorreo] = useState('');
   const [contrasena, setContrasena] = useState('');
   const [mensajeError, setMensajeError] = useState('');
+  const [mensajeExito, setMensajeExito] = useState('');
+  const [modoRecuperacion, setModoRecuperacion] = useState(false);
 
   // Calcula la ruta a la que debe ir el usuario al tener éxito
   const rutaDestino = obtenerDestinoRedireccion(ubicacion);
@@ -133,44 +136,83 @@ export function VistaIniciarSesion() {
       </div>
 
       <Card className="p-6 sm:p-8 rounded-3xl">
-        {/* Alerta de error condicional */}
-        {mensajeError && (
-          <div className="mb-4">
-            <Alert type="error" onClose={() => setMensajeError('')}>
-              {mensajeError}
-            </Alert>
-          </div>
+        {modoRecuperacion ? (
+          <FormularioRecuperarContrasena
+            correoInicial={correo}
+            alVolver={() => setModoRecuperacion(false)}
+            alExito={(texto, correoRecuperado) => {
+              setCorreo(correoRecuperado);
+              setContrasena('');
+              setMensajeError('');
+              setMensajeExito(texto);
+              setModoRecuperacion(false);
+            }}
+          />
+        ) : (
+          <>
+            {/* Alerta de éxito tras recuperar contraseña */}
+            {mensajeExito && (
+              <div className="mb-4">
+                <Alert type="success" onClose={() => setMensajeExito('')}>
+                  {mensajeExito}
+                </Alert>
+              </div>
+            )}
+
+            {/* Alerta de error condicional */}
+            {mensajeError && (
+              <div className="mb-4">
+                <Alert type="error" onClose={() => setMensajeError('')}>
+                  {mensajeError}
+                </Alert>
+              </div>
+            )}
+
+            {/* Formulario de credenciales */}
+            <form onSubmit={manejarEnvio} className="space-y-4">
+              <Input
+                id="correo"
+                label="Correo electrónico"
+                type="email"
+                placeholder="ejemplo@bidzone.com"
+                value={correo}
+                onChange={(evento) => setCorreo(evento.target.value)}
+              />
+              <Input
+                ref={campoContrasenaRef}
+                id="contrasena"
+                label="Contraseña"
+                type="password"
+                placeholder="••••••••"
+                value={contrasena}
+                onChange={(evento) => setContrasena(evento.target.value)}
+              />
+
+              <div className="flex justify-end -mt-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMensajeError('');
+                    setMensajeExito('');
+                    setModoRecuperacion(true);
+                  }}
+                  className="text-xs font-semibold text-[#224F10] hover:underline cursor-pointer"
+                >
+                  ¿Olvidaste tu contraseña?
+                </button>
+              </div>
+
+              <Button
+                type="submit"
+                disabled={cargando}
+                className="w-full mt-2"
+                size="lg"
+              >
+                {cargando ? 'Verificando...' : 'Ingresar a BidZone'}
+              </Button>
+            </form>
+          </>
         )}
-
-        {/* Formulario de credenciales */}
-        <form onSubmit={manejarEnvio} className="space-y-4">
-          <Input
-            id="correo"
-            label="Correo electrónico"
-            type="email"
-            placeholder="ejemplo@bidzone.com"
-            value={correo}
-            onChange={(evento) => setCorreo(evento.target.value)}
-          />
-          <Input
-            ref={campoContrasenaRef}
-            id="contrasena"
-            label="Contraseña"
-            type="password"
-            placeholder="••••••••"
-            value={contrasena}
-            onChange={(evento) => setContrasena(evento.target.value)}
-          />
-
-          <Button
-            type="submit"
-            disabled={cargando}
-            className="w-full mt-2"
-            size="lg"
-          >
-            {cargando ? 'Verificando...' : 'Ingresar a BidZone'}
-          </Button>
-        </form>
 
         {/* Botones rápidos para autocompletar correos de prueba en entornos de desarrollo */}
         <div className="mt-6 pt-5 border-t border-[#224F10]/15">

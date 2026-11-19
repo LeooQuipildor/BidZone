@@ -44,6 +44,7 @@ import { calcularTiempoRestante } from '../../utilidades/formatos';
 import { BotonPanel, CabeceraSeccionPanel, GridEstadisticasPanel } from './PanelCompartido';
 import { TarjetaProximoCierre, TarjetaSubastasRecientes } from './TarjetasResumenPanel';
 import { CierresAdjudicadosPanel } from './CierresAdjudicadosPanel';
+import { GraficosAdminPanel } from './GraficosAdminPanel';
 
 /**
  * Subcomponente auxiliar: BotonFlecha
@@ -224,6 +225,15 @@ export function TabResumenPanel({
 
       {/* Grilla superior de 4 tarjetas estadísticas */}
       <GridEstadisticasPanel tarjetas={tarjetasResumen} />
+
+      {/* Gráficos visuales en vivo (exclusivos para el Administrador) */}
+      {esAdmin && (
+        <GraficosAdminPanel
+          subastas={subastas}
+          reportes={reportes}
+          usuarios={usuarios}
+        />
+      )}
 
       {/* Bloque central: Próximo cierre con cuenta regresiva y publicaciones recientes */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
