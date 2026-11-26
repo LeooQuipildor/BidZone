@@ -5,16 +5,16 @@ import {
   registrarLimpiezaSesion,
 } from '../../nucleo/servicios/clienteApi';
 import { eliminarPorId, reemplazarPorId } from '../../nucleo/utilidades/ayudas';
-import { usarTiendaAutenticacion } from '../../autenticacion/estado/tiendaAutenticacion';
+import { useStoreAuthentication } from '../../autenticacion/estado/storeAuthentication';
 
 async function refrescarReputaciones() {
-  const tiendaAuth = usarTiendaAutenticacion.getState();
-  await tiendaAuth.obtenerUsuarios();
-  await tiendaAuth.verificarSesion();
+  const storeAuth = useStoreAuthentication.getState();
+  await storeAuth.obtenerUsuarios();
+  await storeAuth.verificarSesion();
 }
 
 // Tienda global de calificaciones / reseñas RN07 (conecta con /api/reviews)
-export const usarTiendaResenas = create((set) => ({
+export const useStoreReviews = create((set) => ({
   // ESTADOS REACTIVOS
   resenas: [],      // Array de reseñas (emitidas y recibidas)
   cargando: false,  // Bandera de llamada HTTP
@@ -106,6 +106,6 @@ export const usarTiendaResenas = create((set) => ({
 
 // Al cerrar sesión, limpiamos las reseñas en memoria
 registrarLimpiezaSesion(() => {
-  usarTiendaResenas.setState({ resenas: [], error: null, cargando: false });
+  useStoreReviews.setState({ resenas: [], error: null, cargando: false });
 });
 

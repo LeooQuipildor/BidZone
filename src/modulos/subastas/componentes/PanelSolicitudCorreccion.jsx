@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { BellRing, Send } from 'lucide-react';
-import { usarTiendaAutenticacion } from '../../autenticacion/estado/tiendaAutenticacion';
-import { usarTiendaNotificaciones } from '../../notificaciones/estado/tiendaNotificaciones';
+import { useStoreAuthentication } from '../../autenticacion/estado/storeAuthentication';
+import { useStoreNotifications } from '../../notificaciones/estado/storeNotifications';
 import { buscarPorId } from '../../nucleo/utilidades/ayudas';
 import { Input, Select, Textarea } from '../../nucleo/diseno/ui';
 import { Alert, Modal } from '../../nucleo/diseno/uiFeedback';
@@ -32,8 +32,8 @@ const MOTIVOS_CORRECCION = [
 
 function FormularioSolicitudCorreccion({ subasta, alExito, alCancelar }) {
   // Suscripción a tiendas de autenticación y notificaciones
-  const usuarios = usarTiendaAutenticacion((estado) => estado.usuarios);
-  const enviarNotificacion = usarTiendaNotificaciones((estado) => estado.enviarNotificacion);
+  const usuarios = useStoreAuthentication((estado) => estado.usuarios);
+  const enviarNotificacion = useStoreNotifications((estado) => estado.enviarNotificacion);
 
   // Identificación del vendedor receptor de la notificación
   const vendedor = buscarPorId(usuarios, subasta.vendedorId);

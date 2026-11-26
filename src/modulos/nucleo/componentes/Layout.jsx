@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { usarTiendaAutenticacion } from '../../autenticacion/estado/tiendaAutenticacion';
-import { usarTiendaNotificaciones } from '../../notificaciones/estado/tiendaNotificaciones';
+import { useStoreAuthentication } from '../../autenticacion/estado/storeAuthentication';
+import { useStoreNotifications } from '../../notificaciones/estado/storeNotifications';
 import { hayTokenSesion } from '../servicios/clienteApi';
 import { mismoId } from '../utilidades/ayudas';
 import { Navbar } from './Navbar';
@@ -29,11 +29,11 @@ export function Layout({ children }) {
   const rutaAnteriorRef = useRef(ubicacion.pathname);
 
   // ESTADO GLOBAL (Zustand)
-  const usuarioActual = usarTiendaAutenticacion((estado) => estado.usuarioActual);
-  const verificarSesion = usarTiendaAutenticacion((estado) => estado.verificarSesion);
-  const cerrarSesion = usarTiendaAutenticacion((estado) => estado.cerrarSesion);
-  const notificaciones = usarTiendaNotificaciones((estado) => estado.notificaciones);
-  const obtenerNotificaciones = usarTiendaNotificaciones((estado) => estado.obtenerNotificaciones);
+  const usuarioActual = useStoreAuthentication((estado) => estado.usuarioActual);
+  const verificarSesion = useStoreAuthentication((estado) => estado.verificarSesion);
+  const cerrarSesion = useStoreAuthentication((estado) => estado.cerrarSesion);
+  const notificaciones = useStoreNotifications((estado) => estado.notificaciones);
+  const obtenerNotificaciones = useStoreNotifications((estado) => estado.obtenerNotificaciones);
 
   useEffect(() => {
     const cambioDePagina = rutaAnteriorRef.current !== ubicacion.pathname;

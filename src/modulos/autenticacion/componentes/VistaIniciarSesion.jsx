@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ShieldCheck, UserCheck } from 'lucide-react';
-import { usarTiendaAutenticacion } from '../estado/tiendaAutenticacion';
+import { useStoreAuthentication } from '../estado/storeAuthentication';
 import { Button, Card, Input } from '../../nucleo/diseno/ui';
 import { Alert } from '../../nucleo/diseno/uiFeedback';
 import { FormularioRecuperarContrasena } from './FormularioRecuperarContrasena';
@@ -21,8 +21,8 @@ export function VistaIniciarSesion() {
 
   const campoContrasenaRef = useRef(null);
 
-  const iniciarSesion = usarTiendaAutenticacion((estado) => estado.iniciarSesion);
-  const cargando = usarTiendaAutenticacion((estado) => estado.cargando);
+  const iniciarSesion = useStoreAuthentication((estado) => estado.iniciarSesion);
+  const cargando = useStoreAuthentication((estado) => estado.cargando);
 
   const [correo, setCorreo] = useState('');
   const [contrasena, setContrasena] = useState('');

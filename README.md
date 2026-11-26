@@ -187,12 +187,12 @@ Proyectos/BidZone/
         │   │   ├── diseno/                       # Sistema de diseño (ui.jsx, uiFeedback.jsx, componentesBloques.jsx)
         │   │   ├── servicios/                    # Cliente HTTP centralizado con JWT (clienteApi.js)
         │   │   └── utilidades/                   # Formateadores de moneda/fechas y ayudas (formatos.js, ayudas.js)
-        │   ├── autenticacion/                    # Login, Recuperar Contraseña, Registro, CRUD Usuarios y tiendaAutenticacion.js
+        │   ├── autenticacion/                    # Login, Recuperar Contraseña, Registro, CRUD Usuarios y storeAuthentication.js
         │   ├── subastas/                         # Catálogo paginado, TarjetaSubasta, Galería (hasta 4 fotos), Detalle en vivo, Crear/Editar y Solicitud de Corrección
-        │   ├── pujas/                            # Crear/Editar pujas, confirmación vinculante y tiendaPujas.js
-        │   ├── reportes/                         # Crear/Editar reportes, PanelResolucionTicket y tiendaReportes.js
-        │   ├── resenas/                          # Crear/Editar reseñas con estrellas y tiendaResenas.js
-        │   └── notificaciones/                   # Bandeja personal y tiendaNotificaciones.js
+        │   ├── pujas/                            # Crear/Editar pujas, confirmación vinculante y storeBids.js
+        │   ├── reportes/                         # Crear/Editar reportes, PanelResolucionTicket y storeReports.js
+        │   ├── resenas/                          # Crear/Editar reseñas con estrellas y storeReviews.js
+        │   └── notificaciones/                   # Bandeja personal y storeNotifications.js
         ├── App.jsx                               # Enrutador principal con rutas públicas y protegidas
         └── main.jsx                              # Punto de montaje de React
 ```

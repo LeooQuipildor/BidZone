@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { ArrowLeft, ExternalLink, KeyRound, Mail } from 'lucide-react';
-import { usarTiendaAutenticacion } from '../estado/tiendaAutenticacion';
+import { useStoreAuthentication } from '../estado/storeAuthentication';
 import { Button, Input } from '../../nucleo/diseno/ui';
 import { Alert } from '../../nucleo/diseno/uiFeedback';
 
 export function FormularioRecuperarContrasena({ correoInicial = '', alVolver, alExito }) {
-  const solicitarRecuperacion = usarTiendaAutenticacion((estado) => estado.solicitarRecuperacion);
-  const restablecerContrasena = usarTiendaAutenticacion((estado) => estado.restablecerContrasena);
+  const solicitarRecuperacion = useStoreAuthentication((estado) => estado.solicitarRecuperacion);
+  const restablecerContrasena = useStoreAuthentication((estado) => estado.restablecerContrasena);
 
   const [paso, setPaso] = useState(1);
   const [correo, setCorreo] = useState(correoInicial);

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { usarTiendaSubastas } from '../estado/tiendaSubastas';
+import { useStoreAuctions } from '../estado/storeAuctions';
 import { FormularioSubasta } from './FormularioSubasta';
 import { PaginaFormulario } from '../../nucleo/diseno/componentesBloques';
 
@@ -8,7 +8,7 @@ export function VistaCrearSubasta() {
   const navegar = useNavigate();
 
   // Acción para persistir la nueva subasta
-  const crearSubasta = usarTiendaSubastas((estado) => estado.crearSubasta);
+  const crearSubasta = useStoreAuctions((estado) => estado.crearSubasta);
 
   async function manejarCreacion(datos) {
     const creada = await crearSubasta(datos);

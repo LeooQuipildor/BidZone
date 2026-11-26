@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Plus } from 'lucide-react';
-import { usarTiendaReportes } from '../../../reportes/estado/tiendaReportes';
+import { useStoreReports } from '../../../reportes/estado/storeReports';
 import { FormularioReporte } from '../../../reportes/componentes/FormularioReporte';
 import { PanelResolucionTicket } from '../../../reportes/componentes/PanelResolucionTicket';
 import { buscarPorId, coincideConBusqueda, mismoId } from '../../utilidades/ayudas';
@@ -29,10 +29,10 @@ export function TabReportesPanel({
   textoBusqueda,
   datosIniciales,
 }) {
-  // Acciones asíncronas de la tienda de Zustand `tiendaReportes.js`
-  const crearReporte = usarTiendaReportes((estado) => estado.crearReporte);
-  const actualizarReporte = usarTiendaReportes((estado) => estado.actualizarReporte);
-  const eliminarReporte = usarTiendaReportes((estado) => estado.eliminarReporte);
+  // Acciones asíncronas de la tienda de Zustand `storeReports.js`
+  const crearReporte = useStoreReports((estado) => estado.crearReporte);
+  const actualizarReporte = useStoreReports((estado) => estado.actualizarReporte);
+  const eliminarReporte = useStoreReports((estado) => estado.eliminarReporte);
 
   const esAdmin = usuarioActual?.rol === 'admin';
   const otrosUsuarios = usuarios.filter((usuario) => !mismoId(usuario.id, usuarioActual?.id));

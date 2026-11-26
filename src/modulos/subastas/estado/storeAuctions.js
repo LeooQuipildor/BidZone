@@ -26,7 +26,7 @@ function construirCuerpoActualizacion(cambios) {
 }
 
 // Tienda global de subastas (conecta con /api/subastas)
-export const usarTiendaSubastas = create((set, get) => ({
+export const useStoreAuctions = create((set, get) => ({
   // ESTADOS REACTIVOS
   subastas: [],               // Array de publicaciones
   detalleSubastaActual: null, // Subasta individual con datos enriquecidos
@@ -144,6 +144,6 @@ export const usarTiendaSubastas = create((set, get) => ({
 
 // Al cerrar sesión, limpiamos el detalle de subasta cargado en memoria
 registrarLimpiezaSesion(() => {
-  usarTiendaSubastas.setState({ detalleSubastaActual: null, error: null });
+  useStoreAuctions.setState({ detalleSubastaActual: null, error: null });
 });
 

@@ -5,11 +5,11 @@ import {
   registrarLimpiezaSesion,
 } from '../../nucleo/servicios/clienteApi';
 import { eliminarPorId, reemplazarPorId } from '../../nucleo/utilidades/ayudas';
-import { usarTiendaAutenticacion } from '../../autenticacion/estado/tiendaAutenticacion';
-import { usarTiendaNotificaciones } from '../../notificaciones/estado/tiendaNotificaciones';
+import { useStoreAuthentication } from '../../autenticacion/estado/storeAuthentication';
+import { useStoreNotifications } from '../../notificaciones/estado/storeNotifications';
 
 // Tienda global de reportes e infracciones RN06 (conecta con /api/reports)
-export const usarTiendaReportes = create((set) => ({
+export const useStoreReports = create((set) => ({
   // ESTADOS REACTIVOS
   reportes: [],     // Listado de tickets (abiertos, en revisión, resueltos)
   cargando: false,  // Bandera de llamada HTTP en curso
@@ -76,9 +76,9 @@ export const usarTiendaReportes = create((set) => ({
       }));
 
       // Al resolver un reporte puede cambiar el estado del usuario denunciado y llegar avisos
-      await usarTiendaAutenticacion.getState().obtenerUsuarios();
+      await useStoreAuthentication.getState().obtenerUsuarios();
       if (hayTokenSesion()) {
-        await usarTiendaNotificaciones.getState().obtenerNotificaciones();
+        await useStoreNotifications.getState().obtenerNotificaciones();
       }
       return actualizado;
     } catch (error) {
@@ -101,6 +101,6 @@ export const usarTiendaReportes = create((set) => ({
 
 // Al cerrar sesión, limpiamos los reportes cargados en memoria
 registrarLimpiezaSesion(() => {
-  usarTiendaReportes.setState({ reportes: [], error: null, cargando: false });
+  useStoreReports.setState({ reportes: [], error: null, cargando: false });
 });
 

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Plus } from 'lucide-react';
-import { usarTiendaSubastas } from '../../../subastas/estado/tiendaSubastas';
+import { useStoreAuctions } from '../../../subastas/estado/storeAuctions';
 import { filtrarYOrdenarSubastas } from '../../../subastas/utilidades/filtrosSubasta';
 import { FormularioSubasta } from '../../../subastas/componentes/FormularioSubasta';
 import { PanelSolicitudCorreccion } from '../../../subastas/componentes/PanelSolicitudCorreccion';
@@ -38,10 +38,10 @@ export function TabSubastasPanel({
   abrirDesdeAccesoExterno = false,
   alLimpiarNuevo,
 }) {
-  // Acciones asíncronas del store de Zustand `tiendaSubastas.js`
-  const crearSubasta = usarTiendaSubastas((estado) => estado.crearSubasta);
-  const actualizarSubasta = usarTiendaSubastas((estado) => estado.actualizarSubasta);
-  const eliminarSubasta = usarTiendaSubastas((estado) => estado.eliminarSubasta);
+  // Acciones asíncronas del store de Zustand `storeAuctions.js`
+  const crearSubasta = useStoreAuctions((estado) => estado.crearSubasta);
+  const actualizarSubasta = useStoreAuctions((estado) => estado.actualizarSubasta);
+  const eliminarSubasta = useStoreAuctions((estado) => estado.eliminarSubasta);
 
   // Estados locales de filtrado y control de formularios
   const esAdmin = usuarioActual?.rol === 'admin';

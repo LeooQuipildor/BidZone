@@ -1,8 +1,8 @@
 import React, { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { usarTiendaResenas } from '../estado/tiendaResenas';
-import { usarTiendaSubastas } from '../../subastas/estado/tiendaSubastas';
-import { usarTiendaAutenticacion } from '../../autenticacion/estado/tiendaAutenticacion';
+import { useStoreReviews } from '../estado/storeReviews';
+import { useStoreAuctions } from '../../subastas/estado/storeAuctions';
+import { useStoreAuthentication } from '../../autenticacion/estado/storeAuthentication';
 import { mismoId } from '../../nucleo/utilidades/ayudas';
 import { obtenerSubastasPendientesResena } from '../utilidades/ayudasResena';
 import { FormularioResena } from './FormularioResena';
@@ -15,15 +15,15 @@ export function VistaCrearResena() {
   const [parametrosUrl] = useSearchParams();
   const idSubastaInicial = parametrosUrl.get('subasta') || parametrosUrl.get('auctionId') || '';
 
-  const resenas = usarTiendaResenas((estado) => estado.resenas);
-  const obtenerResenas = usarTiendaResenas((estado) => estado.obtenerResenas);
-  const crearResena = usarTiendaResenas((estado) => estado.crearResena);
-  const subastas = usarTiendaSubastas((estado) => estado.subastas);
-  const cargandoSubastas = usarTiendaSubastas((estado) => estado.cargando);
-  const obtenerSubastas = usarTiendaSubastas((estado) => estado.obtenerSubastas);
-  const usuarios = usarTiendaAutenticacion((estado) => estado.usuarios);
-  const obtenerUsuarios = usarTiendaAutenticacion((estado) => estado.obtenerUsuarios);
-  const usuarioActual = usarTiendaAutenticacion((estado) => estado.usuarioActual);
+  const resenas = useStoreReviews((estado) => estado.resenas);
+  const obtenerResenas = useStoreReviews((estado) => estado.obtenerResenas);
+  const crearResena = useStoreReviews((estado) => estado.crearResena);
+  const subastas = useStoreAuctions((estado) => estado.subastas);
+  const cargandoSubastas = useStoreAuctions((estado) => estado.cargando);
+  const obtenerSubastas = useStoreAuctions((estado) => estado.obtenerSubastas);
+  const usuarios = useStoreAuthentication((estado) => estado.usuarios);
+  const obtenerUsuarios = useStoreAuthentication((estado) => estado.obtenerUsuarios);
+  const usuarioActual = useStoreAuthentication((estado) => estado.usuarioActual);
 
   useEffect(() => {
     obtenerSubastas();

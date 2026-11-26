@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AlertTriangle, ArrowUpRight, Gavel, PhoneCall, Star } from 'lucide-react';
-import { usarTiendaSubastas } from '../../subastas/estado/tiendaSubastas';
+import { useStoreAuctions } from '../../subastas/estado/storeAuctions';
 import { PortadaInicio } from './PortadaInicio';
 import { SeccionCatalogoInicio } from './SeccionCatalogoInicio';
 import { SeccionModulosInicio } from './SeccionModulosInicio';
@@ -35,10 +35,10 @@ const TARJETAS_SEGURIDAD = [
 export function Inicio() {
   const navegar = useNavigate();
 
-  const subastas = usarTiendaSubastas((estado) => estado.subastas);
-  const errorSubastas = usarTiendaSubastas((estado) => estado.error);
-  const obtenerSubastas = usarTiendaSubastas((estado) => estado.obtenerSubastas);
-  const actualizarFiltros = usarTiendaSubastas((estado) => estado.actualizarFiltros);
+  const subastas = useStoreAuctions((estado) => estado.subastas);
+  const errorSubastas = useStoreAuctions((estado) => estado.error);
+  const obtenerSubastas = useStoreAuctions((estado) => estado.obtenerSubastas);
+  const actualizarFiltros = useStoreAuctions((estado) => estado.actualizarFiltros);
 
   const [categoriaSeleccionada, setCategoriaSeleccionada] = useState('Todas');
 

@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { usarTiendaReportes } from '../estado/tiendaReportes';
-import { usarTiendaAutenticacion } from '../../autenticacion/estado/tiendaAutenticacion';
+import { useStoreReports } from '../estado/storeReports';
+import { useStoreAuthentication } from '../../autenticacion/estado/storeAuthentication';
 import { buscarPorId, mismoId } from '../../nucleo/utilidades/ayudas';
 import { FormularioReporte } from './FormularioReporte';
 import { PanelResolucionTicket } from './PanelResolucionTicket';
@@ -11,13 +11,13 @@ export function VistaEditarReporte() {
   const { id } = useParams();
   const navegar = useNavigate();
 
-  const reportes = usarTiendaReportes((estado) => estado.reportes);
-  const cargandoReportes = usarTiendaReportes((estado) => estado.cargando);
-  const obtenerReportes = usarTiendaReportes((estado) => estado.obtenerReportes);
-  const actualizarReporte = usarTiendaReportes((estado) => estado.actualizarReporte);
-  const usuarioActual = usarTiendaAutenticacion((estado) => estado.usuarioActual);
-  const usuarios = usarTiendaAutenticacion((estado) => estado.usuarios);
-  const obtenerUsuarios = usarTiendaAutenticacion((estado) => estado.obtenerUsuarios);
+  const reportes = useStoreReports((estado) => estado.reportes);
+  const cargandoReportes = useStoreReports((estado) => estado.cargando);
+  const obtenerReportes = useStoreReports((estado) => estado.obtenerReportes);
+  const actualizarReporte = useStoreReports((estado) => estado.actualizarReporte);
+  const usuarioActual = useStoreAuthentication((estado) => estado.usuarioActual);
+  const usuarios = useStoreAuthentication((estado) => estado.usuarios);
+  const obtenerUsuarios = useStoreAuthentication((estado) => estado.obtenerUsuarios);
 
   useEffect(() => {
     obtenerReportes();

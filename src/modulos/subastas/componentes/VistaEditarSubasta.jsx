@@ -1,8 +1,8 @@
 import React, { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { usarTiendaSubastas } from '../estado/tiendaSubastas';
-import { usarTiendaPujas } from '../../pujas/estado/tiendaPujas';
-import { usarTiendaAutenticacion } from '../../autenticacion/estado/tiendaAutenticacion';
+import { useStoreAuctions } from '../estado/storeAuctions';
+import { useStoreBids } from '../../pujas/estado/storeBids';
+import { useStoreAuthentication } from '../../autenticacion/estado/storeAuthentication';
 import { FormularioSubasta } from './FormularioSubasta';
 import { buscarPorId, mismoId } from '../../nucleo/utilidades/ayudas';
 import { PaginaFormulario } from '../../nucleo/diseno/componentesBloques';
@@ -11,14 +11,14 @@ export function VistaEditarSubasta() {
   const { id } = useParams();
   const navegar = useNavigate();
 
-  const subastas = usarTiendaSubastas((estado) => estado.subastas);
-  const detalleSubastaActual = usarTiendaSubastas((estado) => estado.detalleSubastaActual);
-  const cargandoDetalle = usarTiendaSubastas((estado) => estado.cargandoDetalle);
-  const obtenerSubastaPorId = usarTiendaSubastas((estado) => estado.obtenerSubastaPorId);
-  const actualizarSubasta = usarTiendaSubastas((estado) => estado.actualizarSubasta);
-  const pujas = usarTiendaPujas((estado) => estado.pujas);
-  const obtenerPujas = usarTiendaPujas((estado) => estado.obtenerPujas);
-  const usuarioActual = usarTiendaAutenticacion((estado) => estado.usuarioActual);
+  const subastas = useStoreAuctions((estado) => estado.subastas);
+  const detalleSubastaActual = useStoreAuctions((estado) => estado.detalleSubastaActual);
+  const cargandoDetalle = useStoreAuctions((estado) => estado.cargandoDetalle);
+  const obtenerSubastaPorId = useStoreAuctions((estado) => estado.obtenerSubastaPorId);
+  const actualizarSubasta = useStoreAuctions((estado) => estado.actualizarSubasta);
+  const pujas = useStoreBids((estado) => estado.pujas);
+  const obtenerPujas = useStoreBids((estado) => estado.obtenerPujas);
+  const usuarioActual = useStoreAuthentication((estado) => estado.usuarioActual);
 
   useEffect(() => {
     obtenerSubastaPorId(id);

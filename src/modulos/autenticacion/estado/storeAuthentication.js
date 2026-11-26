@@ -44,7 +44,7 @@ function construirCuerpoUsuario(datos) {
 }
 
 // Tienda global de autenticación y usuarios (conecta con /api/autenticacion y /api/usuarios)
-export const usarTiendaAutenticacion = create((set, get) => ({
+export const useStoreAuthentication = create((set, get) => ({
   // ESTADOS REACTIVOS
   usuarioActual: obtenerUsuarioGuardado(), // Objeto del usuario conectado o null
   usuarios: [],                           // Lista de todos los usuarios (para panel de admin)
@@ -210,10 +210,10 @@ export const usarTiendaAutenticacion = create((set, get) => ({
 }));
 
 // Si el servidor responde 401 (sesión vencida), cerramos la sesión automáticamente
-registrarManejadorSinAutorizacion(() => usarTiendaAutenticacion.getState().cerrarSesion());
+registrarManejadorSinAutorizacion(() => useStoreAuthentication.getState().cerrarSesion());
 
 // Registramos la función de limpieza que se llamará al cerrar sesión
 registrarLimpiezaSesion(() => {
-  usarTiendaAutenticacion.setState({ usuarioActual: null, usuarios: [], error: null, cargando: false });
+  useStoreAuthentication.setState({ usuarioActual: null, usuarios: [], error: null, cargando: false });
 });
 

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Mail, MapPin, Phone, ShieldCheck, Star } from 'lucide-react';
-import { usarTiendaAutenticacion } from '../../../autenticacion/estado/tiendaAutenticacion';
+import { useStoreAuthentication } from '../../../autenticacion/estado/storeAuthentication';
 import { FormularioUsuario } from '../../../autenticacion/componentes/FormularioUsuario';
 import { mismoId } from '../../utilidades/ayudas';
 import { formatearRolUsuario, obtenerIniciales } from '../../utilidades/formatos';
@@ -8,7 +8,7 @@ import { AvisoPanel, CabeceraSeccionPanel } from './PanelCompartido';
 
 export function TabPerfilPanel({ usuarioActual, subastas, pujas }) {
   // Acción asíncrona del store de autenticación para persistir los cambios
-  const actualizarUsuario = usarTiendaAutenticacion((estado) => estado.actualizarUsuario);
+  const actualizarUsuario = useStoreAuthentication((estado) => estado.actualizarUsuario);
   const [aviso, setAviso] = useState(null);
 
   // Conteo de actividad histórica del usuario

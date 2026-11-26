@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Bell, Check, CheckCheck, ExternalLink, Trash2 } from 'lucide-react';
-import { usarTiendaNotificaciones } from '../../../notificaciones/estado/tiendaNotificaciones';
+import { useStoreNotifications } from '../../../notificaciones/estado/storeNotifications';
 import { formatearFechaHora } from '../../utilidades/formatos';
 import { coincideConBusqueda, mismoId } from '../../utilidades/ayudas';
 import {
@@ -81,10 +81,10 @@ function FilaNotificacion({ item, alMarcarLeida, alEliminar }) {
 }
 
 export function TabNotificacionesPanel({ usuarioActual, notificaciones, textoBusqueda }) {
-  // Acciones asíncronas del store de Zustand `tiendaNotificaciones.js`
-  const marcarComoLeida = usarTiendaNotificaciones((estado) => estado.marcarComoLeida);
-  const marcarTodasComoLeidas = usarTiendaNotificaciones((estado) => estado.marcarTodasComoLeidas);
-  const eliminarNotificacion = usarTiendaNotificaciones((estado) => estado.eliminarNotificacion);
+  // Acciones asíncronas del store de Zustand `storeNotifications.js`
+  const marcarComoLeida = useStoreNotifications((estado) => estado.marcarComoLeida);
+  const marcarTodasComoLeidas = useStoreNotifications((estado) => estado.marcarTodasComoLeidas);
+  const eliminarNotificacion = useStoreNotifications((estado) => estado.eliminarNotificacion);
 
   const [mensajeError, setMensajeError] = useState('');
 

@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
-import { usarTiendaAutenticacion } from '../../autenticacion/estado/tiendaAutenticacion';
-import { usarTiendaSubastas } from '../../subastas/estado/tiendaSubastas';
-import { usarTiendaPujas } from '../../pujas/estado/tiendaPujas';
-import { usarTiendaReportes } from '../../reportes/estado/tiendaReportes';
-import { usarTiendaResenas } from '../../resenas/estado/tiendaResenas';
-import { usarTiendaNotificaciones } from '../../notificaciones/estado/tiendaNotificaciones';
+import { useStoreAuthentication } from '../../autenticacion/estado/storeAuthentication';
+import { useStoreAuctions } from '../../subastas/estado/storeAuctions';
+import { useStoreBids } from '../../pujas/estado/storeBids';
+import { useStoreReports } from '../../reportes/estado/storeReports';
+import { useStoreReviews } from '../../resenas/estado/storeReviews';
+import { useStoreNotifications } from '../../notificaciones/estado/storeNotifications';
 import { useRelojSegundo } from '../utilidades/ayudas';
 import { formatearRolUsuario } from '../utilidades/formatos';
 import { construirMenuPanel } from './panel/ayudasPanel';
@@ -39,19 +39,19 @@ export function VistaPanelControl({ seccionInicial = 'resumen' }) {
   // Reloj de cuenta regresiva sincronizado para los componentes del panel
   const ahoraMs = useRelojSegundo();
 
-  const usuarioActual = usarTiendaAutenticacion((estado) => estado.usuarioActual);
-  const usuarios = usarTiendaAutenticacion((estado) => estado.usuarios);
-  const obtenerUsuarios = usarTiendaAutenticacion((estado) => estado.obtenerUsuarios);
-  const subastas = usarTiendaSubastas((estado) => estado.subastas);
-  const obtenerSubastas = usarTiendaSubastas((estado) => estado.obtenerSubastas);
-  const pujas = usarTiendaPujas((estado) => estado.pujas);
-  const obtenerPujas = usarTiendaPujas((estado) => estado.obtenerPujas);
-  const reportes = usarTiendaReportes((estado) => estado.reportes);
-  const obtenerReportes = usarTiendaReportes((estado) => estado.obtenerReportes);
-  const resenas = usarTiendaResenas((estado) => estado.resenas);
-  const obtenerResenas = usarTiendaResenas((estado) => estado.obtenerResenas);
-  const notificaciones = usarTiendaNotificaciones((estado) => estado.notificaciones);
-  const obtenerNotificaciones = usarTiendaNotificaciones((estado) => estado.obtenerNotificaciones);
+  const usuarioActual = useStoreAuthentication((estado) => estado.usuarioActual);
+  const usuarios = useStoreAuthentication((estado) => estado.usuarios);
+  const obtenerUsuarios = useStoreAuthentication((estado) => estado.obtenerUsuarios);
+  const subastas = useStoreAuctions((estado) => estado.subastas);
+  const obtenerSubastas = useStoreAuctions((estado) => estado.obtenerSubastas);
+  const pujas = useStoreBids((estado) => estado.pujas);
+  const obtenerPujas = useStoreBids((estado) => estado.obtenerPujas);
+  const reportes = useStoreReports((estado) => estado.reportes);
+  const obtenerReportes = useStoreReports((estado) => estado.obtenerReportes);
+  const resenas = useStoreReviews((estado) => estado.resenas);
+  const obtenerResenas = useStoreReviews((estado) => estado.obtenerResenas);
+  const notificaciones = useStoreNotifications((estado) => estado.notificaciones);
+  const obtenerNotificaciones = useStoreNotifications((estado) => estado.obtenerNotificaciones);
 
   // Estados locales para la barra de búsqueda y paginación interna
   const [textoBusqueda, setTextoBusqueda] = useState('');

@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { usarTiendaAutenticacion } from '../estado/tiendaAutenticacion';
+import { useStoreAuthentication } from '../estado/storeAuthentication';
 import { buscarPorId, mismoId } from '../../nucleo/utilidades/ayudas';
 import { FormularioUsuario } from './FormularioUsuario';
 import { PaginaFormulario } from '../../nucleo/diseno/componentesBloques';
@@ -10,11 +10,11 @@ export function VistaEditarUsuario() {
 
   const navegar = useNavigate();
 
-  const usuarios = usarTiendaAutenticacion((estado) => estado.usuarios);
-  const cargandoUsuarios = usarTiendaAutenticacion((estado) => estado.cargando);
-  const obtenerUsuarios = usarTiendaAutenticacion((estado) => estado.obtenerUsuarios);
-  const usuarioActual = usarTiendaAutenticacion((estado) => estado.usuarioActual);
-  const actualizarUsuario = usarTiendaAutenticacion((estado) => estado.actualizarUsuario);
+  const usuarios = useStoreAuthentication((estado) => estado.usuarios);
+  const cargandoUsuarios = useStoreAuthentication((estado) => estado.cargando);
+  const obtenerUsuarios = useStoreAuthentication((estado) => estado.obtenerUsuarios);
+  const usuarioActual = useStoreAuthentication((estado) => estado.usuarioActual);
+  const actualizarUsuario = useStoreAuthentication((estado) => estado.actualizarUsuario);
 
   useEffect(() => {
     obtenerUsuarios();

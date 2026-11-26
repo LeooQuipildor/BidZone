@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { AlertTriangle, ArrowLeft, Trash2, Trophy } from 'lucide-react';
-import { usarTiendaSubastas } from '../estado/tiendaSubastas';
-import { usarTiendaPujas } from '../../pujas/estado/tiendaPujas';
-import { usarTiendaAutenticacion } from '../../autenticacion/estado/tiendaAutenticacion';
+import { useStoreAuctions } from '../estado/storeAuctions';
+import { useStoreBids } from '../../pujas/estado/storeBids';
+import { useStoreAuthentication } from '../../autenticacion/estado/storeAuthentication';
 import { prepararDatosDetalleSubasta } from '../utilidades/filtrosSubasta';
 import { FichaProductoSubasta } from './FichaProductoSubasta';
 import { PanelContactoSubasta } from './PanelContactoSubasta';
@@ -17,17 +17,17 @@ export function VistaDetalleSubasta() {
   const { id } = useParams();
   const navegar = useNavigate();
 
-  const subastas = usarTiendaSubastas((estado) => estado.subastas);
-  const detalleSubastaActual = usarTiendaSubastas((estado) => estado.detalleSubastaActual);
-  const cargandoDetalle = usarTiendaSubastas((estado) => estado.cargandoDetalle);
-  const errorTienda = usarTiendaSubastas((estado) => estado.error);
-  const obtenerSubastaPorId = usarTiendaSubastas((estado) => estado.obtenerSubastaPorId);
-  const eliminarSubasta = usarTiendaSubastas((estado) => estado.eliminarSubasta);
+  const subastas = useStoreAuctions((estado) => estado.subastas);
+  const detalleSubastaActual = useStoreAuctions((estado) => estado.detalleSubastaActual);
+  const cargandoDetalle = useStoreAuctions((estado) => estado.cargandoDetalle);
+  const errorStore = useStoreAuctions((estado) => estado.error);
+  const obtenerSubastaPorId = useStoreAuctions((estado) => estado.obtenerSubastaPorId);
+  const eliminarSubasta = useStoreAuctions((estado) => estado.eliminarSubasta);
 
-  const pujas = usarTiendaPujas((estado) => estado.pujas);
-  const crearPuja = usarTiendaPujas((estado) => estado.crearPuja);
-  const usuarioActual = usarTiendaAutenticacion((estado) => estado.usuarioActual);
-  const usuarios = usarTiendaAutenticacion((estado) => estado.usuarios);
+  const pujas = useStoreBids((estado) => estado.pujas);
+  const crearPuja = useStoreBids((estado) => estado.crearPuja);
+  const usuarioActual = useStoreAuthentication((estado) => estado.usuarioActual);
+  const usuarios = useStoreAuthentication((estado) => estado.usuarios);
 
   // Estados locales para mensajes y modal de moderación
   const [mensajeError, setMensajeError] = useState('');
@@ -61,7 +61,7 @@ export function VistaDetalleSubasta() {
     return (
       <ErrorCard
         title="Subasta no encontrada"
-        message={errorTienda || 'El artículo que buscas no existe o fue eliminado.'}
+        message={errorStore || 'El artículo que buscas no existe o fue eliminado.'}
         backLabel="Volver al catálogo"
         onBack={() => navegar('/subastas')}
       />

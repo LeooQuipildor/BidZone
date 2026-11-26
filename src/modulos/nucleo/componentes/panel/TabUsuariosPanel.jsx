@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { UserPlus } from 'lucide-react';
-import { usarTiendaAutenticacion } from '../../../autenticacion/estado/tiendaAutenticacion';
+import { useStoreAuthentication } from '../../../autenticacion/estado/storeAuthentication';
 import { FormularioUsuario } from '../../../autenticacion/componentes/FormularioUsuario';
 import { buscarPorId, coincideConBusqueda, mismoId } from '../../utilidades/ayudas';
 import {
@@ -27,10 +27,10 @@ const OPCIONES_FILTRO_ESTADO = [
 ];
 
 export function TabUsuariosPanel({ usuarioActual, usuarios, textoBusqueda }) {
-  // Acciones asíncronas del store de Zustand `tiendaAutenticacion.js`
-  const crearUsuario = usarTiendaAutenticacion((estado) => estado.crearUsuario);
-  const actualizarUsuario = usarTiendaAutenticacion((estado) => estado.actualizarUsuario);
-  const eliminarUsuario = usarTiendaAutenticacion((estado) => estado.eliminarUsuario);
+  // Acciones asíncronas del store de Zustand `storeAuthentication.js`
+  const crearUsuario = useStoreAuthentication((estado) => estado.crearUsuario);
+  const actualizarUsuario = useStoreAuthentication((estado) => estado.actualizarUsuario);
+  const eliminarUsuario = useStoreAuthentication((estado) => estado.eliminarUsuario);
 
   // Estados locales para filtros, alertas y control de formularios
   const [filtroRol, setFiltroRol] = useState('todos');

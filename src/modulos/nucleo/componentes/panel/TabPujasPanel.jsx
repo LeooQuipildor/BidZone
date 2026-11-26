@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Compass } from 'lucide-react';
-import { usarTiendaPujas } from '../../../pujas/estado/tiendaPujas';
+import { useStoreBids } from '../../../pujas/estado/storeBids';
 import { FormularioPuja } from '../../../pujas/componentes/FormularioPuja';
 import { buscarPorId, coincideConBusqueda, mismoId } from '../../utilidades/ayudas';
 import {
@@ -17,9 +17,9 @@ import { FilaPujaPanel } from './FilaPujaPanel';
 export function TabPujasPanel({ usuarioActual, subastas, pujas, textoBusqueda }) {
   const navegar = useNavigate();
 
-  // Acciones asíncronas de la tienda de Zustand `tiendaPujas.js`
-  const crearPuja = usarTiendaPujas((estado) => estado.crearPuja);
-  const actualizarPuja = usarTiendaPujas((estado) => estado.actualizarPuja);
+  // Acciones asíncronas de la tienda de Zustand `storeBids.js`
+  const crearPuja = useStoreBids((estado) => estado.crearPuja);
+  const actualizarPuja = useStoreBids((estado) => estado.actualizarPuja);
 
   // Estados locales para filtrado y edición
   const [filtroSubasta, setFiltroSubasta] = useState('todas');

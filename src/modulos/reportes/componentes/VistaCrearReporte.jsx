@@ -1,8 +1,8 @@
 import React, { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { usarTiendaReportes } from '../estado/tiendaReportes';
-import { usarTiendaSubastas } from '../../subastas/estado/tiendaSubastas';
-import { usarTiendaAutenticacion } from '../../autenticacion/estado/tiendaAutenticacion';
+import { useStoreReports } from '../estado/storeReports';
+import { useStoreAuctions } from '../../subastas/estado/storeAuctions';
+import { useStoreAuthentication } from '../../autenticacion/estado/storeAuthentication';
 import { mismoId } from '../../nucleo/utilidades/ayudas';
 import { FormularioReporte } from './FormularioReporte';
 import { PaginaFormulario } from '../../nucleo/diseno/componentesBloques';
@@ -15,12 +15,12 @@ export function VistaCrearReporte() {
   const idUsuarioReportadoInicial =
     parametrosUrl.get('reportado') || parametrosUrl.get('reportedUserId') || '';
 
-  const crearReporte = usarTiendaReportes((estado) => estado.crearReporte);
-  const subastas = usarTiendaSubastas((estado) => estado.subastas);
-  const obtenerSubastas = usarTiendaSubastas((estado) => estado.obtenerSubastas);
-  const usuarios = usarTiendaAutenticacion((estado) => estado.usuarios);
-  const obtenerUsuarios = usarTiendaAutenticacion((estado) => estado.obtenerUsuarios);
-  const usuarioActual = usarTiendaAutenticacion((estado) => estado.usuarioActual);
+  const crearReporte = useStoreReports((estado) => estado.crearReporte);
+  const subastas = useStoreAuctions((estado) => estado.subastas);
+  const obtenerSubastas = useStoreAuctions((estado) => estado.obtenerSubastas);
+  const usuarios = useStoreAuthentication((estado) => estado.usuarios);
+  const obtenerUsuarios = useStoreAuthentication((estado) => estado.obtenerUsuarios);
+  const usuarioActual = useStoreAuthentication((estado) => estado.usuarioActual);
 
   useEffect(() => {
     obtenerSubastas();

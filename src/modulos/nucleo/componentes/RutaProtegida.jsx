@@ -1,12 +1,12 @@
 import React from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { ShieldAlert } from 'lucide-react';
-import { usarTiendaAutenticacion } from '../../autenticacion/estado/tiendaAutenticacion';
+import { useStoreAuthentication } from '../../autenticacion/estado/storeAuthentication';
 import { Button, Card } from '../diseno/ui';
 
 export function RutaProtegida({ children, rolesPermitidos = [] }) {
   const navegar = useNavigate();
-  const usuarioActual = usarTiendaAutenticacion((estado) => estado.usuarioActual);
+  const usuarioActual = useStoreAuthentication((estado) => estado.usuarioActual);
   const ubicacion = useLocation();
 
   // 1. Si no hay sesión activa, redirigimos a login guardando la ruta de origen

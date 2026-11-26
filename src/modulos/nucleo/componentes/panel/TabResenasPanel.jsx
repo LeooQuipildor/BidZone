@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Plus } from 'lucide-react';
-import { usarTiendaResenas } from '../../../resenas/estado/tiendaResenas';
+import { useStoreReviews } from '../../../resenas/estado/storeReviews';
 import { FormularioResena } from '../../../resenas/componentes/FormularioResena';
 import { buscarPorId, coincideConBusqueda, mismoId } from '../../utilidades/ayudas';
 import { obtenerSubastasPendientesResena } from '../../../resenas/utilidades/ayudasResena';
@@ -28,10 +28,10 @@ export function TabResenasPanel({
   textoBusqueda,
   datosIniciales,
 }) {
-  // Acciones asíncronas del store de Zustand `tiendaResenas.js`
-  const crearResena = usarTiendaResenas((estado) => estado.crearResena);
-  const actualizarResena = usarTiendaResenas((estado) => estado.actualizarResena);
-  const eliminarResena = usarTiendaResenas((estado) => estado.eliminarResena);
+  // Acciones asíncronas del store de Zustand `storeReviews.js`
+  const crearResena = useStoreReviews((estado) => estado.crearResena);
+  const actualizarResena = useStoreReviews((estado) => estado.actualizarResena);
+  const eliminarResena = useStoreReviews((estado) => estado.eliminarResena);
 
   // Estados locales para filtrado, modales y avisos
   const [filtroDireccion, setFiltroDireccion] = useState('todas');

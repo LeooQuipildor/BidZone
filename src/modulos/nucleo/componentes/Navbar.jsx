@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { Bell, LayoutDashboard, LogOut, Plus, Search, User, X } from 'lucide-react';
-import { usarTiendaSubastas } from '../../subastas/estado/tiendaSubastas';
+import { useStoreAuctions } from '../../subastas/estado/storeAuctions';
 
 // Enlaces de navegación pública del lado izquierdo
 const ENLACES_IZQUIERDA = [
@@ -50,8 +50,8 @@ export function Navbar({ esInicio, usuarioActual, cantidadSinLeer, alCerrarSesio
   const navegar = useNavigate();
 
   // Conexión con la tienda de subastas para compartir el término de búsqueda
-  const textoBusqueda = usarTiendaSubastas((estado) => estado.filtros.busqueda);
-  const actualizarFiltros = usarTiendaSubastas((estado) => estado.actualizarFiltros);
+  const textoBusqueda = useStoreAuctions((estado) => estado.filtros.busqueda);
+  const actualizarFiltros = useStoreAuctions((estado) => estado.actualizarFiltros);
 
   const clasePosicionBarra = esInicio ? 'fixed top-0 left-0 right-0' : 'sticky top-0';
   const enlacesMovil = usuarioActual

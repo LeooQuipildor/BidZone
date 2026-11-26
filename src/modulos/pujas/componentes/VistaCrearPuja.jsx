@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { usarTiendaPujas } from '../estado/tiendaPujas';
-import { usarTiendaSubastas } from '../../subastas/estado/tiendaSubastas';
+import { useStoreBids } from '../estado/storeBids';
+import { useStoreAuctions } from '../../subastas/estado/storeAuctions';
 import { FormularioPuja } from './FormularioPuja';
 import { PaginaFormulario } from '../../nucleo/diseno/componentesBloques';
 
@@ -9,10 +9,10 @@ export function VistaCrearPuja() {
   const navegar = useNavigate();
 
   // Acciones y estados de tiendas
-  const crearPuja = usarTiendaPujas((estado) => estado.crearPuja);
-  const subastas = usarTiendaSubastas((estado) => estado.subastas);
-  const cargandoSubastas = usarTiendaSubastas((estado) => estado.cargando);
-  const obtenerSubastas = usarTiendaSubastas((estado) => estado.obtenerSubastas);
+  const crearPuja = useStoreBids((estado) => estado.crearPuja);
+  const subastas = useStoreAuctions((estado) => estado.subastas);
+  const cargandoSubastas = useStoreAuctions((estado) => estado.cargando);
+  const obtenerSubastas = useStoreAuctions((estado) => estado.obtenerSubastas);
 
   // Asegura que las subastas estén cargadas en la tienda
   useEffect(() => {

@@ -7,7 +7,7 @@ import {
 import { eliminarPorId, mismoId } from '../../nucleo/utilidades/ayudas';
 
 // Tienda global de notificaciones del usuario (conecta con /api/notifications)
-export const usarTiendaNotificaciones = create((set) => ({
+export const useStoreNotifications = create((set) => ({
   // ESTADOS REACTIVOS
   notificaciones: [], // Array de notificaciones recibidas
   cargando: false,    // Bandera de llamada HTTP
@@ -102,7 +102,7 @@ export const usarTiendaNotificaciones = create((set) => ({
 
 // Al cerrar sesión, limpiamos la lista de notificaciones en memoria
 registrarLimpiezaSesion(() => {
-  usarTiendaNotificaciones.setState({
+  useStoreNotifications.setState({
     notificaciones: [],
     error: null,
     cargando: false,

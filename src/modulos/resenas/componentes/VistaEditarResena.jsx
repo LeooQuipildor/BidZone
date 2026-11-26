@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { usarTiendaResenas } from '../estado/tiendaResenas';
-import { usarTiendaAutenticacion } from '../../autenticacion/estado/tiendaAutenticacion';
+import { useStoreReviews } from '../estado/storeReviews';
+import { useStoreAuthentication } from '../../autenticacion/estado/storeAuthentication';
 import { buscarPorId, mismoId } from '../../nucleo/utilidades/ayudas';
 import { FormularioResena } from './FormularioResena';
 import { PaginaFormulario } from '../../nucleo/diseno/componentesBloques';
@@ -10,11 +10,11 @@ export function VistaEditarResena() {
   const { id } = useParams();
   const navegar = useNavigate();
 
-  const resenas = usarTiendaResenas((estado) => estado.resenas);
-  const cargandoResenas = usarTiendaResenas((estado) => estado.cargando);
-  const obtenerResenas = usarTiendaResenas((estado) => estado.obtenerResenas);
-  const actualizarResena = usarTiendaResenas((estado) => estado.actualizarResena);
-  const usuarioActual = usarTiendaAutenticacion((estado) => estado.usuarioActual);
+  const resenas = useStoreReviews((estado) => estado.resenas);
+  const cargandoResenas = useStoreReviews((estado) => estado.cargando);
+  const obtenerResenas = useStoreReviews((estado) => estado.obtenerResenas);
+  const actualizarResena = useStoreReviews((estado) => estado.actualizarResena);
+  const usuarioActual = useStoreAuthentication((estado) => estado.usuarioActual);
 
   useEffect(() => {
     obtenerResenas();

@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PlusCircle } from 'lucide-react';
-import { usarTiendaSubastas } from '../estado/tiendaSubastas';
-import { usarTiendaAutenticacion } from '../../autenticacion/estado/tiendaAutenticacion';
+import { useStoreAuctions } from '../estado/storeAuctions';
+import { useStoreAuthentication } from '../../autenticacion/estado/storeAuthentication';
 import { filtrarYOrdenarSubastas } from '../utilidades/filtrosSubasta';
 import { TarjetaSubasta } from './TarjetaSubasta';
 import { PaginacionCatalogo } from './PaginacionCatalogo';
@@ -30,15 +30,15 @@ export function VistaListaSubastas() {
   // Reloj de cuenta regresiva sincronizado cada segundo
   const ahoraMs = useRelojSegundo();
 
-  const subastas = usarTiendaSubastas((estado) => estado.subastas);
-  const errorSubastas = usarTiendaSubastas((estado) => estado.error);
-  const filtros = usarTiendaSubastas((estado) => estado.filtros);
-  const paginaCatalogo = usarTiendaSubastas((estado) => estado.paginaCatalogo);
-  const actualizarFiltros = usarTiendaSubastas((estado) => estado.actualizarFiltros);
-  const cambiarPaginaCatalogo = usarTiendaSubastas((estado) => estado.cambiarPaginaCatalogo);
-  const obtenerSubastas = usarTiendaSubastas((estado) => estado.obtenerSubastas);
-  const eliminarSubasta = usarTiendaSubastas((estado) => estado.eliminarSubasta);
-  const usuarioActual = usarTiendaAutenticacion((estado) => estado.usuarioActual);
+  const subastas = useStoreAuctions((estado) => estado.subastas);
+  const errorSubastas = useStoreAuctions((estado) => estado.error);
+  const filtros = useStoreAuctions((estado) => estado.filtros);
+  const paginaCatalogo = useStoreAuctions((estado) => estado.paginaCatalogo);
+  const actualizarFiltros = useStoreAuctions((estado) => estado.actualizarFiltros);
+  const cambiarPaginaCatalogo = useStoreAuctions((estado) => estado.cambiarPaginaCatalogo);
+  const obtenerSubastas = useStoreAuctions((estado) => estado.obtenerSubastas);
+  const eliminarSubasta = useStoreAuctions((estado) => estado.eliminarSubasta);
+  const usuarioActual = useStoreAuthentication((estado) => estado.usuarioActual);
 
   // Estados locales para mensajes de éxito y subasta seleccionada para revisión disciplinaria
   const [aviso, setAviso] = useState(null);

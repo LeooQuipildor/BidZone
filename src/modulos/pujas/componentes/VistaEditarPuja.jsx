@@ -1,8 +1,8 @@
 import React, { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { usarTiendaPujas } from '../estado/tiendaPujas';
-import { usarTiendaSubastas } from '../../subastas/estado/tiendaSubastas';
-import { usarTiendaAutenticacion } from '../../autenticacion/estado/tiendaAutenticacion';
+import { useStoreBids } from '../estado/storeBids';
+import { useStoreAuctions } from '../../subastas/estado/storeAuctions';
+import { useStoreAuthentication } from '../../autenticacion/estado/storeAuthentication';
 import { FormularioPuja } from './FormularioPuja';
 import { buscarPorId, mismoId } from '../../nucleo/utilidades/ayudas';
 import { PaginaFormulario } from '../../nucleo/diseno/componentesBloques';
@@ -11,13 +11,13 @@ export function VistaEditarPuja() {
   const { id } = useParams();
   const navegar = useNavigate();
 
-  const pujas = usarTiendaPujas((estado) => estado.pujas);
-  const cargandoPujas = usarTiendaPujas((estado) => estado.cargando);
-  const obtenerPujas = usarTiendaPujas((estado) => estado.obtenerPujas);
-  const actualizarPuja = usarTiendaPujas((estado) => estado.actualizarPuja);
-  const subastas = usarTiendaSubastas((estado) => estado.subastas);
-  const obtenerSubastas = usarTiendaSubastas((estado) => estado.obtenerSubastas);
-  const usuarioActual = usarTiendaAutenticacion((estado) => estado.usuarioActual);
+  const pujas = useStoreBids((estado) => estado.pujas);
+  const cargandoPujas = useStoreBids((estado) => estado.cargando);
+  const obtenerPujas = useStoreBids((estado) => estado.obtenerPujas);
+  const actualizarPuja = useStoreBids((estado) => estado.actualizarPuja);
+  const subastas = useStoreAuctions((estado) => estado.subastas);
+  const obtenerSubastas = useStoreAuctions((estado) => estado.obtenerSubastas);
+  const usuarioActual = useStoreAuthentication((estado) => estado.usuarioActual);
 
   useEffect(() => {
     obtenerPujas();

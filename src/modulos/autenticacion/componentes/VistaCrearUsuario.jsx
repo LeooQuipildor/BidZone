@@ -1,13 +1,13 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { usarTiendaAutenticacion } from '../estado/tiendaAutenticacion';
+import { useStoreAuthentication } from '../estado/storeAuthentication';
 import { FormularioUsuario } from './FormularioUsuario';
 import { PaginaFormulario } from '../../nucleo/diseno/componentesBloques';
 
 export function VistaCrearUsuario() {
   const navegar = useNavigate();
 
-  const crearUsuario = usarTiendaAutenticacion((estado) => estado.crearUsuario);
+  const crearUsuario = useStoreAuthentication((estado) => estado.crearUsuario);
 
   return (
     <PaginaFormulario

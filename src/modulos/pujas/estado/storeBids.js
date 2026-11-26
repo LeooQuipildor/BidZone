@@ -5,20 +5,20 @@ import {
   registrarLimpiezaSesion,
 } from '../../nucleo/servicios/clienteApi';
 import { mismoId, reemplazarPorId } from '../../nucleo/utilidades/ayudas';
-import { usarTiendaSubastas } from '../../subastas/estado/tiendaSubastas';
+import { useStoreAuctions } from '../../subastas/estado/storeAuctions';
 
 async function refrescarSubastaDespuesDePuja(idSubasta) {
-  const tiendaSubastas = usarTiendaSubastas.getState();
-  await tiendaSubastas.obtenerSubastas();
+  const storeAuctions = useStoreAuctions.getState();
+  await storeAuctions.obtenerSubastas();
 
-  const detalle = tiendaSubastas.detalleSubastaActual;
+  const detalle = storeAuctions.detalleSubastaActual;
   if (detalle && mismoId(detalle.id, idSubasta)) {
-    await tiendaSubastas.obtenerSubastaPorId(idSubasta);
+    await storeAuctions.obtenerSubastaPorId(idSubasta);
   }
 }
 
 // Tienda global de pujas u ofertas (conecta con /api/bids)
-export const usarTiendaPujas = create((set) => ({
+export const useStoreBids = create((set) => ({
   // ESTADOS REACTIVOS
   pujas: [],        // Listado de todas las ofertas registradas
   cargando: false,  // Indicador de llamada en curso
@@ -89,5 +89,5 @@ export const usarTiendaPujas = create((set) => ({
 
 // Al cerrar sesión, limpiamos el historial de pujas en memoria
 registrarLimpiezaSesion(() => {
-  usarTiendaPujas.setState({ pujas: [], error: null, cargando: false });
+  useStoreBids.setState({ pujas: [], error: null, cargando: false });
 });

@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { usarTiendaAutenticacion } from '../estado/tiendaAutenticacion';
+import { useStoreAuthentication } from '../estado/storeAuthentication';
 import { Button, Card, Input } from '../../nucleo/diseno/ui';
 import { Alert } from '../../nucleo/diseno/uiFeedback';
 
 export function VistaRegistro() {
   const navegar = useNavigate();
 
-  const registrarUsuario = usarTiendaAutenticacion((estado) => estado.registrarUsuario);
-  const cargando = usarTiendaAutenticacion((estado) => estado.cargando);
+  const registrarUsuario = useStoreAuthentication((estado) => estado.registrarUsuario);
+  const cargando = useStoreAuthentication((estado) => estado.cargando);
 
   const [datosFormulario, setDatosFormulario] = useState({
     nombre: '',
