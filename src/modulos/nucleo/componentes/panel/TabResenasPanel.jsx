@@ -77,7 +77,7 @@ export function TabResenasPanel({
       tipo: 'exito',
       texto: resenaEditando
         ? `Calificación #${resenaEditando.id} actualizada y reputación recalculada.`
-        : 'Calificación publicada y reputación actualizada (RN07).',
+        : 'Calificación publicada y reputación actualizada.',
     });
     cerrarFormulario();
   }
@@ -120,7 +120,7 @@ export function TabResenasPanel({
       {/* Modal flotante del formulario de calificación */}
       {formularioAbierto && (
         <ContenedorFormularioPanel
-          titulo={resenaEditando ? `Editar Calificación #${resenaEditando.id}` : 'Emitir Calificación (RN07)'}
+          titulo={resenaEditando ? `Editar Calificación #${resenaEditando.id}` : 'Emitir Calificación'}
           alCerrar={cerrarFormulario}
         >
           <FormularioResena

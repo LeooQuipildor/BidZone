@@ -147,13 +147,13 @@ export function PanelPujasSubasta({
         {/* Mensaje de cierre definitivo si la subasta terminó (RN03) */}
         {!esActiva && (
           <div className="bg-[#0D0D0D] text-[#EAFFD0] p-4 rounded-2xl text-center text-xs font-medium">
-            Esta subasta se encuentra cerrada y ya no admite nuevas pujas (RN03).
+            Esta subasta se encuentra cerrada y ya no admite nuevas pujas.
           </div>
         )}
 
         {/* Bloqueo por auto-puja para el vendedor del artículo (RN02) */}
         {esActiva && esVendedor && (
-          <Alert type="info" title="Eres el dueño de este artículo (RN02)">
+          <Alert type="info" title="Eres el dueño de este artículo">
             Como vendedor no puedes realizar auto-pujas sobre tu propia publicación. Al cumplirse la fecha de cierre se adjudicará automáticamente al mejor postor.
           </Alert>
         )}

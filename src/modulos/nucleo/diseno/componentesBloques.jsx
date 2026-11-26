@@ -112,7 +112,7 @@ export function DatosContactoPersona({
       </p>
       <p className={`flex items-center gap-1.5 truncate ${colorDato}`}>
         <Mail className={`w-3.5 h-3.5 shrink-0 ${colorIcono}`} />
-        {persona?.correo || 'Privado (RN05)'}
+        {persona?.correo || 'Privado'}
       </p>
       <p className={`flex items-center gap-1.5 ${colorDato}`}>
         <MapPin className={`w-3.5 h-3.5 shrink-0 ${colorIcono}`} />

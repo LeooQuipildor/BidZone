@@ -62,7 +62,7 @@ export function construirMenuPanel({
     { id: 'pujas', etiqueta: 'Mis Pujas', icono: TrendingUp, cantidad: misPujas.length },
     {
       id: 'reportes',
-      etiqueta: esAdmin ? 'Tickets RN06' : 'Mis Reportes',
+      etiqueta: esAdmin ? 'Tickets y Mediación' : 'Mis Reportes',
       icono: AlertOctagon,
       insignia: reportesAbiertos || null,
     },

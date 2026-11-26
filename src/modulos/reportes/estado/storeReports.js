@@ -8,7 +8,7 @@ import { eliminarPorId, reemplazarPorId } from '../../nucleo/utilidades/ayudas';
 import { useStoreAuthentication } from '../../autenticacion/estado/storeAuthentication';
 import { useStoreNotifications } from '../../notificaciones/estado/storeNotifications';
 
-// Tienda global de reportes e infracciones RN06 (conecta con /api/reports)
+// Store global de reportes e infracciones (conecta con /api/reportes)
 export const useStoreReports = create((set) => ({
   // ESTADOS REACTIVOS
   reportes: [],     // Listado de tickets (abiertos, en revisión, resueltos)

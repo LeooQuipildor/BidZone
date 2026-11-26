@@ -43,8 +43,8 @@ function obtenerTarjetasResumen({ esAdmin, usuarioActual, totales, alElegirSecci
       {
         titulo: 'Tickets Abiertos',
         valor: totales.reportesAbiertos,
-        subtitulo: `${totales.totalReportes} casos RN06 registrados`,
-        accionSuperior: <BotonFlecha titulo="Ir a Tickets RN06" alHacerClic={() => alElegirSeccion('reportes')} />,
+        subtitulo: `${totales.totalReportes} casos registrados`,
+        accionSuperior: <BotonFlecha titulo="Ir a Tickets" alHacerClic={() => alElegirSeccion('reportes')} />,
       },
       {
         titulo: 'Usuarios',
@@ -70,7 +70,7 @@ function obtenerTarjetasResumen({ esAdmin, usuarioActual, totales, alElegirSecci
       accionSuperior: <BotonFlecha titulo="Ver mis pujas" alHacerClic={() => alElegirSeccion('pujas')} />,
     },
     {
-      titulo: 'Cierres RN05',
+      titulo: 'Cierres adjudicados',
       valor: totales.misCierres,
       subtitulo: 'Operaciones finalizadas',
       accionSuperior: <BotonFlecha titulo="Ver mis reseñas" alHacerClic={() => alElegirSeccion('resenas')} />,
@@ -159,7 +159,7 @@ export function TabResumenPanel({
       {/* Cabecera de la sección con botón directo para crear una subasta */}
       <CabeceraSeccionPanel
         titulo={esAdmin ? 'Panel de Administración' : 'Resumen de mi cuenta'}
-        subtitulo={esAdmin ? 'Supervisa subastas globales, tickets RN06 y cuentas.' : 'Controla tus subastas publicadas, pujas y cierres adjudicados.'}
+        subtitulo={esAdmin ? 'Supervisa subastas globales, tickets y cuentas.' : 'Controla tus subastas publicadas, pujas y cierres adjudicados.'}
         botonPrincipal={
           <BotonPanel icono={<Plus className="w-3.5 h-3.5" />} alHacerClic={() => alElegirSeccion('subastas', { abrirFormulario: true })}>
             Publicar Subasta

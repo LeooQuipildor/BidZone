@@ -31,7 +31,7 @@ const MOTIVOS_CORRECCION = [
 ];
 
 function FormularioSolicitudCorreccion({ subasta, alExito, alCancelar }) {
-  // Suscripción a tiendas de autenticación y notificaciones
+  // Suscripción a stores de autenticación y notificaciones
   const usuarios = useStoreAuthentication((estado) => estado.usuarios);
   const enviarNotificacion = useStoreNotifications((estado) => estado.enviarNotificacion);
 

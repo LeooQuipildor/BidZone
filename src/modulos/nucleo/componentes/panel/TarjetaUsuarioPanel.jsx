@@ -28,7 +28,7 @@ export function TarjetaUsuarioPanel({
   // Determinación de visibilidad del teléfono según la regla de contacto RN05
   let telefonoVisible = 'Sin teléfono';
   if (usuario.telefono) telefonoVisible = usuario.telefono;
-  else if (usuario.contactoBloqueado) telefonoVisible = 'Privado (RN05)';
+  else if (usuario.contactoBloqueado) telefonoVisible = 'Privado';
 
   // Selección rotativa de color para el avatar usando el operador módulo (%)
   const claseAvatar = COLORES_AVATAR[indiceColor % COLORES_AVATAR.length];
@@ -48,7 +48,7 @@ export function TarjetaUsuarioPanel({
             <div className="min-w-0">
               <h3 className="text-sm font-bold text-[#0D0D0D] truncate">{usuario.nombre}</h3>
               <p className="text-[11px] text-[#0D0D0D]/55 truncate">
-                {usuario.correo || 'Privado hasta el cierre (RN05)'}
+                {usuario.correo || 'Privado hasta el cierre'}
               </p>
             </div>
           </div>

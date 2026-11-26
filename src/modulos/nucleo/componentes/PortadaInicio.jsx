@@ -151,7 +151,7 @@ export function PortadaInicio({ categorias, alBuscar }) {
             titulo="Modalidad de cierre"
           >
             <p className="text-xs font-bold text-[#0D0D0D] truncate">
-              Trato directo (RN05)
+              Trato directo
             </p>
           </CajaFiltroPortada>
 

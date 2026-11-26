@@ -13,10 +13,10 @@ export function CasillaCompromisoPuja({ aceptado, alCambiar, textoDetallado = fa
       <span>
         {textoDetallado ? (
           <>
-            <strong>Compromiso vinculante (RN04 / RN06):</strong> Si resulto ganador, me comprometo a coordinar el pago con el dueño. El incumplimiento conlleva sanción.
+            <strong>Compromiso vinculante:</strong> Si resulto ganador, me comprometo a coordinar el pago con el dueño. El incumplimiento conlleva sanción.
           </>
         ) : (
-          'Acepto el compromiso vinculante e irrevocable de compra (RN04) para concretar el pago si resulto ganador.'
+          'Acepto el compromiso vinculante e irrevocable de compra para concretar el pago si resulto ganador.'
         )}
       </span>
     </label>
@@ -32,7 +32,7 @@ export function ResumenOfertaSubasta({ subasta, montoSugerido }) {
         Precio actual: <strong className="text-[#224F10]">{formatearMoneda(subasta.precioActual)}</strong>
       </span>
       <span>
-        Incremento RN01: <strong>+{formatearMoneda(subasta.incrementoMinimo)}</strong>
+        Incremento mínimo: <strong>+{formatearMoneda(subasta.incrementoMinimo)}</strong>
       </span>
       <span>
         Mínimo sugerido: <strong className="text-[#224F10]">{formatearMoneda(montoSugerido)}</strong>

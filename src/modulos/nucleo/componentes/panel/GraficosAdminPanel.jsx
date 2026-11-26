@@ -72,8 +72,8 @@ export function GraficosAdminPanel({ subastas = [], reportes = [], usuarios = []
 
   const filasUsuarios = [
     { etiqueta: 'Cuentas activas', cantidad: usuariosActivos, color: 'bg-[#224F10]' },
-    { etiqueta: 'Suspendidas (RN06)', cantidad: usuariosSuspendidos, color: 'bg-amber-500' },
-    { etiqueta: 'Cerradas (RN06)', cantidad: usuariosCerrados, color: 'bg-red-500' },
+    { etiqueta: 'Suspendidas', cantidad: usuariosSuspendidos, color: 'bg-amber-500' },
+    { etiqueta: 'Cerradas', cantidad: usuariosCerrados, color: 'bg-red-500' },
   ];
 
   return (
@@ -160,7 +160,7 @@ export function GraficosAdminPanel({ subastas = [], reportes = [], usuarios = []
         {/* 3. Gráfico de barras verticales: Tickets y Reportes RN06 */}
         <TarjetaGrafico
           icono={<ShieldAlert className="w-4 h-4" />}
-          titulo="Tickets y mediación RN06"
+          titulo="Tickets y mediación"
           subtitulo={`${reportes.length} expedientes registrados`}
         >
           <div className="grid grid-cols-3 gap-3 items-end h-32 pt-2">

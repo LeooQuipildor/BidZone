@@ -9,11 +9,11 @@ export function hayTokenSesion() {
 }
 
 // Variable que guarda la función a ejecutar cuando el servidor rechaza una petición con 401.
-// Se inicializa en null y la tienda de autenticación la registra al arrancar la app.
+// Se inicializa en null y el store de autenticación la registra al arrancar la app.
 let manejadorSinAutorizacion = null;
 
-// Lista de funciones de limpieza registradas por las tiendas (Zustand).
-// Permite que al cerrar sesión, cada tienda limpie sus datos locales (observador / suscriptor).
+// Lista de funciones de limpieza registradas por los stores (Zustand).
+// Permite que al cerrar sesión, cada store limpie sus datos locales (observador / suscriptor).
 const funcionesLimpiezaSesion = [];
 
 export function registrarManejadorSinAutorizacion(manejador) {
@@ -31,7 +31,7 @@ export function ejecutarLimpiezaSesion() {
     try {
       limpiarEstado();
     } catch {
-      // Si falla una limpieza puntual, continuamos limpiando las demás tiendas
+      // Si falla una limpieza puntual, continuamos limpiando los demás stores
       // para evitar que datos privados queden retenidos en memoria.
     }
   }
@@ -100,11 +100,12 @@ export async function peticionHttp(ruta, opciones = {}) {
       }
     }
 
-    // Lanzamos el error con el mensaje devuelto por el backend o el código HTTP
-    throw new Error(datos.mensaje || datos.message || `Error HTTP ${respuesta.status}`);
+    // Lanzamos el error con el mensaje devuelto por el backend
+    const mensajeBruto = datos.mensaje || datos.message || `Error HTTP ${respuesta.status}`;
+    throw new Error(String(mensajeBruto).replace(/^RN0?\d+\s*:\s*/i, ''));
   }
 
-  // 7. Retornamos los datos limpios para que la tienda los almacene
+  // 7. Retornamos los datos limpios para que el store los almacene
   return datos;
 }
 

@@ -26,7 +26,7 @@ export function PanelContactoSubasta({
         <div className="flex items-center gap-2">
           <ShieldCheck className="w-6 h-6 text-[#B0E454]" />
           <h2 className="font-serif-display text-2xl sm:text-3xl text-[#EAFFD0]">
-            Coordinación directa liberada (RN05 / RN06)
+            Coordinación directa liberada
           </h2>
         </div>
         <Badge variant="lime">{ganador ? 'Adjudicada' : 'Cerrada'}</Badge>
@@ -98,7 +98,7 @@ export function PanelContactoSubasta({
           <Lock className="w-5 h-5 text-[#B0E454] shrink-0" />
           <div>
             Subasta adjudicada a <strong className="text-[#B0E454]">{ganador.nombre}</strong> por{' '}
-            <strong className="text-[#B0E454]">{formatearMoneda(subasta.precioActual)}</strong>. Por privacidad (RN05), los teléfonos y correos solo son visibles para el vendedor y el ganador.
+            <strong className="text-[#B0E454]">{formatearMoneda(subasta.precioActual)}</strong>. Por privacidad, los teléfonos y correos solo son visibles para el vendedor y el ganador.
           </div>
         </div>
       )}

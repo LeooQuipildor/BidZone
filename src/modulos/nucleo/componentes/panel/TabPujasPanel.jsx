@@ -17,7 +17,7 @@ import { FilaPujaPanel } from './FilaPujaPanel';
 export function TabPujasPanel({ usuarioActual, subastas, pujas, textoBusqueda }) {
   const navegar = useNavigate();
 
-  // Acciones asíncronas de la tienda de Zustand `storeBids.js`
+  // Acciones asíncronas del store de Zustand `storeBids.js`
   const crearPuja = useStoreBids((estado) => estado.crearPuja);
   const actualizarPuja = useStoreBids((estado) => estado.actualizarPuja);
 
@@ -70,7 +70,7 @@ export function TabPujasPanel({ usuarioActual, subastas, pujas, textoBusqueda })
       {/* Cabecera con recordatorio de compromiso legal RN04 y botón de exploración */}
       <CabeceraSeccionPanel
         titulo="Mis Pujas"
-        subtitulo={`Historial de tus ${misPujas.length} ofertas vinculantes (RN04). Para ofertar ve a Explorar.`}
+        subtitulo={`Historial de tus ${misPujas.length} ofertas vinculantes. Para ofertar ve a Explorar.`}
         botonPrincipal={
           <BotonPanel
             variante="secundario"

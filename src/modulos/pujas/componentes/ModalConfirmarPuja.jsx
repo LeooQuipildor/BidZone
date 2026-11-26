@@ -35,7 +35,7 @@ export function ModalConfirmarPuja({
             Confirmar oferta
           </p>
           <p className="text-[#0D0D0D]/80">
-            ¿Estás seguro de que deseas enviar esta puja? Por favor revisa el monto antes de confirmar, ya que las ofertas son vinculantes (RN04).
+            ¿Estás seguro de que deseas enviar esta puja? Por favor revisa el monto antes de confirmar, ya que las ofertas son vinculantes.
           </p>
         </div>
 

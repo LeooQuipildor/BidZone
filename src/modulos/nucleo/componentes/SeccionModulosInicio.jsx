@@ -10,7 +10,7 @@ const TARJETAS_MOSAICO = [
     imagen: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=700&q=80',
   },
   {
-    titulo: 'Denuncias (RN06)',
+    titulo: 'Denuncias',
     subtitulo: 'Infracciones y cierre de cuentas',
     ruta: '/reportes',
     imagen: 'https://images.unsplash.com/photo-1450101499163-c8848c66ca85?auto=format&fit=crop&w=700&q=80',
@@ -63,7 +63,7 @@ export function SeccionModulosInicio() {
 
           <div className="relative z-10 space-y-4">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EAFFD0]/20 backdrop-blur-md border border-[#EAFFD0]/30 text-[#EAFFD0] text-[11px] font-medium">
-              Liberación de Datos (RN05)
+              Liberación de Datos
             </span>
             <div className="space-y-1.5">
               <h3 className="text-2xl sm:text-3xl font-semibold text-[#EAFFD0]">

@@ -20,7 +20,7 @@ const OPCIONES_DECISION = [
     detalle: 'Suspende la cuenta reportada y le envía aviso.',
     estado: 'resuelto_sancion',
     accionCuenta: 'suspender',
-    sugerencia: 'Suspensión temporal de cuenta por incumplimiento RN06.',
+    sugerencia: 'Suspensión temporal de cuenta por incumplimiento.',
   },
   {
     clave: 'cerrar',
@@ -28,7 +28,7 @@ const OPCIONES_DECISION = [
     detalle: 'Bloqueo definitivo de la cuenta infractora.',
     estado: 'resuelto_sancion',
     accionCuenta: 'cerrar',
-    sugerencia: 'Cierre definitivo de cuenta por falta grave RN06.',
+    sugerencia: 'Cierre definitivo de cuenta por falta grave.',
   },
   {
     clave: 'rehabilitar',

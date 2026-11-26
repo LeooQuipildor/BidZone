@@ -120,7 +120,7 @@ export function FormularioPuja({
   // Texto explicativo del monto según el modo
   let textoAyudaMonto;
   if (estaEditando) {
-    textoAyudaMonto = 'RN04: El monto ofertado es vinculante e irrevocable.';
+    textoAyudaMonto = 'El monto ofertado es vinculante e irrevocable.';
   } else if (maximoPermitido) {
     textoAyudaMonto = `Máximo permitido (10x precio inicial): ${formatearMoneda(maximoPermitido)}`;
   }
@@ -130,7 +130,7 @@ export function FormularioPuja({
       <form onSubmit={manejarEnvio} className="space-y-4">
         {/* Alerta explicativa de inmutabilidad RN04 en modo edición */}
         {estaEditando && (
-          <Alert type="info" title="Regla de Negocio RN04 (Irrevocabilidad del Monto)">
+          <Alert type="info" title="Irrevocabilidad del Monto">
             Puedes actualizar tu nota de coordinación, pero el importe ofertado no se modifica.
           </Alert>
         )}

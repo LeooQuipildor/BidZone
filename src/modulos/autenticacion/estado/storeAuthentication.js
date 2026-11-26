@@ -43,7 +43,7 @@ function construirCuerpoUsuario(datos) {
   return cuerpo;
 }
 
-// Tienda global de autenticación y usuarios (conecta con /api/autenticacion y /api/usuarios)
+// Store global de autenticación y usuarios (conecta con /api/autenticacion y /api/usuarios)
 export const useStoreAuthentication = create((set, get) => ({
   // ESTADOS REACTIVOS
   usuarioActual: obtenerUsuarioGuardado(), // Objeto del usuario conectado o null
@@ -62,8 +62,11 @@ export const useStoreAuthentication = create((set, get) => ({
       set({ usuarioActual: respuesta.usuario, error: null });
       return respuesta.usuario;
     } catch (error) {
-      // Si la cuenta fue sancionada o cerrada por infracción (RN06), cerramos sesión forzosa
-      if (String(error.message || '').includes('RN06')) get().cerrarSesion();
+      // Si la cuenta fue sancionada o cerrada por infracción, cerramos sesión forzosa
+      const textoError = String(error.message || '').toLowerCase();
+      if (textoError.includes('suspendida') || textoError.includes('cerrada') || textoError.includes('rn06')) {
+        get().cerrarSesion();
+      }
       else set({ error: error.message });
       return null;
     }

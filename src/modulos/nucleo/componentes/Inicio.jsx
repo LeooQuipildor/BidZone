@@ -11,23 +11,23 @@ const CATEGORIAS_INICIO = ['Todas', 'Tecnología', 'Gaming', 'Hogar y Oficina', 
 const TARJETAS_SEGURIDAD = [
   {
     titulo: 'Ofertas en vivo auditables',
-    texto: 'Cada puja supera el monto actual respetando el incremento mínimo configurado por el dueño (RN01).',
+    texto: 'Cada puja supera el monto actual respetando el incremento mínimo configurado por el dueño.',
     icono: Gavel,
     destacada: true, // Se resalta con un fondo verde oscuro principal
   },
   {
     titulo: 'Liberación de datos al ganar',
-    texto: 'Cuando cierra la subasta se desbloquean teléfono, WhatsApp y correo del vendedor y del ganador (RN05).',
+    texto: 'Cuando cierra la subasta se desbloquean teléfono, WhatsApp y correo del vendedor y del ganador.',
     icono: PhoneCall,
   },
   {
     titulo: 'Infracción o cierre de cuenta',
-    texto: 'Si alguna parte incumple el pago o entrega, se reporta en la página y se aplica sanción o cierre (RN06).',
+    texto: 'Si alguna parte incumple el pago o entrega, se reporta en la página y se aplica sanción o cierre.',
     icono: AlertTriangle,
   },
   {
     titulo: 'Reputación de 1 a 5 estrellas',
-    texto: 'Calificaciones mutuas verificadas tras cada operación para construir confianza en la comunidad (RN07).',
+    texto: 'Calificaciones mutuas verificadas tras cada operación para construir confianza en la comunidad.',
     icono: Star,
   },
 ];

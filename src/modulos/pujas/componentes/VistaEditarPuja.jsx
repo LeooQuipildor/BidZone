@@ -35,7 +35,7 @@ export function VistaEditarPuja() {
     errorMensaje = 'El registro de oferta solicitado no existe.';
   } else if (!mismoId(usuarioActual?.id, puja.postorId)) {
     errorTitulo = 'Sin permisos de edición';
-    errorMensaje = 'RN04: Solo el postor titular puede editar su nota de coordinación; los montos ofertados no se editan.';
+    errorMensaje = 'Solo el postor titular puede editar su nota de coordinación; los montos ofertados no se editan.';
   }
 
   // Identificación de la subasta vinculada

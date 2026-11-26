@@ -6,7 +6,7 @@ import {
 } from '../../nucleo/servicios/clienteApi';
 import { eliminarPorId, mismoId } from '../../nucleo/utilidades/ayudas';
 
-// Tienda global de notificaciones del usuario (conecta con /api/notifications)
+// Store global de notificaciones del usuario (conecta con /api/notificaciones)
 export const useStoreNotifications = create((set) => ({
   // ESTADOS REACTIVOS
   notificaciones: [], // Array de notificaciones recibidas

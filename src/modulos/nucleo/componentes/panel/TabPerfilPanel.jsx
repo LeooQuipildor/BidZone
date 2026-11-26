@@ -26,7 +26,7 @@ export function TabPerfilPanel({ usuarioActual, subastas, pujas }) {
       {/* Cabecera con recordatorio de la regla de trato directo RN05 */}
       <CabeceraSeccionPanel
         titulo="Mi Perfil"
-        subtitulo="Mantén actualizados tu teléfono y ciudad para la liberación automática de datos al cierre (RN05)."
+        subtitulo="Mantén actualizados tu teléfono y ciudad para la liberación automática de datos al cierre."
       />
 
       {/* Banner de mensajes de éxito tras guardar cambios */}
@@ -100,7 +100,7 @@ export function TabPerfilPanel({ usuarioActual, subastas, pujas }) {
             alGuardar={() =>
               setAviso({
                 tipo: 'exito',
-                texto: 'Tus datos de coordinación directa RN05 se actualizaron correctamente.',
+                texto: 'Tus datos de coordinación directa se actualizaron correctamente.',
               })
             }
           />

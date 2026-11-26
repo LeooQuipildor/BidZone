@@ -101,7 +101,7 @@ export function FichaProductoSubasta({ subasta, vendedor }) {
             </strong>
           </div>
           <div className="bg-white/80 p-3.5 rounded-2xl border border-[#224F10]/15">
-            <span className="text-[11px] text-[#0D0D0D]/55 block">Incremento Mín. (RN01)</span>
+            <span className="text-[11px] text-[#0D0D0D]/55 block">Incremento Mín.</span>
             <strong className="font-serif-display text-2xl text-[#224F10]">
               + {formatearMoneda(subasta.incrementoMinimo)}
             </strong>

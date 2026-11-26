@@ -13,7 +13,7 @@ async function refrescarReputaciones() {
   await storeAuth.verificarSesion();
 }
 
-// Tienda global de calificaciones / reseñas RN07 (conecta con /api/reviews)
+// Store global de calificaciones / reseñas (conecta con /api/resenas)
 export const useStoreReviews = create((set) => ({
   // ESTADOS REACTIVOS
   resenas: [],      // Array de reseñas (emitidas y recibidas)

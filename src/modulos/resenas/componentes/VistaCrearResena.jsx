@@ -39,7 +39,7 @@ export function VistaCrearResena() {
 
   return (
     <PaginaFormulario
-      titulo="Emitir Calificación (RN07)"
+      titulo="Emitir Calificación"
       subtitulo="Califica de 1 a 5 estrellas a tu contraparte luego de finalizar la subasta y coordinar la entrega."
       alVolver={() => navegar('/resenas')}
       cargando={cargandoSubastas && subastas.length === 0}

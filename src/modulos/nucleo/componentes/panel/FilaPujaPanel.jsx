@@ -50,7 +50,7 @@ export function FilaPujaPanel({
 
           {/* Fecha y recordatorio de compromiso legal RN04 */}
           <p className="text-[11px] text-[#0D0D0D]/50">
-            {formatearFechaHora(puja.creadoEn)} · Compromiso RN04 aceptado
+            {formatearFechaHora(puja.creadoEn)} · Compromiso aceptado
           </p>
         </div>
       </div>

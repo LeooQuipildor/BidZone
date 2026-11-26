@@ -25,7 +25,7 @@ function construirCuerpoActualizacion(cambios) {
   return cuerpo;
 }
 
-// Tienda global de subastas (conecta con /api/subastas)
+// Store global de subastas (conecta con /api/subastas)
 export const useStoreAuctions = create((set, get) => ({
   // ESTADOS REACTIVOS
   subastas: [],               // Array de publicaciones

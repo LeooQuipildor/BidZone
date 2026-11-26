@@ -35,7 +35,7 @@ export function FormularioResena({
   if (!estaEditando && subastasElegibles.length === 0) {
     return (
       <Alert type="info" title="Sin operaciones calificables aún">
-        Solo puedes calificar subastas finalizadas con ganador adjudicado en las que hayas participado (RN07).
+        Solo puedes calificar subastas finalizadas con ganador adjudicado en las que hayas participado.
       </Alert>
     );
   }

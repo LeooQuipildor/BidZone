@@ -133,7 +133,7 @@ export function FormularioUsuario({
         <Input
           id="telefono"
           name="telefono"
-          label="Teléfono / WhatsApp RN05"
+          label="Teléfono / WhatsApp"
           placeholder="+54 9 381 400-0000"
           value={datosFormulario.telefono}
           onChange={manejarCambio}

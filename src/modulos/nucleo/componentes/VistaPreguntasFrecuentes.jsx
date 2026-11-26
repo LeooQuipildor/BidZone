@@ -9,37 +9,37 @@ const PREGUNTAS_FRECUENTES = [
   {
     pregunta: '¿Cómo participo y envío una oferta en BidZone?',
     respuesta:
-      'Inicia sesión o crea tu cuenta gratuita, entra al lote que te interese desde Explorar y oferta un monto que respete el incremento mínimo indicado (RN01).',
+      'Inicia sesión o crea tu cuenta gratuita, entra al lote que te interese desde Explorar y oferta un monto que respete el incremento mínimo indicado.',
   },
   {
     pregunta: '¿Puedo cancelar una puja después de haberla confirmado?',
     respuesta:
-      'No. Según la regla RN04 todas las ofertas son vinculantes para proteger la transparencia de la sala. Solo puedes editar la nota aclaratoria de coordinación.',
+      'No. Todas las ofertas son vinculantes para proteger la transparencia de la sala. Solo puedes editar la nota aclaratoria de coordinación.',
   },
   {
     pregunta: '¿Cómo se realiza el pago y la entrega al ganar una subasta?',
     respuesta:
-      'BidZone funciona sin billeteras ni retenciones intermedias. Al finalizar la subasta con un ganador, liberamos el teléfono y correo de ambas partes para que acuerden pago y retiro directamente (RN05).',
+      'BidZone funciona sin billeteras ni retenciones intermedias. Al finalizar la subasta con un ganador, liberamos el teléfono y correo de ambas partes para que acuerden pago y retiro directamente.',
   },
   {
     pregunta: '¿Por qué no puedo ver el teléfono ni correo del vendedor antes del cierre?',
     respuesta:
-      'Para cuidar la privacidad de todos los usuarios (RN05). Los datos de contacto directo solo se desbloquean cuando el reloj finaliza y se adjudica el artículo.',
+      'Para cuidar la privacidad de todos los usuarios. Los datos de contacto directo solo se desbloquean cuando el reloj finaliza y se adjudica el artículo.',
   },
   {
     pregunta: '¿Qué pasa si la otra parte incumple con el pago o la entrega?',
     respuesta:
-      'Puedes radicar un reporte con evidencia desde el detalle de la subasta o tu panel (RN06). Un administrador revisará el caso y podrá suspender o cerrar la cuenta infractora.',
+      'Puedes radicar un reporte con evidencia desde el detalle de la subasta o tu panel. Un administrador revisará el caso y podrá suspender o cerrar la cuenta infractora.',
   },
   {
     pregunta: '¿Puedo modificar el precio base o cierre después de publicar mi lote?',
     respuesta:
-      'Sí, siempre que todavía no haya recibido ninguna puja. Una vez ingresada la primera oferta válida, esos valores quedan bloqueados por seguridad (RN08).',
+      'Sí, siempre que todavía no haya recibido ninguna puja. Una vez ingresada la primera oferta válida, esos valores quedan bloqueados por seguridad.',
   },
   {
     pregunta: '¿Cómo funcionan las reseñas y la reputación?',
     respuesta:
-      'Al cerrarse una subasta con ganador, vendedor y comprador pueden calificarse mutuamente de 1 a 5 estrellas (RN07) y esa puntuación actualiza el promedio visible en sus perfiles.',
+      'Al cerrarse una subasta con ganador, vendedor y comprador pueden calificarse mutuamente de 1 a 5 estrellas y esa puntuación actualiza el promedio visible en sus perfiles.',
   },
 ];
 

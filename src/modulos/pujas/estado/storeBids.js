@@ -17,7 +17,7 @@ async function refrescarSubastaDespuesDePuja(idSubasta) {
   }
 }
 
-// Tienda global de pujas u ofertas (conecta con /api/bids)
+// Store global de pujas u ofertas (conecta con /api/pujas)
 export const useStoreBids = create((set) => ({
   // ESTADOS REACTIVOS
   pujas: [],        // Listado de todas las ofertas registradas

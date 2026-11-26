@@ -85,7 +85,7 @@ export function validarDatosPuja({
 
   const minimoPermitido = Number(subasta.precioActual) + Number(subasta.incrementoMinimo);
   if (montoNumerico < minimoPermitido) {
-    return `RN01: La oferta debe ser de al menos ${formatearMoneda(minimoPermitido)} (Precio actual + incremento mínimo).`;
+    return `La oferta debe ser de al menos ${formatearMoneda(minimoPermitido)} (Precio actual + incremento mínimo).`;
   }
 
   if (validarMaximo) {
@@ -96,7 +96,7 @@ export function validarDatosPuja({
   }
 
   if (!compromisoAceptado) {
-    return 'Debes aceptar el compromiso vinculante (RN04) antes de enviar tu oferta.';
+    return 'Debes aceptar el compromiso vinculante antes de enviar tu oferta.';
   }
 
   return '';

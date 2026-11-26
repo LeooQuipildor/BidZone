@@ -25,7 +25,7 @@ export function CierresAdjudicadosPanel({
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2">
         <div>
           <span className="text-[10px] font-bold uppercase tracking-widest text-[#224F10]">
-            TRATO DIRECTO RN05
+            TRATO DIRECTO
           </span>
           <h2 className="text-lg sm:text-xl font-bold text-[#0D0D0D] mt-0.5">
             Cierres adjudicados y contactos liberados

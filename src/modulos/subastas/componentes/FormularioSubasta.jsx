@@ -96,7 +96,7 @@ export function FormularioSubasta({
     <form onSubmit={manejarEnvio} className="space-y-4">
       {/* Alerta explicativa de la Regla de Negocio RN08 */}
       {bloquearCamposFinancieros && (
-        <Alert type="warning" title="Regla de Negocio RN08 (Inmutabilidad por Oferta)">
+        <Alert type="warning" title="Inmutabilidad por Oferta">
           Esta subasta ya cuenta con ofertas registradas. El precio base, incremento mínimo y cierre quedan bloqueados para proteger a los postores.
         </Alert>
       )}

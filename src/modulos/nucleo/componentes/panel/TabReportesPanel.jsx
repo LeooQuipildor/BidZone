@@ -29,7 +29,7 @@ export function TabReportesPanel({
   textoBusqueda,
   datosIniciales,
 }) {
-  // Acciones asíncronas de la tienda de Zustand `storeReports.js`
+  // Acciones asíncronas del store de Zustand `storeReports.js`
   const crearReporte = useStoreReports((estado) => estado.crearReporte);
   const actualizarReporte = useStoreReports((estado) => estado.actualizarReporte);
   const eliminarReporte = useStoreReports((estado) => estado.eliminarReporte);
@@ -74,7 +74,7 @@ export function TabReportesPanel({
       tipo: 'exito',
       texto: reporteEditando
         ? `Ticket #${reporteEditando.id} actualizado.`
-        : `Ticket #${reporteGuardado.id} abierto para revisión RN06.`,
+        : `Ticket #${reporteGuardado.id} abierto para revisión.`,
     });
     cerrarFormulario();
   }
@@ -99,8 +99,8 @@ export function TabReportesPanel({
   }
 
   const subtituloPanel = esAdmin
-    ? `Mesa de mediación RN06 (${cantidadAbiertos} tickets abiertos · ${reportes.length} totales).`
-    : `Tus tickets de mediación RN06 (${cantidadAbiertos} abiertos · ${reportes.length} totales).`;
+    ? `Mesa de mediación (${cantidadAbiertos} tickets abiertos · ${reportes.length} totales).`
+    : `Tus tickets de mediación (${cantidadAbiertos} abiertos · ${reportes.length} totales).`;
 
   return (
     <div className="space-y-5">

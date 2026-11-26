@@ -129,7 +129,7 @@ export function CamposSubasta({
           name="incrementoMinimo"
           type="number"
           min="1"
-          label="Incremento Mínimo por Puja (RN01) *"
+          label="Incremento Mínimo por Puja *"
           placeholder="Ej: 20000"
           disabled={bloquearCamposFinancieros}
           value={datosFormulario.incrementoMinimo}

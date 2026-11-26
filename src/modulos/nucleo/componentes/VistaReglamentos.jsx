@@ -16,56 +16,56 @@ import { CabeceraPagina } from '../diseno/componentesBloques';
 // Constante con las 8 reglas de negocio del sistema
 const REGLAS_PLATAFORMA = [
   {
-    codigo: 'RN01',
+    codigo: 'Regla 01',
     titulo: 'Incremento mínimo por oferta',
     descripcion:
       'Cada puja debe superar el precio actual respetando al menos el incremento mínimo definido al crear la subasta.',
     icono: Gavel,
   },
   {
-    codigo: 'RN02',
+    codigo: 'Regla 02',
     titulo: 'Prohibición de auto-puja',
     descripcion:
       'Quien publica el artículo no puede realizar ofertas sobre su propia subasta bajo ninguna circunstancia.',
     icono: UserX,
   },
   {
-    codigo: 'RN03',
+    codigo: 'Regla 03',
     titulo: 'Vigencia temporal estricta',
     descripcion:
       'Solo se aceptan ofertas mientras la subasta esté activa y antes de que el reloj llegue a cero.',
     icono: Clock,
   },
   {
-    codigo: 'RN04',
+    codigo: 'Regla 04',
     titulo: 'Ofertas vinculantes e irrevocables',
     descripcion:
       'Al confirmar una puja asumes el compromiso real de compra; los montos enviados no se pueden cancelar ni bajar.',
     icono: ShieldCheck,
   },
   {
-    codigo: 'RN05',
+    codigo: 'Regla 05',
     titulo: 'Liberación condicional de contacto y plazo de 48 hs',
     descripcion:
       'Teléfono, WhatsApp y correo se habilitan entre vendedor y ganador al cerrar. Ambas partes tienen 48 hs para contactarse; de lo contrario, la cuenta podrá ser suspendida por incumplimiento de normas.',
     icono: PhoneCall,
   },
   {
-    codigo: 'RN06',
+    codigo: 'Regla 06',
     titulo: 'Reportes, infracciones y sanciones',
     descripcion:
       'Ante falta de pago, no contactarse dentro de las 48 hs, ausencia de entrega o incumplimiento de normas, la contraparte puede radicar un reporte para suspender o cerrar la cuenta.',
     icono: AlertOctagon,
   },
   {
-    codigo: 'RN07',
+    codigo: 'Regla 07',
     titulo: 'Calificación mutua de 1 a 5 estrellas',
     descripcion:
       'Una vez adjudicada la operación, vendedor y ganador pueden calificarse una única vez para construir reputación verificada.',
     icono: Star,
   },
   {
-    codigo: 'RN08',
+    codigo: 'Regla 08',
     titulo: 'Inmutabilidad tras recibir ofertas',
     descripcion:
       'Cuando un lote ya tiene al menos una puja registrada, el vendedor no puede modificar precio base, incremento ni fecha de cierre.',
@@ -112,7 +112,7 @@ export function VistaReglamentos() {
       <div className="rounded-3xl bg-[#0D0D0D] text-[#EAFFD0] p-6 sm:p-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="space-y-1 max-w-2xl">
           <p className="text-xs font-bold uppercase tracking-wider text-[#B0E454]">
-            Mediación y cumplimiento RN06
+            Mediación y cumplimiento
           </p>
           <p className="text-sm sm:text-base font-medium">
             ¿Tuviste un inconveniente tras finalizar una subasta? Puedes iniciar sesión y registrar un expediente en el centro de reportes.

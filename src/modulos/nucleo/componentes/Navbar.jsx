@@ -49,7 +49,7 @@ function BuscadorNavbar({ valor, alCambiar, alEnviar, claseExtra = '' }) {
 export function Navbar({ esInicio, usuarioActual, cantidadSinLeer, alCerrarSesion }) {
   const navegar = useNavigate();
 
-  // Conexión con la tienda de subastas para compartir el término de búsqueda
+  // Conexión con el store de subastas para compartir el término de búsqueda
   const textoBusqueda = useStoreAuctions((estado) => estado.filtros.busqueda);
   const actualizarFiltros = useStoreAuctions((estado) => estado.actualizarFiltros);
 
